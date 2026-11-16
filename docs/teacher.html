@@ -62,7 +62,7 @@ th{font-size:12px;color:#5A6178}
 </head>
 <body>
 <header>
-  <div><div class="sub" id="who">Багшийн хэсэг</div><h1>Зураг зүй · Багш</h1></div>
+  <div><div class="sub" id="who">Багшийн хэсэг</div><h1>Зураг зүй · Г.Даваасүрэн багшийн самбар</h1></div>
   <nav class="tabs" id="tabs" hidden></nav>
 </header>
 <main id="app"><div class="muted">Ачаалж байна…</div></main>
@@ -90,10 +90,11 @@ th{font-size:12px;color:#5A6178}
     tabsEl.hidden = true;
     app.innerHTML = '<div class="card" style="max-width:420px;margin:30px auto"><h2>Багшаар нэвтрэх</h2>' +
       '<label class="muted" for="em">Имэйл</label><input id="em" type="email" autocomplete="email">' +
-      '<label class="muted" for="pw">Нууц үг (8+ тэмдэгт)</label><input id="pw" type="password" autocomplete="current-password">' +
+      '<label class="muted" for="pw">Нууц үг (8+ тэмдэгт)</label><div class="row" style="flex-wrap:nowrap"><input id="pw" type="password" autocomplete="current-password" style="flex:1;min-width:0"><button class="btn ghost" id="eye" type="button" aria-pressed="false">Харах</button></div>' +
       '<div class="muted" id="msg" style="color:#B42318">' + esc(msg || '') + '</div>' +
       '<button class="btn" id="in">Нэвтрэх</button><button class="btn ghost" id="up">Анх удаа: бүртгүүлэх</button>' +
       '<div class="muted">Анх бүртгүүлсэн хүн л багш болно. Бусад хүн бүртгүүлсэн ч юу ч харахгүй.</div></div>';
+    q('#eye').onclick = function () { var p = q('#pw'), show = p.type === 'password'; p.type = show ? 'text' : 'password'; this.textContent = show ? 'Нуух' : 'Харах'; this.setAttribute('aria-pressed', show); };
     q('#in').onclick = function () {
       sb.auth.signInWithPassword({ email: q('#em').value.trim(), password: q('#pw').value }).then(function (r) {
         if (r.error) q('#msg').textContent = 'Нэвтэрч чадсангүй: имэйл, нууц үгээ шалгана уу.'; else boot();
@@ -329,7 +330,7 @@ th{font-size:12px;color:#5A6178}
       app.innerHTML = html;
       app.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { libGrade = +b.dataset.g; openLesson = null; showLibrary(); }; });
       q('#addU').onclick = function () {
-        var n = q('#un').value.trim(); if (!n) return;
+        var n = q('#un').value.trim(); if (!n) { toast('Нэгжийн нэрээ бичнэ үү'); return; }
         sb.from('units').insert({ teacher_id: me.id, grade: libGrade, name: n, sort: units.length + 1 }).then(function (r) { if (!fail(r)) showLibrary(); });
       };
       app.querySelectorAll('[data-addl]').forEach(function (b) {
@@ -362,11 +363,11 @@ th{font-size:12px;color:#5A6178}
 
   // ---------- CLASSES ----------
   function showClasses() {
-    var html = '<div class="card"><h2>Анги үүсгэх</h2><div class="row"><input type="text" id="cn" placeholder="ж: 12е" style="width:120px"><select id="cg"><option>10</option><option>11</option><option selected>12</option></select><button class="btn" id="addC">Үүсгэх</button></div></div>';
+    var html = '<div class="card"><h2>Анги үүсгэх</h2><div class="row"><input type="text" id="cn" placeholder="Ангийн нэр" aria-label="Ангийн нэр" style="width:140px"><select id="cg"><option>10</option><option>11</option><option selected>12</option></select><button class="btn" id="addC">Үүсгэх</button></div></div>';
     if (classes.length) { if (!curClass) curClass = classes[0].id; html += classPicker(curClass) + '<div id="roster"><div class="muted">Ачаалж байна…</div></div>'; }
     app.innerHTML = html;
     q('#addC').onclick = function () {
-      var n = q('#cn').value.trim(); if (!n) return;
+      var n = q('#cn').value.trim(); if (!n) { toast('Ангийн нэрээ бичнэ үү, жишээ нь 12е'); q('#cn').focus(); return; }
       sb.from('classes').insert({ teacher_id: me.id, name: n, grade: +q('#cg').value }).select().then(function (r) { if (fail(r)) return; curClass = r.data[0].id; loadClasses().then(showClasses); });
     };
     if (!classes.length) return;
@@ -375,7 +376,7 @@ th{font-size:12px;color:#5A6178}
     sb.from('students').select('*').eq('class_id', curClass).eq('active', true).order('code').then(function (r) {
       var kids = r.data || [];
       var link = STUDENT_URL + '?c=' + encodeURIComponent(cls.name);
-      var h = '<div class="card"><div class="row between"><h2>' + esc(cls.name) + ' · ' + kids.length + ' сурагч</h2><button class="btn dark" id="print1">Кодын карт хэвлэх</button></div>' +
+      var h = '<div class="card"><div class="row between"><h2>' + esc(cls.name) + ' · ' + kids.length + ' сурагч</h2><div class="row"><button class="btn sec" id="xls1">Excel-ээр татах</button><button class="btn dark" id="print1">Кодын карт хэвлэх</button></div></div>' +
         '<div class="muted">Ангийн линк: <a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link) + '</a></div></div>' +
         '<div class="card"><h3>Олноор нэмэх · журналаас</h3><div class="muted">Excel журналаасаа нэрсийн баганыг хуулаад (Cmd+C) энд буулгана (Cmd+V). Мөр бүр нэг сурагч.</div><textarea id="bulk" placeholder="Б.Тэмүүлэн\nГ.Номин"></textarea><button class="btn" id="addS">Нэмэх</button></div>' +
         '<div class="card"><div class="tablebox"><table><thead><tr><th>Нэр</th><th>Код</th><th>Тоо</th><th></th></tr></thead><tbody>' +
@@ -384,7 +385,7 @@ th{font-size:12px;color:#5A6178}
       document.getElementById('roster').innerHTML = h;
       q('#addS').onclick = function () {
         var names = q('#bulk').value.split('\n').map(function (l) { return l.split('\t')[0].trim(); }).filter(Boolean);
-        if (!names.length) return;
+        if (!names.length) { toast('Нэрсээ буулгана уу'); return; }
         sb.rpc('add_students', { p_class_id: curClass, p_names: names }).then(function (x) { if (!fail(x)) { toast(x.data + ' сурагч нэмэгдлээ'); showClasses(); } });
       };
       app.querySelectorAll('[data-pin]').forEach(function (b) { b.onclick = function () { sb.rpc('reset_pin', { p_student: b.dataset.pin }).then(function (x) { if (!fail(x)) { toast('Шинэ тоо: ' + x.data); showClasses(); } }); }; });
@@ -394,6 +395,12 @@ th{font-size:12px;color:#5A6178}
           sb.from('students').update({ active: false }).eq('id', b.dataset.del).then(function (x) { if (!fail(x)) showClasses(); });
         };
       });
+      q('#xls1').onclick = function () {
+        var lines = [['№', 'Нэр', 'Код', '4 оронтой тоо', 'Анги', 'Нэвтрэх линк']].concat(kids.map(function (k, i) { return [i + 1, k.name, k.code, k.pin, cls.name, link + '&s=' + encodeURIComponent(k.code)]; }));
+        var csv = '\ufeff' + lines.map(function (l) { return l.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\r\n');
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = cls.name + '-кодууд.csv'; a.click();
+        toast('Татагдлаа · Excel-ээр нээгдэнэ');
+      };
       q('#print1').onclick = function () {
         var p = document.getElementById('print');
         p.innerHTML = '<div class="cards">' + kids.map(function (k) {
