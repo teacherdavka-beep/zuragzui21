@@ -289,21 +289,88 @@ th{font-size:12px;color:#5A6178}
     return out;
   }
   function testToText(t) { return (t || []).map(function (x) { return x.q + '\n' + x.opts.map(function (o, i) { return (i === x.ok ? '*' : '') + o; }).join('\n'); }).join('\n\n'); }
+  var KINDS = { year_plan: 'Жилийн төлөвлөлт', unit_plan: 'Нэгжийн төлөвлөлт', lesson_plan: 'Ээлжит хичээлийн төлөвлөлт', ppt: 'Танилцуулга (PPT)', exercise: 'Дасгалын хуудас', other: 'Бусад файл' };
+  function fileList(fs) {
+    if (!fs.length) return '<div class="muted">Файл алга</div>';
+    return fs.map(function (f) {
+      return '<div class="row between" style="background:#F5F6FA;border-radius:8px;padding:6px 10px"><span style="font-size:14px"><b>' + esc(f.name) + '</b> <span class="muted">· ' + KINDS[f.kind] + '</span></span>' +
+        '<span class="row"><button class="btn ghost" style="height:36px" data-open="' + f.id + '">Нээх</button><button class="btn red" style="height:36px" data-fdel="' + f.id + '">Устгах</button></span></div>';
+    }).join('');
+  }
+  function uploader(id, kinds) {
+    return '<div class="row">' + (kinds.length > 1 ? '<select id="k_' + id + '" aria-label="Файлын төрөл">' + kinds.map(function (k) { return '<option value="' + k + '">' + KINDS[k] + '</option>'; }).join('') + '</select>' : '') +
+      '<label class="btn sec" style="display:inline-flex;align-items:center;cursor:pointer">Файл хавсаргах<input type="file" hidden data-up="' + id + '" data-kinds="' + kinds.join(',') + '"></label></div>';
+  }
+  function uploadFile(file, meta) {
+    var ext = (file.name.match(/\.[A-Za-z0-9]{1,6}$/) || [''])[0].toLowerCase();
+    var bucket = meta.kind === 'exercise' ? 'public-materials' : 'materials';
+    var path = me.id + '/' + libGrade + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + ext;
+    toast('Хуулж байна…');
+    return sb.storage.from(bucket).upload(path, file, { contentType: file.type || 'application/octet-stream' }).then(function (r) {
+      if (fail(r)) throw r.error;
+      var row = { teacher_id: me.id, grade: libGrade, unit_id: meta.unit_id || null, lesson_id: meta.lesson_id || null, kind: meta.kind, name: file.name, path: path, bucket: bucket, size: file.size };
+      return sb.from('files').insert(row).then(function (x) {
+        if (fail(x)) throw x.error;
+        if (meta.kind === 'exercise' && meta.lesson_id) {
+          var pub = sb.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+          return sb.from('lessons').update({ exercise_url: pub }).eq('id', meta.lesson_id);
+        }
+      });
+    }).then(function () { toast('Хавсаргалаа'); showLibrary(); });
+  }
+  function bindFiles(files) {
+    app.querySelectorAll('[data-up]').forEach(function (inp) {
+      inp.onchange = function () {
+        var f = inp.files[0]; if (!f) return;
+        if (f.size > 50 * 1024 * 1024) { toast('Файл 50MB-аас их байна'); return; }
+        var id = inp.dataset.up, kinds = inp.dataset.kinds.split(',');
+        var kind = kinds.length > 1 ? (app.querySelector('#k_' + id) || {}).value || kinds[0] : kinds[0];
+        var meta = { kind: kind };
+        if (id.indexOf('u_') === 0) meta.unit_id = id.slice(2);
+        if (id.indexOf('l_') === 0 || id.indexOf('x_') === 0) meta.lesson_id = id.slice(2);
+        uploadFile(f, meta).catch(function () {});
+      };
+    });
+    app.querySelectorAll('[data-open]').forEach(function (b) {
+      b.onclick = function () {
+        var f = files.filter(function (x) { return x.id === b.dataset.open; })[0]; if (!f) return;
+        if (f.bucket === 'public-materials') { window.open(sb.storage.from(f.bucket).getPublicUrl(f.path).data.publicUrl, '_blank'); return; }
+        var w = window.open('', '_blank');
+        sb.storage.from(f.bucket).createSignedUrl(f.path, 3600, { download: f.name }).then(function (r) { if (fail(r)) { if (w) w.close(); return; } if (w) w.location = r.data.signedUrl; else location.href = r.data.signedUrl; });
+      };
+    });
+    app.querySelectorAll('[data-fdel]').forEach(function (b) {
+      b.onclick = function () {
+        if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = 'Тийм, устга'; b.style.background = '#A12A1E'; b.style.color = '#fff'; return; }
+        var f = files.filter(function (x) { return x.id === b.dataset.fdel; })[0]; if (!f) return;
+        sb.storage.from(f.bucket).remove([f.path]).then(function () {
+          sb.from('files').delete().eq('id', f.id).then(function (r) {
+            if (fail(r)) return;
+            if (f.kind === 'exercise' && f.lesson_id) sb.from('lessons').update({ exercise_url: null }).eq('id', f.lesson_id).then(function () { showLibrary(); });
+            else showLibrary();
+          });
+        });
+      };
+    });
+  }
   function showLibrary() {
     Promise.all([
       sb.from('units').select('*').eq('grade', libGrade).order('sort'),
       sb.from('lessons').select('*, units!inner(grade)').eq('units.grade', libGrade).order('num'),
-      sb.from('lesson_access').select('*')
+      sb.from('lesson_access').select('*'),
+      sb.from('files').select('*').eq('grade', libGrade).order('created_at')
     ]).then(function (r) {
-      var units = r[0].data || [], lessons = r[1].data || [], acc = r[2].data || [];
+      var units = r[0].data || [], lessons = r[1].data || [], acc = r[2].data || [], files = r[3].data || [];
       var html = '<div class="row">' + [10, 11, 12].map(function (g) { return '<button class="chip' + (g === libGrade ? ' on' : '') + '" data-g="' + g + '">' + g + '-р анги</button>'; }).join('') + '</div>';
+      html += '<div class="card"><h2>' + libGrade + '-р анги · Жилийн төлөвлөлт</h2>' + fileList(files.filter(function (f) { return f.kind === 'year_plan'; })) + uploader('g_' + libGrade, ['year_plan']) + '</div>';
       html += '<div class="card"><div class="row"><input type="text" id="un" placeholder="Шинэ нэгжийн нэр, ж: Гадаргуугийн дэлгээс" style="flex:1;min-width:220px"><button class="btn" id="addU">Нэгж нэмэх</button></div></div>';
       units.forEach(function (u) {
         var ls = lessons.filter(function (l) { return l.unit_id === u.id; });
-        html += '<div class="card"><h2>' + esc(u.name) + '</h2><div class="grid">';
+        html += '<div class="card"><h2>' + esc(u.name) + '</h2><div class="muted"><b>Нэгжийн файлууд</b></div>' + fileList(files.filter(function (f) { return f.unit_id === u.id && !f.lesson_id; })) + uploader('u_' + u.id, ['unit_plan', 'other']) + '<div class="grid">';
         ls.forEach(function (l) {
           var a = acc.filter(function (x) { return x.lesson_id === l.id; });
-          var parts = [['Видео', !!l.video_url], ['Дасгал', !!l.exercise_url], ['Тест ' + (l.test || []).length, (l.test || []).length > 0]];
+          var hasPlan = files.some(function (f) { return f.lesson_id === l.id && f.kind === 'lesson_plan'; });
+          var parts = [['Видео', !!l.video_url], ['Дасгал', !!l.exercise_url], ['Тест ' + (l.test || []).length, (l.test || []).length > 0], ['Төлөвлөлт', hasPlan]];
           var full = parts.every(function (p) { return p[1]; });
           html += '<button class="card" style="text-align:left;border:2px solid ' + (openLesson === l.id ? '#2747B8' : '#E1E4EE') + '" data-l="' + l.id + '"><div class="row between"><span class="muted">Ээлжит ' + l.num + '</span><span class="pill ' + (full ? 'p-green' : 'p-amber') + '">' + (full ? 'Бэлэн' : 'Дутуу') + '</span></div><b>' + esc(l.title) + '</b>' +
             '<div class="row">' + parts.map(function (p) { return '<span class="pill ' + (p[1] ? 'p-blue' : '') + '" style="' + (p[1] ? '' : 'border:1px dashed #A9B1CC;color:#5A6178') + '">' + p[0] + '</span>'; }).join('') + '</div>' +
@@ -321,6 +388,9 @@ th{font-size:12px;color:#5A6178}
           '<label class="muted">Тест: асуулт бүрийг хоосон мөрөөр тусгаарла. Эхний мөр асуулт, дараагийн мөрүүд хариулт, зөвийн өмнө * тавина.</label>' +
           '<textarea id="lq" placeholder="Призмийн дэлгээс гэж юу вэ?\n*Бүх талсыг нэг хавтгайд дэлгэсэн дүрс\nХажуугаас харсан дүрс\nОгтлол">' + esc(testToText(L.test)) + '</textarea>' +
           '<button class="btn" id="save">Хадгалах</button>' +
+          '<hr style="border:0;border-top:1px solid #E1E4EE;width:100%"><h3>Дасгалын хуудас · сурагчид харна</h3><div class="muted">PDF эсвэл зураг хавсаргахад дээрх линк автоматаар бөглөгдөнө.</div>' +
+          fileList(files.filter(function (f) { return f.lesson_id === L.id && f.kind === 'exercise'; })) + uploader('x_' + L.id, ['exercise']) +
+          '<h3>Миний файлууд · зөвхөн танд</h3>' + fileList(files.filter(function (f) { return f.lesson_id === L.id && f.kind !== 'exercise'; })) + uploader('l_' + L.id, ['lesson_plan', 'ppt', 'other']) +
           '<hr style="border:0;border-top:1px solid #E1E4EE;width:100%"><h3>Ангид илгээх</h3>' +
           '<div class="muted">1. Аль анги руу</div><div class="row" id="pc">' + classes.map(function (c) { var on = a2.some(function (x) { return x.class_id === c.id; }); return '<button class="chip' + (on ? ' on' : '') + '" data-pc="' + c.id + '">' + esc(c.name) + '</button>'; }).join('') + '</div>' +
           '<div class="muted">2. Юуг нээх (видео, зураг илгээх нь үргэлж нээлттэй)</div><div class="row"><button class="chip on" id="ot">Дасгал, даалгавар</button><button class="chip on" id="oq">Тест</button></div>' +
@@ -329,6 +399,7 @@ th{font-size:12px;color:#5A6178}
       }
       app.innerHTML = html;
       app.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { libGrade = +b.dataset.g; openLesson = null; showLibrary(); }; });
+      bindFiles(files);
       q('#addU').onclick = function () {
         var n = q('#un').value.trim(); if (!n) { toast('Нэгжийн нэрээ бичнэ үү'); return; }
         sb.from('units').insert({ teacher_id: me.id, grade: libGrade, name: n, sort: units.length + 1 }).then(function (r) { if (!fail(r)) showLibrary(); });
