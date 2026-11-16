@@ -330,7 +330,16 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
     });
   }
 
-  if (token) loadHome(); else showLogin();
+  var autoPin = params.get('p');
+  if (preCode && autoPin) {
+    try { history.replaceState(null, '', location.pathname + '?c=' + encodeURIComponent(cls)); } catch (e) {}
+    app.innerHTML = '<div class="muted">Нэвтэрч байна…</div>';
+    sb.rpc('student_login', { p_code: preCode, p_pin: autoPin }).then(function (r) {
+      var d = r.data || {};
+      if (d.token) { token = d.token; try { localStorage.setItem('tok', token); } catch (e) {} loadHome(); }
+      else showLogin(d.error === 'locked' ? 'Олон удаа буруу оролдсон. 15 минутын дараа дахин оролдоно уу.' : 'Энэ QR хуучирсан байна. Багшаасаа шинэ карт аваарай.');
+    });
+  } else if (token) loadHome(); else showLogin();
 })();
 </script>
 </body>
