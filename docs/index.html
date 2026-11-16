@@ -91,7 +91,7 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
     }
     app.innerHTML = '<div class="card"><h1>Ангидаа нэвтрэх</h1><div class="muted">Кодоо сонгоод 4 оронтой тоогоо бичнэ үү.</div>' +
       '<label for="code">Миний код</label><select id="code"><option value="">Ачаалж байна…</option></select>' +
-      '<label for="pin">4 оронтой тоо</label><input id="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••" style="font-size:22px;letter-spacing:8px">' +
+      '<label for="pin">4 оронтой тоо</label><div style="display:flex;gap:8px"><input id="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••" style="font-size:22px;letter-spacing:8px;flex:1;min-width:0"><button type="button" id="eye" aria-pressed="false" style="height:50px;padding:0 14px;border-radius:10px;border:1px solid #C5CADB;background:#fff;color:#1A1F36;font-weight:600">Харах</button></div>' +
       '<div class="err" id="err">' + esc(msg || '') + '</div><button class="btn" id="go">Орох</button>' +
       '<div class="muted">Кодоо мартсан бол багшаасаа асуугаарай.</div></div>';
     sb.rpc('class_codes', { p_class: cls }).then(function (r) {
@@ -101,6 +101,7 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
       if (!list.length) sel.innerHTML = '<option value="">Энэ ангид сурагч бүртгэгдээгүй</option>';
     });
     var pin = document.getElementById('pin');
+    document.getElementById('eye').onclick = function () { var show = pin.type === 'password'; pin.type = show ? 'text' : 'password'; this.textContent = show ? 'Нуух' : 'Харах'; this.setAttribute('aria-pressed', show); };
     pin.addEventListener('input', function () { pin.value = pin.value.replace(/\D/g, '').slice(0, 4); });
     document.getElementById('go').onclick = function () {
       var code = document.getElementById('code').value, p = pin.value, err = document.getElementById('err');

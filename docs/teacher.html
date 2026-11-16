@@ -309,7 +309,7 @@ th{font-size:12px;color:#5A6178}
             '<div class="row">' + parts.map(function (p) { return '<span class="pill ' + (p[1] ? 'p-blue' : '') + '" style="' + (p[1] ? '' : 'border:1px dashed #A9B1CC;color:#5A6178') + '">' + p[0] + '</span>'; }).join('') + '</div>' +
             '<div class="muted">' + (a.length ? 'Нээсэн: ' + a.map(function (x) { var c = classes.filter(function (k) { return k.id === x.class_id; })[0]; return c ? c.name : ''; }).join(', ') : 'Ангид нээгээгүй') + '</div></button>';
         });
-        html += '<button class="card" style="border:1.5px dashed #A9B1CC;color:#2747B8;font-weight:600;justify-content:center;min-height:100px" data-addl="' + u.id + '" data-n="' + (ls.length + 1) + '">+ Ээлжит хичээл нэмэх</button></div></div>';
+        html += '<div class="card" style="border:1.5px dashed #A9B1CC"><b style="color:#2747B8">+ Ээлжит хичээл нэмэх</b><input type="text" placeholder="Гарчиг, ж: Призмийн гадаргуугийн дэлгээс" aria-label="Ээлжит хичээлийн гарчиг" data-lt="' + u.id + '"><button class="btn" data-addl="' + u.id + '" data-n="' + (ls.length + 1) + '">Нэмэх</button></div></div></div>';
       });
       var L = lessons.filter(function (l) { return l.id === openLesson; })[0];
       if (L) {
@@ -335,7 +335,8 @@ th{font-size:12px;color:#5A6178}
       };
       app.querySelectorAll('[data-addl]').forEach(function (b) {
         b.onclick = function () {
-          var t = prompt('Ээлжит хичээлийн гарчиг:'); if (!t) return;
+          var inp = app.querySelector('[data-lt="' + b.dataset.addl + '"]'); var t = inp.value.trim();
+          if (!t) { toast('Гарчгаа бичнэ үү'); inp.focus(); return; }
           sb.from('lessons').insert({ unit_id: b.dataset.addl, num: +b.dataset.n, title: t }).select().then(function (r) { if (fail(r)) return; openLesson = r.data[0].id; showLibrary(); });
         };
       });
@@ -363,12 +364,19 @@ th{font-size:12px;color:#5A6178}
 
   // ---------- CLASSES ----------
   function showClasses() {
-    var html = '<div class="card"><h2>Анги үүсгэх</h2><div class="row"><input type="text" id="cn" placeholder="Ангийн нэр" aria-label="Ангийн нэр" style="width:140px"><select id="cg"><option>10</option><option>11</option><option selected>12</option></select><button class="btn" id="addC">Үүсгэх</button></div></div>';
+    var letters = ['а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и'];
+    var html = '<div class="card"><h2>Шинэ анги</h2><div class="row">' +
+      '<label class="muted" for="cg">Анги</label><select id="cg"><option value="10">10</option><option value="11">11</option><option value="12" selected>12</option></select>' +
+      '<label class="muted" for="cb">Бүлэг</label><select id="cb">' + letters.map(function (l) { return '<option>' + l + '</option>'; }).join('') + '</select>' +
+      '<button class="btn" id="addC">Нэмэх</button><span class="muted" id="cprev"></span></div></div>';
     if (classes.length) { if (!curClass) curClass = classes[0].id; html += classPicker(curClass) + '<div id="roster"><div class="muted">Ачаалж байна…</div></div>'; }
     app.innerHTML = html;
+    var prev = function () { q('#cprev').textContent = '→ ' + q('#cg').value + q('#cb').value + ' анги'; };
+    q('#cg').onchange = prev; q('#cb').onchange = prev; prev();
     q('#addC').onclick = function () {
-      var n = q('#cn').value.trim(); if (!n) { toast('Ангийн нэрээ бичнэ үү, жишээ нь 12е'); q('#cn').focus(); return; }
-      sb.from('classes').insert({ teacher_id: me.id, name: n, grade: +q('#cg').value }).select().then(function (r) { if (fail(r)) return; curClass = r.data[0].id; loadClasses().then(showClasses); });
+      var n = q('#cg').value + q('#cb').value;
+      if (classes.some(function (c) { return c.name === n; })) { toast(n + ' анги аль хэдийн байна'); return; }
+      sb.from('classes').insert({ teacher_id: me.id, name: n, grade: +q('#cg').value }).select().then(function (r) { if (fail(r)) return; curClass = r.data[0].id; toast(n + ' анги нэмэгдлээ'); loadClasses().then(showClasses); });
     };
     if (!classes.length) return;
     bindClassPicker(function (c) { curClass = c; showClasses(); });
@@ -377,7 +385,7 @@ th{font-size:12px;color:#5A6178}
       var kids = r.data || [];
       var link = STUDENT_URL + '?c=' + encodeURIComponent(cls.name);
       var h = '<div class="card"><div class="row between"><h2>' + esc(cls.name) + ' · ' + kids.length + ' сурагч</h2><div class="row"><button class="btn sec" id="xls1">Excel-ээр татах</button><button class="btn dark" id="print1">Кодын карт хэвлэх</button></div></div>' +
-        '<div class="muted">Ангийн линк: <a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link) + '</a></div></div>' +
+        '<div class="muted">Карт бүрийн QR тухайн хүүхдийн өөрийнх: уншуулахад шууд нэвтэрнэ. Карт алдагдвал "Шинэ тоо" дарахад хуучин QR ажиллахаа болино.</div><div class="muted">Ангийн линк: <a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link) + '</a></div></div>' +
         '<div class="card"><h3>Олноор нэмэх · журналаас</h3><div class="muted">Excel журналаасаа нэрсийн баганыг хуулаад (Cmd+C) энд буулгана (Cmd+V). Мөр бүр нэг сурагч.</div><textarea id="bulk" placeholder="Б.Тэмүүлэн\nГ.Номин"></textarea><button class="btn" id="addS">Нэмэх</button></div>' +
         '<div class="card"><div class="tablebox"><table><thead><tr><th>Нэр</th><th>Код</th><th>Тоо</th><th></th></tr></thead><tbody>' +
         kids.map(function (k) { return '<tr><td><b>' + esc(k.name) + '</b></td><td>' + esc(k.code) + '</td><td>' + esc(k.pin) + '</td><td style="text-align:right;white-space:nowrap"><button class="btn ghost" data-pin="' + k.id + '">Шинэ тоо</button> <button class="btn red" data-del="' + k.id + '" data-n="' + esc(k.name) + '">Хасах</button></td></tr>'; }).join('') +
@@ -391,12 +399,12 @@ th{font-size:12px;color:#5A6178}
       app.querySelectorAll('[data-pin]').forEach(function (b) { b.onclick = function () { sb.rpc('reset_pin', { p_student: b.dataset.pin }).then(function (x) { if (!fail(x)) { toast('Шинэ тоо: ' + x.data); showClasses(); } }); }; });
       app.querySelectorAll('[data-del]').forEach(function (b) {
         b.onclick = function () {
-          if (!confirm(b.dataset.n + '-г хасах уу? Өмнөх дүн, тэмдэглэл архивт хадгалагдана.')) return;
+          if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = 'Тийм, хас'; b.style.background = '#A12A1E'; b.style.color = '#fff'; toast(b.dataset.n + '-г хасах бол дахин дарна уу. Өмнөх дүн архивт үлдэнэ.'); return; }
           sb.from('students').update({ active: false }).eq('id', b.dataset.del).then(function (x) { if (!fail(x)) showClasses(); });
         };
       });
       q('#xls1').onclick = function () {
-        var lines = [['№', 'Нэр', 'Код', '4 оронтой тоо', 'Анги', 'Нэвтрэх линк']].concat(kids.map(function (k, i) { return [i + 1, k.name, k.code, k.pin, cls.name, link + '&s=' + encodeURIComponent(k.code)]; }));
+        var lines = [['№', 'Нэр', 'Код', '4 оронтой тоо', 'Анги', 'Шууд нэвтрэх линк (QR-тэй ижил)']].concat(kids.map(function (k, i) { return [i + 1, k.name, k.code, k.pin, cls.name, link + '&s=' + encodeURIComponent(k.code) + '&p=' + k.pin]; }));
         var csv = '\ufeff' + lines.map(function (l) { return l.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\r\n');
         var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = cls.name + '-кодууд.csv'; a.click();
         toast('Татагдлаа · Excel-ээр нээгдэнэ');
@@ -404,7 +412,7 @@ th{font-size:12px;color:#5A6178}
       q('#print1').onclick = function () {
         var p = document.getElementById('print');
         p.innerHTML = '<div class="cards">' + kids.map(function (k) {
-          var qr = qrcode(0, 'M'); qr.addData(link + '&s=' + encodeURIComponent(k.code)); qr.make();
+          var qr = qrcode(0, 'M'); qr.addData(link + '&s=' + encodeURIComponent(k.code) + '&p=' + k.pin); qr.make();
           return '<div class="pc"><div style="flex:1"><b>' + esc(k.name) + '</b><div>' + esc(cls.name) + ' · ' + esc(C.subject) + '</div><div>Код: <b>' + esc(k.code) + '</b></div><div>Тоо: <b>' + esc(k.pin) + '</b></div></div>' + qr.createSvgTag(3, 0) + '</div>';
         }).join('') + '</div>';
         setTimeout(function () { window.print(); }, 100);
