@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Багшийн хэсэг · Зураг зүй</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#F5F6FA;font-family:Inter,system-ui,sans-serif;color:#1A1F36}
+button,input,select,textarea{font-family:inherit;font-size:15px}
+button{cursor:pointer}
+header{background:#1E2A5A;color:#fff;padding:16px 24px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+header .sub{font-size:13px;color:#C9D1F0}
+header h1{margin:2px 0 0;font-size:22px}
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap}
+nav.tabs button{height:42px;padding:0 16px;border-radius:99px;border:1.5px solid #fff;background:transparent;color:#fff;font-weight:600}
+nav.tabs button.on{background:#fff;color:#1E2A5A}
+main{max-width:1200px;margin:0 auto;padding:20px 24px 60px;display:flex;flex-direction:column;gap:16px}
+.card{background:#fff;border:1px solid #E1E4EE;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+h2{margin:0;font-size:18px}h3{margin:0;font-size:16px}
+.muted{color:#5A6178;font-size:13px;line-height:1.5}
+input[type=text],input[type=email],input[type=password],input[type=url],input[type=number],select,textarea{height:44px;border:1px solid #C5CADB;border-radius:10px;padding:0 12px;background:#fff;color:#1A1F36}
+textarea{height:auto;min-height:120px;padding:10px 12px;resize:vertical;width:100%}
+.btn{height:44px;padding:0 16px;border:0;border-radius:10px;background:#2747B8;color:#fff;font-weight:600}
+.btn.sec{background:#fff;color:#2747B8;border:1.5px solid #2747B8}
+.btn.ghost{background:#fff;color:#1A1F36;border:1px solid #C5CADB}
+.btn.green{background:#1C7C4A}.btn.amber{background:#fff;color:#8A4B0B;border:1px solid #F2C89A}.btn.red{background:#fff;color:#A12A1E;border:1px solid #E9B4AE}
+.btn.dark{background:#1E2A5A}
+.btn:disabled{opacity:.5}
+.chip{min-height:40px;padding:0 14px;border-radius:99px;border:1.5px solid #C5CADB;background:#fff;font-weight:600;color:#1A1F36}
+.chip.on{background:#1E2A5A;border-color:#1E2A5A;color:#fff}
+.pill{font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px}
+.p-red{background:#FDECEA;color:#A12A1E}.p-green{background:#E3F4EA;color:#1C6B40}.p-blue{background:#EEF1FA;color:#2747B8}.p-amber{background:#FFF3E5;color:#8A4B0B}
+.photos{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.photos img{width:100%;height:150px;object-fit:cover;border-radius:8px;border:1px solid #C5CADB;cursor:zoom-in}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid #EEF0F5}
+th{font-size:12px;color:#5A6178}
+.tablebox{overflow-x:auto}
+.names{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.names button{min-height:54px;text-align:left;border-radius:10px;border:1.5px solid #D5DAE8;background:#fff;padding:8px 10px;position:relative;color:#1A1F36}
+.names button.on{background:#2747B8;color:#fff;border-color:#2747B8}
+.badge{position:absolute;top:6px;right:6px;background:#C2410C;color:#fff;border-radius:99px;font-size:11px;min-width:20px;height:20px;line-height:20px;text-align:center}
+.sticky{position:sticky;bottom:0;background:#fff;border-top:2px solid #2747B8;padding:12px;border-radius:12px 12px 0 0;box-shadow:0 -4px 18px rgba(0,0,0,.06)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1A1F36;color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;z-index:20}
+.zoom{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:30}
+.zoom img{max-width:96vw;max-height:94vh}
+#print{display:none}
+@media print{
+  body{background:#fff} header,main,.toast{display:none!important}
+  #print{display:block}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  .pc{border:1px dashed #888;padding:12px;display:flex;gap:10px;align-items:center;break-inside:avoid;height:46mm}
+  .pc b{font-size:15px}.pc div{font-size:13px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="sub" id="who">Багшийн хэсэг</div><h1>Зураг зүй · Багш</h1></div>
+  <nav class="tabs" id="tabs" hidden></nav>
+</header>
+<main id="app"><div class="muted">Ачаалж байна…</div></main>
+<div id="print"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  var C = window.APP_CONFIG;
+  var sb = window.supabase.createClient(C.url, C.key);
+  var app = document.getElementById('app'), tabsEl = document.getElementById('tabs');
+  var me = null, classes = [], tab = 'review';
+  var KIND = { phone: 'Утас', sleep: 'Унтсан', late: 'Хоцорсон', disrupt: 'Саад' };
+  var STUDENT_URL = new URL('index.html', location.href).href;
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function toast(t) { var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 3000); }
+  function fmt(d) { var x = new Date(d); return (x.getMonth() + 1) + '/' + x.getDate() + ' ' + String(x.getHours()).padStart(2, '0') + ':' + String(x.getMinutes()).padStart(2, '0'); }
+  function q(sel) { return app.querySelector(sel); }
+  function fail(r) { if (r && r.error) { toast('Алдаа: ' + r.error.message); console.error(r.error); return true; } return false; }
+
+  // ---------- AUTH ----------
+  function showAuth(msg) {
+    tabsEl.hidden = true;
+    app.innerHTML = '<div class="card" style="max-width:420px;margin:30px auto"><h2>Багшаар нэвтрэх</h2>' +
+      '<label class="muted" for="em">Имэйл</label><input id="em" type="email" autocomplete="email">' +
+      '<label class="muted" for="pw">Нууц үг (8+ тэмдэгт)</label><input id="pw" type="password" autocomplete="current-password">' +
+      '<div class="muted" id="msg" style="color:#B42318">' + esc(msg || '') + '</div>' +
+      '<button class="btn" id="in">Нэвтрэх</button><button class="btn ghost" id="up">Анх удаа: бүртгүүлэх</button>' +
+      '<div class="muted">Анх бүртгүүлсэн хүн л багш болно. Бусад хүн бүртгүүлсэн ч юу ч харахгүй.</div></div>';
+    q('#in').onclick = function () {
+      sb.auth.signInWithPassword({ email: q('#em').value.trim(), password: q('#pw').value }).then(function (r) {
+        if (r.error) q('#msg').textContent = 'Нэвтэрч чадсангүй: имэйл, нууц үгээ шалгана уу.'; else boot();
+      });
+    };
+    q('#up').onclick = function () {
+      var pw = q('#pw').value; if (pw.length < 8) { q('#msg').textContent = 'Нууц үг 8+ тэмдэгт байх ёстой.'; return; }
+      sb.auth.signUp({ email: q('#em').value.trim(), password: pw, options: { emailRedirectTo: location.href } }).then(function (r) {
+        if (r.error) q('#msg').textContent = r.error.message;
+        else if (!r.data.session) q('#msg').textContent = 'Имэйл рүү тань баталгаажуулах линк явууллаа. Линк дээр дараад энд буцаж нэвтэрнэ үү.';
+        else boot();
+      });
+    };
+  }
+
+  function boot() {
+    sb.auth.getSession().then(function (r) {
+      var s = r.data.session; if (!s) { showAuth(); return; }
+      sb.rpc('claim_teacher', { p_name: 'Г.Даваасүрэн' }).then(function (c) {
+        if (c.data !== true) { app.innerHTML = '<div class="card">Энэ бүртгэл багшийн эрхгүй байна.</div>'; return; }
+        me = s.user; document.getElementById('who').textContent = me.email;
+        cleanupPhotos();
+        loadClasses().then(function () { drawTabs(); go(classes.length ? 'review' : 'classes'); });
+      });
+    });
+  }
+  function loadClasses() { return sb.from('classes').select('*').order('name').then(function (r) { classes = r.data || []; }); }
+  function cleanupPhotos() {
+    sb.from('behavior_logs').select('id,photo_path').lt('photo_expires_at', new Date().toISOString()).not('photo_path', 'is', null).then(function (r) {
+      var rows = r.data || []; if (!rows.length) return;
+      sb.storage.from('behavior').remove(rows.map(function (x) { return x.photo_path; })).then(function () {
+        sb.from('behavior_logs').update({ photo_path: null }).in('id', rows.map(function (x) { return x.id; }));
+      });
+    });
+  }
+  function drawTabs() {
+    var T = [['review', 'Шалгах'], ['lesson', 'Хичээл дээр'], ['journal', 'Журнал'], ['library', 'Материалын сан'], ['classes', 'Анги']];
+    tabsEl.hidden = false;
+    tabsEl.innerHTML = T.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (t[0] === tab ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') +
+      '<button data-t="out">Гарах</button>';
+    tabsEl.querySelectorAll('button').forEach(function (b) {
+      b.onclick = function () { if (b.dataset.t === 'out') { sb.auth.signOut().then(function () { showAuth(); }); return; } go(b.dataset.t); };
+    });
+  }
+  function go(t) { tab = t; drawTabs(); ({ review: showReview, lesson: showLesson, journal: showJournal, library: showLibrary, classes: showClasses })[t](); }
+  function classPicker(cur, cb) {
+    return '<div class="row">' + classes.map(function (c) { return '<button class="chip' + (c.id === cur ? ' on' : '') + '" data-c="' + c.id + '">' + esc(c.name) + '</button>'; }).join('') + '</div>';
+  }
+  function bindClassPicker(cb) { app.querySelectorAll('[data-c]').forEach(function (b) { b.onclick = function () { cb(b.dataset.c); }; }); }
+  var curClass = null;
+  function needClass() { if (!classes.length) { app.innerHTML = '<div class="card"><h2>Эхлээд анги үүсгэнэ үү</h2><button class="btn" id="g">Анги цонх руу</button></div>'; q('#g').onclick = function () { go('classes'); }; return true; } if (!curClass) curClass = classes[0].id; return false; }
+
+  // ---------- REVIEW ----------
+  function showReview() {
+    app.innerHTML = '<div class="muted">Ачаалж байна…</div>';
+    sb.from('submissions').select('id,status,reason,photo_paths,created_at,lesson_id,student_id,students(name,code,class_id),lessons(title)')
+      .eq('status', 'review').order('created_at').limit(60).then(function (r) {
+        if (fail(r)) return;
+        var rows = r.data || [];
+        sb.from('submissions').select('id', { count: 'exact', head: true }).eq('status', 'auto').then(function (a) {
+          var html = '<div class="row between"><h2>Танд шалгах: ' + rows.length + '</h2><span class="pill p-green">Автоматаар орсон: ' + (a.count || 0) + '</span></div>' +
+            '<div class="muted">"+ авсан" гэж илгээсэн ажил автоматаар журналд ордог. Энд зөвхөн "+"-гүй, ижил зурагтай, санамсаргүй шалгалтын ажлууд гарна.</div>';
+          if (!rows.length) html += '<div class="card muted" style="text-align:center;padding:30px">Шалгах ажил алга.</div>';
+          html += '<div class="grid">';
+          var R = { noplus: ['Багшид үзүүлээгүй · нөхсөн', 'p-blue', '+ Батлах', 'Дахин хийх'], dup: ['Ижил зураг илэрсэн', 'p-red', 'Зөв, өөрийнх нь', 'Хуулбар'],
+            spot: ['Санамсаргүй шалгалт · "+ авсан" гэсэн', 'p-amber', 'Зөв байна', 'Худал'], flagged: ['Өмнө нь худал бичсэн', 'p-red', 'Зөв байна', 'Худал'] };
+          rows.forEach(function (s) {
+            var x = R[s.reason] || R.noplus;
+            html += '<div class="card" data-id="' + s.id + '"><span class="pill ' + x[1] + '" style="align-self:flex-start">' + x[0] + '</span>' +
+              '<div class="row between"><b>' + esc(s.students.name) + '</b><span class="muted">' + esc(s.students.code) + '</span></div>' +
+              '<div class="muted">' + esc(s.lessons.title) + ' · ' + fmt(s.created_at) + '</div><div class="photos" data-p="' + esc(JSON.stringify(s.photo_paths)) + '"></div>' +
+              '<div class="row"><button class="btn green" data-ok="' + s.id + '">' + x[2] + '</button><button class="btn amber" data-bad="' + s.id + '" data-r="' + s.reason + '" data-st="' + s.student_id + '">' + x[3] + '</button></div></div>';
+          });
+          app.innerHTML = html + '</div>';
+          app.querySelectorAll('.photos').forEach(function (el) {
+            var paths = JSON.parse(el.dataset.p);
+            sb.storage.from('submissions').createSignedUrls(paths, 3600).then(function (u) {
+              el.innerHTML = (u.data || []).map(function (x) { return '<img alt="Сурагчийн зураг" src="' + esc(x.signedUrl) + '">'; }).join('');
+              el.querySelectorAll('img').forEach(function (im) { im.onclick = function () { var z = document.createElement('div'); z.className = 'zoom'; z.innerHTML = '<img alt="" src="' + im.src + '">'; z.onclick = function () { z.remove(); }; document.body.appendChild(z); }; });
+            });
+          });
+          app.querySelectorAll('[data-ok]').forEach(function (b) { b.onclick = function () { setStatus(b.dataset.ok, 'ok'); }; });
+          app.querySelectorAll('[data-bad]').forEach(function (b) {
+            b.onclick = function () {
+              var lie = b.dataset.r === 'spot' || b.dataset.r === 'flagged' || b.dataset.r === 'dup';
+              setStatus(b.dataset.bad, lie ? 'fake' : 'redo');
+              if (b.dataset.r === 'spot' || b.dataset.r === 'flagged') sb.from('students').update({ no_auto: true }).eq('id', b.dataset.st).then(function () {});
+            };
+          });
+        });
+      });
+  }
+  function setStatus(id, st) {
+    sb.from('submissions').update({ status: st, reviewed_at: new Date().toISOString() }).eq('id', id).then(function (r) {
+      if (fail(r)) return;
+      var el = app.querySelector('.card[data-id="' + id + '"]'); if (el) el.remove();
+      toast(st === 'ok' ? 'Журналд орлоо' : (st === 'fake' ? 'Тэмдэглэгдлээ · энэ сурагчийн автомат батлалт зогслоо' : 'Сурагчид "Дахин хийх" гэж харагдана'));
+    });
+  }
+
+  // ---------- LESSON (behavior) ----------
+  var sel = null, photoOn = false;
+  function showLesson() {
+    if (needClass()) return;
+    Promise.all([
+      sb.from('students').select('id,name,code').eq('class_id', curClass).eq('active', true).order('code'),
+      sb.from('behavior_logs').select('id,kind,created_at,photo_path,student_id').gte('created_at', new Date(Date.now() - 864e5 * 30).toISOString()).order('created_at', { ascending: false })
+    ]).then(function (res) {
+      var kids = res[0].data || [], logs = res[1].data || [];
+      var ids = {}; kids.forEach(function (k) { ids[k.id] = k; });
+      logs = logs.filter(function (l) { return ids[l.student_id]; });
+      var today = new Date(); today.setHours(0, 0, 0, 0);
+      var todayLogs = logs.filter(function (l) { return new Date(l.created_at) >= today; });
+      var cnt = {}; todayLogs.forEach(function (l) { cnt[l.student_id] = (cnt[l.student_id] || 0) + 1; });
+      var html = classPicker(curClass) + '<div class="card row between"><div><b>Багшийн зураг</b><div class="muted">Зөвхөн танд · 30 хоногт устна, тэмдэглэл үлдэнэ</div></div>' +
+        '<button class="btn ' + (photoOn ? 'green' : 'ghost') + '" id="ph" aria-pressed="' + photoOn + '">' + (photoOn ? 'Асаалттай' : 'Унтраалттай') + '</button></div>' +
+        '<div class="muted">Нэр дээр дараад доороос зөрчлөө сонгоно. Тоо нь өнөөдрийн тэмдэглэл.</div><div class="names">' +
+        kids.map(function (k) { return '<button data-k="' + k.id + '" class="' + (sel === k.id ? 'on' : '') + '"><b>' + esc(k.name) + '</b><div class="muted" style="color:inherit;opacity:.8">' + esc(k.code) + '</div>' + (cnt[k.id] ? '<span class="badge">' + cnt[k.id] + '</span>' : '') + '</button>'; }).join('') + '</div>';
+      if (sel && ids[sel]) {
+        html += '<div class="sticky"><div class="row between"><b>' + esc(ids[sel].name) + '</b><button class="btn ghost" id="cl">Болих</button></div><div class="row" style="margin-top:8px">' +
+          Object.keys(KIND).map(function (k) { return '<button class="btn amber" data-kind="' + k + '">' + KIND[k] + '</button>'; }).join('') +
+          (photoOn ? '<button class="btn dark" id="cam">Зурагтай бүртгэх</button><input type="file" accept="image/*" capture="environment" id="camf" hidden>' : '') + '</div></div>';
+      }
+      html += '<h3>Өнөөдрийн тэмдэглэл</h3>' + (todayLogs.length ? '<div class="card">' + todayLogs.map(function (l) { return '<div class="row between"><span><b>' + esc(ids[l.student_id].name) + '</b> · ' + KIND[l.kind] + (l.photo_path ? ' · зурагтай' : '') + '</span><span class="muted">' + fmt(l.created_at) + '</span></div>'; }).join('') + '</div>' : '<div class="muted">Одоогоор алга.</div>');
+      app.innerHTML = html;
+      bindClassPicker(function (c) { curClass = c; sel = null; showLesson(); });
+      q('#ph').onclick = function () { photoOn = !photoOn; showLesson(); };
+      app.querySelectorAll('[data-k]').forEach(function (b) { b.onclick = function () { sel = sel === b.dataset.k ? null : b.dataset.k; showLesson(); }; });
+      var cl = q('#cl'); if (cl) cl.onclick = function () { sel = null; showLesson(); };
+      app.querySelectorAll('[data-kind]').forEach(function (b) { b.onclick = function () { addLog(b.dataset.kind, null); }; });
+      var cam = q('#cam'); if (cam) {
+        var f = q('#camf'); cam.onclick = function () { f.click(); };
+        f.onchange = function () {
+          var file = f.files[0]; if (!file) return;
+          var path = sel + '/' + Date.now() + '.jpg';
+          sb.storage.from('behavior').upload(path, file, { contentType: file.type || 'image/jpeg' }).then(function (r) { if (fail(r)) return; addLog('phone', path); });
+        };
+      }
+    });
+  }
+  function addLog(kind, photo) {
+    var row = { student_id: sel, kind: kind };
+    if (photo) { row.photo_path = photo; row.photo_expires_at = new Date(Date.now() + 864e5 * 30).toISOString(); }
+    sb.from('behavior_logs').insert(row).then(function (r) { if (fail(r)) return; sel = null; toast('Бүртгэгдлээ'); showLesson(); });
+  }
+
+  // ---------- JOURNAL ----------
+  function showJournal() {
+    if (needClass()) return;
+    var cls = classes.filter(function (c) { return c.id === curClass; })[0];
+    Promise.all([
+      sb.from('students').select('id,name,code').eq('class_id', curClass).eq('active', true).order('code'),
+      sb.from('lesson_access').select('lesson_id,lessons(title)').eq('class_id', curClass),
+      sb.from('submissions').select('student_id,lesson_id,status'),
+      sb.from('test_results').select('student_id,lesson_id,score,total'),
+      sb.from('behavior_logs').select('student_id,kind').gte('created_at', new Date(Date.now() - 864e5 * 30).toISOString())
+    ]).then(function (r) {
+      var kids = r[0].data || [], opened = r[1].data || [], subs = r[2].data || [], tests = r[3].data || [], logs = r[4].data || [];
+      var lessonIds = opened.map(function (o) { return o.lesson_id; });
+      var rows = kids.map(function (k) {
+        var done = {}; subs.forEach(function (s) { if (s.student_id === k.id && (s.status === 'auto' || s.status === 'ok')) done[s.lesson_id] = 1; });
+        var plus = lessonIds.filter(function (l) { return done[l]; }).length;
+        var ts = tests.filter(function (t) { return t.student_id === k.id; });
+        var avg = ts.length ? Math.round(ts.reduce(function (a, t) { return a + t.score / t.total; }, 0) / ts.length * 100) : null;
+        var b = logs.filter(function (l) { return l.student_id === k.id; }).length;
+        return { k: k, plus: plus, total: lessonIds.length, avg: avg, b: b, weak: lessonIds.length && plus / lessonIds.length < 0.5 };
+      });
+      var html = classPicker(curClass) + '<div class="card"><div class="row between"><h2>' + esc(cls.name) + ' · Журнал</h2><button class="btn sec" id="csv">Excel рүү татах (CSV)</button></div>' +
+        '<div class="tablebox"><table><thead><tr><th>Нэр</th><th>Код</th><th>Даалгавар "+"</th><th>Тестийн дундаж</th><th>Сахилга (30 хоног)</th></tr></thead><tbody>' +
+        rows.map(function (x) { return '<tr style="background:' + (x.weak ? '#FFF3E5' : '#fff') + '"><td><b>' + esc(x.k.name) + '</b></td><td>' + esc(x.k.code) + '</td><td>' + x.plus + ' / ' + x.total + '</td><td>' + (x.avg == null ? '—' : x.avg + '%') + '</td><td>' + (x.b || '—') + '</td></tr>'; }).join('') +
+        '</tbody></table></div><div class="muted">Улбар мөр: нээгдсэн даалгаврын талаас бага нь "+" авсан.</div></div>';
+      app.innerHTML = html;
+      bindClassPicker(function (c) { curClass = c; showJournal(); });
+      q('#csv').onclick = function () {
+        var lines = [['Нэр', 'Код', 'Даалгавар +', 'Нийт', 'Тест %', 'Сахилга']].concat(rows.map(function (x) { return [x.k.name, x.k.code, x.plus, x.total, x.avg == null ? '' : x.avg, x.b]; }));
+        var csv = '﻿' + lines.map(function (l) { return l.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = cls.name + '-journal.csv'; a.click();
+      };
+    });
+  }
+
+  // ---------- LIBRARY ----------
+  var libGrade = 12, openLesson = null;
+  function parseTest(txt) {
+    var blocks = txt.split(/\n\s*\n/).map(function (b) { return b.trim(); }).filter(Boolean), out = [];
+    blocks.forEach(function (b) {
+      var lines = b.split('\n').map(function (l) { return l.trim(); }).filter(Boolean); if (lines.length < 3) return;
+      var qq = { q: lines[0].replace(/^\d+[.)]\s*/, ''), opts: [], ok: 0 };
+      lines.slice(1).forEach(function (l, i) { var star = /^\*/.test(l); var t = l.replace(/^\*\s*/, '').replace(/^[a-dа-г][.)]\s*/i, ''); if (star) qq.ok = i; qq.opts.push(t); });
+      out.push(qq);
+    });
+    return out;
+  }
+  function testToText(t) { return (t || []).map(function (x) { return x.q + '\n' + x.opts.map(function (o, i) { return (i === x.ok ? '*' : '') + o; }).join('\n'); }).join('\n\n'); }
+  function showLibrary() {
+    Promise.all([
+      sb.from('units').select('*').eq('grade', libGrade).order('sort'),
+      sb.from('lessons').select('*, units!inner(grade)').eq('units.grade', libGrade).order('num'),
+      sb.from('lesson_access').select('*')
+    ]).then(function (r) {
+      var units = r[0].data || [], lessons = r[1].data || [], acc = r[2].data || [];
+      var html = '<div class="row">' + [10, 11, 12].map(function (g) { return '<button class="chip' + (g === libGrade ? ' on' : '') + '" data-g="' + g + '">' + g + '-р анги</button>'; }).join('') + '</div>';
+      html += '<div class="card"><div class="row"><input type="text" id="un" placeholder="Шинэ нэгжийн нэр, ж: Гадаргуугийн дэлгээс" style="flex:1;min-width:220px"><button class="btn" id="addU">Нэгж нэмэх</button></div></div>';
+      units.forEach(function (u) {
+        var ls = lessons.filter(function (l) { return l.unit_id === u.id; });
+        html += '<div class="card"><h2>' + esc(u.name) + '</h2><div class="grid">';
+        ls.forEach(function (l) {
+          var a = acc.filter(function (x) { return x.lesson_id === l.id; });
+          var parts = [['Видео', !!l.video_url], ['Дасгал', !!l.exercise_url], ['Тест ' + (l.test || []).length, (l.test || []).length > 0]];
+          var full = parts.every(function (p) { return p[1]; });
+          html += '<button class="card" style="text-align:left;border:2px solid ' + (openLesson === l.id ? '#2747B8' : '#E1E4EE') + '" data-l="' + l.id + '"><div class="row between"><span class="muted">Ээлжит ' + l.num + '</span><span class="pill ' + (full ? 'p-green' : 'p-amber') + '">' + (full ? 'Бэлэн' : 'Дутуу') + '</span></div><b>' + esc(l.title) + '</b>' +
+            '<div class="row">' + parts.map(function (p) { return '<span class="pill ' + (p[1] ? 'p-blue' : '') + '" style="' + (p[1] ? '' : 'border:1px dashed #A9B1CC;color:#5A6178') + '">' + p[0] + '</span>'; }).join('') + '</div>' +
+            '<div class="muted">' + (a.length ? 'Нээсэн: ' + a.map(function (x) { var c = classes.filter(function (k) { return k.id === x.class_id; })[0]; return c ? c.name : ''; }).join(', ') : 'Ангид нээгээгүй') + '</div></button>';
+        });
+        html += '<button class="card" style="border:1.5px dashed #A9B1CC;color:#2747B8;font-weight:600;justify-content:center;min-height:100px" data-addl="' + u.id + '" data-n="' + (ls.length + 1) + '">+ Ээлжит хичээл нэмэх</button></div></div>';
+      });
+      var L = lessons.filter(function (l) { return l.id === openLesson; })[0];
+      if (L) {
+        var a2 = acc.filter(function (x) { return x.lesson_id === L.id; });
+        html += '<div class="card" id="ed" style="border:2px solid #2747B8"><div class="row between"><h2>Ээлжит ' + L.num + ' · засах</h2><button class="btn ghost" id="close">Хаах</button></div>' +
+          '<label class="muted">Гарчиг</label><input type="text" id="lt" value="' + esc(L.title) + '">' +
+          '<label class="muted">Видео линк (YouTube эсвэл Google Drive)</label><input type="url" id="lv" value="' + esc(L.video_url || '') + '">' +
+          '<label class="muted">Дасгалын хуудасны линк (Google Drive PDF г.м.)</label><input type="url" id="lx" value="' + esc(L.exercise_url || '') + '">' +
+          '<label class="muted">Тест: асуулт бүрийг хоосон мөрөөр тусгаарла. Эхний мөр асуулт, дараагийн мөрүүд хариулт, зөвийн өмнө * тавина.</label>' +
+          '<textarea id="lq" placeholder="Призмийн дэлгээс гэж юу вэ?\n*Бүх талсыг нэг хавтгайд дэлгэсэн дүрс\nХажуугаас харсан дүрс\nОгтлол">' + esc(testToText(L.test)) + '</textarea>' +
+          '<button class="btn" id="save">Хадгалах</button>' +
+          '<hr style="border:0;border-top:1px solid #E1E4EE;width:100%"><h3>Ангид илгээх</h3>' +
+          '<div class="muted">1. Аль анги руу</div><div class="row" id="pc">' + classes.map(function (c) { var on = a2.some(function (x) { return x.class_id === c.id; }); return '<button class="chip' + (on ? ' on' : '') + '" data-pc="' + c.id + '">' + esc(c.name) + '</button>'; }).join('') + '</div>' +
+          '<div class="muted">2. Юуг нээх (видео, зураг илгээх нь үргэлж нээлттэй)</div><div class="row"><button class="chip on" id="ot">Дасгал, даалгавар</button><button class="chip on" id="oq">Тест</button></div>' +
+          '<div class="muted">3. Хугацаа</div><div class="row" id="due"><button class="chip" data-d="1">Өнөөдөр</button><button class="chip on" data-d="3">3 хоног</button><button class="chip" data-d="7">1 долоо хоног</button></div>' +
+          '<button class="btn green" id="send">Сонгосон анги руу илгээх</button></div>';
+      }
+      app.innerHTML = html;
+      app.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { libGrade = +b.dataset.g; openLesson = null; showLibrary(); }; });
+      q('#addU').onclick = function () {
+        var n = q('#un').value.trim(); if (!n) return;
+        sb.from('units').insert({ teacher_id: me.id, grade: libGrade, name: n, sort: units.length + 1 }).then(function (r) { if (!fail(r)) showLibrary(); });
+      };
+      app.querySelectorAll('[data-addl]').forEach(function (b) {
+        b.onclick = function () {
+          var t = prompt('Ээлжит хичээлийн гарчиг:'); if (!t) return;
+          sb.from('lessons').insert({ unit_id: b.dataset.addl, num: +b.dataset.n, title: t }).select().then(function (r) { if (fail(r)) return; openLesson = r.data[0].id; showLibrary(); });
+        };
+      });
+      app.querySelectorAll('[data-l]').forEach(function (b) { b.onclick = function () { openLesson = b.dataset.l; showLibrary(); setTimeout(function () { var e = q('#ed'); if (e) e.scrollIntoView({ behavior: 'smooth' }); }, 50); }; });
+      if (L) {
+        q('#close').onclick = function () { openLesson = null; showLibrary(); };
+        q('#save').onclick = function () {
+          var test = parseTest(q('#lq').value);
+          sb.from('lessons').update({ title: q('#lt').value.trim() || L.title, video_url: q('#lv').value.trim() || null, exercise_url: q('#lx').value.trim() || null, test: test }).eq('id', L.id)
+            .then(function (r) { if (!fail(r)) { toast('Хадгалагдлаа · тест ' + test.length + ' асуулт'); showLibrary(); } });
+        };
+        app.querySelectorAll('#pc .chip, #ot, #oq').forEach(function (b) { b.onclick = function () { b.classList.toggle('on'); }; });
+        app.querySelectorAll('#due .chip').forEach(function (b) { b.onclick = function () { app.querySelectorAll('#due .chip').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
+        q('#send').onclick = function () {
+          var cs = Array.prototype.map.call(app.querySelectorAll('#pc .chip.on'), function (b) { return b.dataset.pc; });
+          if (!cs.length) { toast('Дор хаяж нэг анги сонгоно уу'); return; }
+          var days = +app.querySelector('#due .chip.on').dataset.d;
+          var due = new Date(); due.setDate(due.getDate() + days - 1); due.setHours(23, 59, 0, 0);
+          var rows = cs.map(function (c) { return { lesson_id: L.id, class_id: c, visible: true, tasks_open: q('#ot').classList.contains('on'), test_open: q('#oq').classList.contains('on'), due_at: due.toISOString(), opened_at: new Date().toISOString() }; });
+          sb.from('lesson_access').upsert(rows).then(function (r) { if (!fail(r)) { toast(cs.length + ' анги руу илгээгдлээ'); showLibrary(); } });
+        };
+      }
+    });
+  }
+
+  // ---------- CLASSES ----------
+  function showClasses() {
+    var html = '<div class="card"><h2>Анги үүсгэх</h2><div class="row"><input type="text" id="cn" placeholder="ж: 12е" style="width:120px"><select id="cg"><option>10</option><option>11</option><option selected>12</option></select><button class="btn" id="addC">Үүсгэх</button></div></div>';
+    if (classes.length) { if (!curClass) curClass = classes[0].id; html += classPicker(curClass) + '<div id="roster"><div class="muted">Ачаалж байна…</div></div>'; }
+    app.innerHTML = html;
+    q('#addC').onclick = function () {
+      var n = q('#cn').value.trim(); if (!n) return;
+      sb.from('classes').insert({ teacher_id: me.id, name: n, grade: +q('#cg').value }).select().then(function (r) { if (fail(r)) return; curClass = r.data[0].id; loadClasses().then(showClasses); });
+    };
+    if (!classes.length) return;
+    bindClassPicker(function (c) { curClass = c; showClasses(); });
+    var cls = classes.filter(function (c) { return c.id === curClass; })[0];
+    sb.from('students').select('*').eq('class_id', curClass).eq('active', true).order('code').then(function (r) {
+      var kids = r.data || [];
+      var link = STUDENT_URL + '?c=' + encodeURIComponent(cls.name);
+      var h = '<div class="card"><div class="row between"><h2>' + esc(cls.name) + ' · ' + kids.length + ' сурагч</h2><button class="btn dark" id="print1">Кодын карт хэвлэх</button></div>' +
+        '<div class="muted">Ангийн линк: <a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link) + '</a></div></div>' +
+        '<div class="card"><h3>Олноор нэмэх · журналаас</h3><div class="muted">Excel журналаасаа нэрсийн баганыг хуулаад (Cmd+C) энд буулгана (Cmd+V). Мөр бүр нэг сурагч.</div><textarea id="bulk" placeholder="Б.Тэмүүлэн\nГ.Номин"></textarea><button class="btn" id="addS">Нэмэх</button></div>' +
+        '<div class="card"><div class="tablebox"><table><thead><tr><th>Нэр</th><th>Код</th><th>Тоо</th><th></th></tr></thead><tbody>' +
+        kids.map(function (k) { return '<tr><td><b>' + esc(k.name) + '</b></td><td>' + esc(k.code) + '</td><td>' + esc(k.pin) + '</td><td style="text-align:right;white-space:nowrap"><button class="btn ghost" data-pin="' + k.id + '">Шинэ тоо</button> <button class="btn red" data-del="' + k.id + '" data-n="' + esc(k.name) + '">Хасах</button></td></tr>'; }).join('') +
+        '</tbody></table></div></div>';
+      document.getElementById('roster').innerHTML = h;
+      q('#addS').onclick = function () {
+        var names = q('#bulk').value.split('\n').map(function (l) { return l.split('\t')[0].trim(); }).filter(Boolean);
+        if (!names.length) return;
+        sb.rpc('add_students', { p_class_id: curClass, p_names: names }).then(function (x) { if (!fail(x)) { toast(x.data + ' сурагч нэмэгдлээ'); showClasses(); } });
+      };
+      app.querySelectorAll('[data-pin]').forEach(function (b) { b.onclick = function () { sb.rpc('reset_pin', { p_student: b.dataset.pin }).then(function (x) { if (!fail(x)) { toast('Шинэ тоо: ' + x.data); showClasses(); } }); }; });
+      app.querySelectorAll('[data-del]').forEach(function (b) {
+        b.onclick = function () {
+          if (!confirm(b.dataset.n + '-г хасах уу? Өмнөх дүн, тэмдэглэл архивт хадгалагдана.')) return;
+          sb.from('students').update({ active: false }).eq('id', b.dataset.del).then(function (x) { if (!fail(x)) showClasses(); });
+        };
+      });
+      q('#print1').onclick = function () {
+        var p = document.getElementById('print');
+        p.innerHTML = '<div class="cards">' + kids.map(function (k) {
+          var qr = qrcode(0, 'M'); qr.addData(link + '&s=' + encodeURIComponent(k.code)); qr.make();
+          return '<div class="pc"><div style="flex:1"><b>' + esc(k.name) + '</b><div>' + esc(cls.name) + ' · ' + esc(C.subject) + '</div><div>Код: <b>' + esc(k.code) + '</b></div><div>Тоо: <b>' + esc(k.pin) + '</b></div></div>' + qr.createSvgTag(3, 0) + '</div>';
+        }).join('') + '</div>';
+        setTimeout(function () { window.print(); }, 100);
+      };
+    });
+  }
+
+  sb.auth.onAuthStateChange(function (ev) { if (ev === 'SIGNED_OUT') showAuth(); });
+  boot();
+})();
+</script>
+</body>
+</html>
