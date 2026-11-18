@@ -131,7 +131,7 @@ th{font-size:12px;color:#5A6178}
     });
   }
   function drawTabs() {
-    var T = [['review', 'Шалгах'], ['lesson', 'Хичээл дээр'], ['journal', 'Журнал'], ['library', 'Материалын сан'], ['classes', 'Анги']];
+    var T = [['review', 'Самбар'], ['lesson', 'Хичээл дээр'], ['journal', 'Журнал'], ['library', 'Материалын сан'], ['classes', 'Анги']];
     tabsEl.hidden = false;
     tabsEl.innerHTML = T.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (t[0] === tab ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') +
       '<button data-t="out">Гарах</button>';
@@ -147,50 +147,121 @@ th{font-size:12px;color:#5A6178}
   var curClass = null;
   function needClass() { if (!classes.length) { app.innerHTML = '<div class="card"><h2>Эхлээд анги үүсгэнэ үү</h2><button class="btn" id="g">Анги цонх руу</button></div>'; q('#g').onclick = function () { go('classes'); }; return true; } if (!curClass) curClass = classes[0].id; return false; }
 
-  // ---------- REVIEW ----------
+  function showClassQR(cls) {
+    var link = STUDENT_URL + '?c=' + encodeURIComponent(cls.name);
+    var qr = qrcode(0, 'M'); qr.addData(link); qr.make();
+        var z = document.createElement('div'); z.className = 'zoom'; z.style.flexDirection = 'column'; z.style.gap = '14px';
+        z.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:10px;max-width:92vw">' +
+          '<b style="font-size:24px">' + esc(cls.name) + ' анги · ' + esc(C.subject) + '</b><div class="muted">Утасны камераар уншуулаад кодоо сонгоно</div>' +
+          '<div id="qrbox" style="width:min(70vw,420px)">' + qr.createSvgTag({ cellSize: 10, margin: 2, scalable: true }) + '</div>' +
+          '<div class="muted" style="word-break:break-all;text-align:center">' + esc(link) + '</div>' +
+          '<div class="row"><button class="btn" id="qcopy">Линк хуулах</button><button class="btn sec" id="qdl">Зураг татах</button><button class="btn ghost" id="qx">Хаах</button></div></div>';
+        document.body.appendChild(z);
+        z.onclick = function (e) { if (e.target === z) z.remove(); };
+        z.querySelector('#qx').onclick = function () { z.remove(); };
+        z.querySelector('#qcopy').onclick = function () {
+          (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).then(function () { toast('Линк хуулагдлаа · группт буулгана'); }, function () { toast('Линкийг гараар хуулна уу'); });
+        };
+        z.querySelector('#qdl').onclick = function () {
+          var a = document.createElement('a'); a.href = qr.createDataURL(12, 4); a.download = cls.name + '-ангийн-QR.gif'; a.click();
+        };
+  }
+  // ---------- BOARD (padlet-like) ----------
+  var boardLesson = null, openMiss = {};
   function showReview() {
     app.innerHTML = '<div class="muted">Ачаалж байна…</div>';
-    sb.from('submissions').select('id,status,reason,photo_paths,created_at,lesson_id,student_id,students(name,code,class_id),lessons(title)')
-      .eq('status', 'review').order('created_at').limit(60).then(function (r) {
-        if (fail(r)) return;
-        var rows = r.data || [];
-        sb.from('submissions').select('id', { count: 'exact', head: true }).eq('status', 'auto').then(function (a) {
-          var html = '<div class="row between"><h2>Танд шалгах: ' + rows.length + '</h2><span class="pill p-green">Автоматаар орсон: ' + (a.count || 0) + '</span></div>' +
-            '<div class="muted">"+ авсан" гэж илгээсэн ажил автоматаар журналд ордог. Энд зөвхөн "+"-гүй, ижил зурагтай, санамсаргүй шалгалтын ажлууд гарна.</div>';
-          if (!rows.length) html += '<div class="card muted" style="text-align:center;padding:30px">Шалгах ажил алга.</div>';
-          html += '<div class="grid">';
-          var R = { noplus: ['Багшид үзүүлээгүй · нөхсөн', 'p-blue', '+ Батлах', 'Дахин хийх'], dup: ['Ижил зураг илэрсэн', 'p-red', 'Зөв, өөрийнх нь', 'Хуулбар'],
-            spot: ['Санамсаргүй шалгалт · "+ авсан" гэсэн', 'p-amber', 'Зөв байна', 'Худал'], flagged: ['Өмнө нь худал бичсэн', 'p-red', 'Зөв байна', 'Худал'] };
-          rows.forEach(function (s) {
-            var x = R[s.reason] || R.noplus;
-            html += '<div class="card" data-id="' + s.id + '"><span class="pill ' + x[1] + '" style="align-self:flex-start">' + x[0] + '</span>' +
-              '<div class="row between"><b>' + esc(s.students.name) + '</b><span class="muted">' + esc(s.students.code) + '</span></div>' +
-              '<div class="muted">' + esc(s.lessons.title) + ' · ' + fmt(s.created_at) + '</div><div class="photos" data-p="' + esc(JSON.stringify(s.photo_paths)) + '"></div>' +
-              '<div class="row"><button class="btn green" data-ok="' + s.id + '">' + x[2] + '</button><button class="btn amber" data-bad="' + s.id + '" data-r="' + s.reason + '" data-st="' + s.student_id + '">' + x[3] + '</button></div></div>';
-          });
-          app.innerHTML = html + '</div>';
-          app.querySelectorAll('.photos').forEach(function (el) {
-            var paths = JSON.parse(el.dataset.p);
-            sb.storage.from('submissions').createSignedUrls(paths, 3600).then(function (u) {
-              el.innerHTML = (u.data || []).map(function (x) { return '<img alt="Сурагчийн зураг" src="' + esc(x.signedUrl) + '">'; }).join('');
-              el.querySelectorAll('img').forEach(function (im) { im.onclick = function () { var z = document.createElement('div'); z.className = 'zoom'; z.innerHTML = '<img alt="" src="' + im.src + '">'; z.onclick = function () { z.remove(); }; document.body.appendChild(z); }; });
+    Promise.all([
+      sb.from('lesson_access').select('lesson_id,class_id,opened_at,due_at,lessons(title,num)').order('opened_at', { ascending: false }),
+      sb.from('students').select('id,name,code,class_id').eq('active', true).order('code')
+    ]).then(function (r0) {
+      var acc = r0[0].data || [], kids = r0[1].data || [];
+      var lessonsMap = {}, order = [];
+      acc.forEach(function (a) { if (!lessonsMap[a.lesson_id]) { lessonsMap[a.lesson_id] = a.lessons; order.push(a.lesson_id); } });
+      if (!boardLesson || !lessonsMap[boardLesson]) boardLesson = order[0] || null;
+      var subsQ = boardLesson ? sb.from('submissions').select('id,status,reason,photo_paths,created_at,student_id').eq('lesson_id', boardLesson).order('created_at', { ascending: false }) : Promise.resolve({ data: [] });
+      Promise.all([subsQ, sb.from('submissions').select('id', { count: 'exact', head: true }).eq('status', 'review')]).then(function (r1) {
+        var subs = r1[0].data || [], pendingAll = r1[1].count || 0;
+        var latest = {}; subs.forEach(function (s) { if (!latest[s.student_id]) latest[s.student_id] = s; });
+        var html = '<div class="row between"><h2>Даалгаврын самбар</h2><span class="pill p-amber">Танд шалгах (бүх сэдэв): ' + pendingAll + '</span></div>';
+        html += order.length ? '<div class="row">' + order.map(function (id) { var l = lessonsMap[id]; return '<button class="chip' + (id === boardLesson ? ' on' : '') + '" data-bl="' + id + '">' + esc(l.title) + '</button>'; }).join('') + '</div>'
+          : '<div class="muted">Одоогоор ямар ч ангид сэдэв нээгээгүй байна. Материалын сангаас "Ангид илгээх" дарна. Ангиуд доор харагдаж байгаа, QR-ээ авч болно.</div>';
+        html += '<div style="overflow-x:auto;padding-bottom:12px"><div style="display:flex;gap:14px;align-items:flex-start;width:max-content">';
+        classes.forEach(function (c) {
+          var ck = kids.filter(function (k) { return k.class_id === c.id; });
+          var opened = acc.some(function (a) { return a.class_id === c.id && a.lesson_id === boardLesson; });
+          var sent = ck.filter(function (k) { return latest[k.id]; });
+          var missing = ck.filter(function (k) { return !latest[k.id]; });
+          var review = sent.filter(function (k) { return latest[k.id].status === 'review'; });
+          var done = sent.filter(function (k) { return latest[k.id].status !== 'review'; });
+          html += '<div style="width:300px;display:flex;flex-direction:column;gap:10px">' +
+            '<div style="background:#1E2A5A;color:#fff;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;position:relative">' +
+            '<div class="row between" style="flex-wrap:nowrap"><b style="font-size:18px">' + esc(c.name) + ' анги</b>' +
+            '<button aria-label="' + esc(c.name) + ' ангийн цэс" data-menu="' + c.id + '" style="background:transparent;border:0;color:#fff;font-size:22px;min-width:44px;min-height:40px;cursor:pointer">⋮</button></div>' +
+            '<div style="font-size:13px;color:#C9D1F0">' + (opened ? sent.length + ' / ' + ck.length + ' илгээсэн' : (boardLesson ? 'Энэ сэдэв нээгдээгүй' : ck.length + ' сурагч')) + '</div>' +
+            (opened ? '<div style="height:6px;border-radius:99px;background:#2E3D78"><div style="height:6px;border-radius:99px;background:#7FB2FF;width:' + (ck.length ? Math.round(sent.length / ck.length * 100) : 0) + '%"></div></div>' : '') +
+            '<div data-menubox="' + c.id + '" hidden style="position:absolute;right:8px;top:48px;background:#fff;color:#1A1F36;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;z-index:5;width:220px">' +
+            '<button class="btn ghost" style="width:100%;border:0;text-align:left" data-cq="' + c.id + '">Ангийн QR харах</button>' +
+            '<button class="btn ghost" style="width:100%;border:0;text-align:left" data-cl="' + c.id + '">Ангийн линк хуулах</button>' +
+            '<button class="btn ghost" style="width:100%;border:0;text-align:left" data-cr="' + c.id + '">Нэрс, кодууд</button></div></div>';
+          if (opened) {
+            html += '<div style="background:#E3F4EA;border-radius:10px;padding:8px 12px" class="row between"><span style="font-size:13px;font-weight:600;color:#1C6B40">Журналд орсон</span><b style="color:#1C6B40">' + done.length + '</b></div>';
+            html += '<button class="btn amber" style="text-align:left" data-miss="' + c.id + '">' + missing.length + ' сурагч илгээгээгүй ' + (openMiss[c.id] ? '▲' : '▼') + '</button>';
+            if (openMiss[c.id]) html += '<div class="card" style="padding:10px;font-size:13px;line-height:1.6">' + (missing.map(function (k) { return esc(k.name); }).join(', ') || 'Бүгд илгээсэн') + '</div>';
+            review.forEach(function (k) {
+              var s = latest[k.id];
+              var R = { noplus: ['Багшид үзүүлээгүй · нөхсөн', 'p-blue', '+ Батлах', 'Дахин хийх'], dup: ['Ижил зураг илэрсэн', 'p-red', 'Зөв', 'Хуулбар'], spot: ['Санамсаргүй шалгалт', 'p-amber', 'Зөв байна', 'Худал'], flagged: ['Өмнө худал бичсэн', 'p-red', 'Зөв байна', 'Худал'] }[s.reason] || ['Шалгах', 'p-blue', '+ Батлах', 'Дахин хийх'];
+              html += '<div class="card" data-id="' + s.id + '"><span class="pill ' + R[1] + '" style="align-self:flex-start">' + R[0] + '</span><b>' + esc(k.name) + '</b><div class="muted">' + fmt(s.created_at) + '</div>' +
+                '<div class="photos" data-p="' + esc(JSON.stringify(s.photo_paths)) + '"></div>' +
+                '<div class="row"><button class="btn green" data-ok="' + s.id + '">' + R[2] + '</button><button class="btn amber" data-bad="' + s.id + '" data-r="' + s.reason + '" data-st="' + k.id + '">' + R[3] + '</button></div></div>';
             });
-          });
-          app.querySelectorAll('[data-ok]').forEach(function (b) { b.onclick = function () { setStatus(b.dataset.ok, 'ok'); }; });
-          app.querySelectorAll('[data-bad]').forEach(function (b) {
-            b.onclick = function () {
-              var lie = b.dataset.r === 'spot' || b.dataset.r === 'flagged' || b.dataset.r === 'dup';
-              setStatus(b.dataset.bad, lie ? 'fake' : 'redo');
-              if (b.dataset.r === 'spot' || b.dataset.r === 'flagged') sb.from('students').update({ no_auto: true }).eq('id', b.dataset.st).then(function () {});
-            };
+            done.forEach(function (k) {
+              var s = latest[k.id];
+              var lab = s.status === 'redo' ? ['Дахин хийх', 'p-amber'] : (s.status === 'fake' ? ['Худал', 'p-red'] : ['+ Журналд', 'p-green']);
+              html += '<div class="card" style="padding:10px 12px;gap:6px"><div class="row between"><b style="font-size:14px">' + esc(k.name) + '</b><span class="pill ' + lab[1] + '">' + lab[0] + '</span></div>' +
+                '<button class="btn ghost" style="height:34px" data-view="' + esc(JSON.stringify(s.photo_paths)) + '">Зураг харах</button></div>';
+            });
+          }
+          html += '</div>';
+        });
+        html += '</div></div>';
+        app.innerHTML = html;
+        app.querySelectorAll('[data-bl]').forEach(function (b) { b.onclick = function () { boardLesson = b.dataset.bl; showReview(); }; });
+        app.querySelectorAll('[data-miss]').forEach(function (b) { b.onclick = function () { openMiss[b.dataset.miss] = !openMiss[b.dataset.miss]; showReview(); }; });
+        app.querySelectorAll('[data-menu]').forEach(function (b) {
+          b.onclick = function (e) { e.stopPropagation(); var m = app.querySelector('[data-menubox="' + b.dataset.menu + '"]'); var was = m.hidden; app.querySelectorAll('[data-menubox]').forEach(function (x) { x.hidden = true; }); m.hidden = !was; };
+        });
+        app.onclick = function (e) { if (!e.target.closest('[data-menubox]')) app.querySelectorAll('[data-menubox]').forEach(function (x) { x.hidden = true; }); };
+        function clsById(id) { return classes.filter(function (c) { return c.id === id; })[0]; }
+        app.querySelectorAll('[data-cq]').forEach(function (b) { b.onclick = function () { showClassQR(clsById(b.dataset.cq)); }; });
+        app.querySelectorAll('[data-cl]').forEach(function (b) {
+          b.onclick = function () { var l = STUDENT_URL + '?c=' + encodeURIComponent(clsById(b.dataset.cl).name); (navigator.clipboard ? navigator.clipboard.writeText(l) : Promise.reject()).then(function () { toast('Линк хуулагдлаа · группт буулгана'); }, function () { toast(l); }); };
+        });
+        app.querySelectorAll('[data-cr]').forEach(function (b) { b.onclick = function () { curClass = b.dataset.cr; go('classes'); }; });
+        function zoom(src) { var z = document.createElement('div'); z.className = 'zoom'; z.innerHTML = '<img alt="" src="' + src + '">'; z.onclick = function () { z.remove(); }; document.body.appendChild(z); }
+        app.querySelectorAll('.photos').forEach(function (el) {
+          sb.storage.from('submissions').createSignedUrls(JSON.parse(el.dataset.p), 3600).then(function (u) {
+            el.innerHTML = (u.data || []).map(function (x) { return '<img alt="Сурагчийн зураг" src="' + esc(x.signedUrl) + '">'; }).join('');
+            el.querySelectorAll('img').forEach(function (im) { im.onclick = function () { zoom(im.src); }; });
           });
         });
+        app.querySelectorAll('[data-view]').forEach(function (b) {
+          b.onclick = function () { sb.storage.from('submissions').createSignedUrls(JSON.parse(b.dataset.view), 3600).then(function (u) { var d = u.data || []; if (d[0]) zoom(d[0].signedUrl); }); };
+        });
+        app.querySelectorAll('[data-ok]').forEach(function (b) { b.onclick = function () { setStatus(b.dataset.ok, 'ok', showReview); }; });
+        app.querySelectorAll('[data-bad]').forEach(function (b) {
+          b.onclick = function () {
+            var lie = b.dataset.r === 'spot' || b.dataset.r === 'flagged' || b.dataset.r === 'dup';
+            setStatus(b.dataset.bad, lie ? 'fake' : 'redo', showReview);
+            if (b.dataset.r === 'spot' || b.dataset.r === 'flagged') sb.from('students').update({ no_auto: true }).eq('id', b.dataset.st).then(function () {});
+          };
+        });
       });
+    });
   }
-  function setStatus(id, st) {
+  function setStatus(id, st, after) {
     sb.from('submissions').update({ status: st, reviewed_at: new Date().toISOString() }).eq('id', id).then(function (r) {
       if (fail(r)) return;
-      var el = app.querySelector('.card[data-id="' + id + '"]'); if (el) el.remove();
+      var el = app.querySelector('.card[data-id="' + id + '"]'); if (el) el.remove(); if (after) setTimeout(after, 600);
       toast(st === 'ok' ? 'Журналд орлоо' : (st === 'fake' ? 'Тэмдэглэгдлээ · энэ сурагчийн автомат батлалт зогслоо' : 'Сурагчид "Дахин хийх" гэж харагдана'));
     });
   }
@@ -392,7 +463,7 @@ th{font-size:12px;color:#5A6178}
           fileList(files.filter(function (f) { return f.lesson_id === L.id && f.kind === 'exercise'; })) + uploader('x_' + L.id, ['exercise']) +
           '<h3>Миний файлууд · зөвхөн танд</h3>' + fileList(files.filter(function (f) { return f.lesson_id === L.id && f.kind !== 'exercise'; })) + uploader('l_' + L.id, ['lesson_plan', 'ppt', 'other']) +
           '<hr style="border:0;border-top:1px solid #E1E4EE;width:100%"><h3>Ангид илгээх</h3>' +
-          '<div class="muted">1. Аль анги руу</div><div class="row" id="pc">' + classes.map(function (c) { var on = a2.some(function (x) { return x.class_id === c.id; }); return '<button class="chip' + (on ? ' on' : '') + '" data-pc="' + c.id + '">' + esc(c.name) + '</button>'; }).join('') + '</div>' +
+          '<div class="muted">1. Аль анги руу</div><div class="row"><button class="btn green" id="allg" type="button">Бүх ' + libGrade + '-р анги</button></div><div class="row" id="pc">' + classes.map(function (c) { var on = a2.some(function (x) { return x.class_id === c.id; }); return '<button class="chip' + (on ? ' on' : '') + '" data-pc="' + c.id + '">' + esc(c.name) + '</button>'; }).join('') + '</div>' +
           '<div class="muted">2. Юуг нээх (видео, зураг илгээх нь үргэлж нээлттэй)</div><div class="row"><button class="chip on" id="ot">Дасгал, даалгавар</button><button class="chip on" id="oq">Тест</button></div>' +
           '<div class="muted">3. Хугацаа</div><div class="row" id="due"><button class="chip" data-d="1">Өнөөдөр</button><button class="chip on" data-d="3">3 хоног</button><button class="chip" data-d="7">1 долоо хоног</button></div>' +
           '<button class="btn green" id="send">Сонгосон анги руу илгээх</button></div>';
@@ -420,6 +491,7 @@ th{font-size:12px;color:#5A6178}
             .then(function (r) { if (!fail(r)) { toast('Хадгалагдлаа · тест ' + test.length + ' асуулт'); showLibrary(); } });
         };
         app.querySelectorAll('#pc .chip, #ot, #oq').forEach(function (b) { b.onclick = function () { b.classList.toggle('on'); }; });
+        q('#allg').onclick = function () { app.querySelectorAll('#pc .chip').forEach(function (x) { var c = classes.filter(function (k) { return k.id === x.dataset.pc; })[0]; x.classList.toggle('on', !!c && c.grade === libGrade); }); toast('Бүх ' + libGrade + '-р анги сонгогдлоо'); };
         app.querySelectorAll('#due .chip').forEach(function (b) { b.onclick = function () { app.querySelectorAll('#due .chip').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
         q('#send').onclick = function () {
           var cs = Array.prototype.map.call(app.querySelectorAll('#pc .chip.on'), function (b) { return b.dataset.pc; });
@@ -455,7 +527,7 @@ th{font-size:12px;color:#5A6178}
     sb.from('students').select('*').eq('class_id', curClass).eq('active', true).order('code').then(function (r) {
       var kids = r.data || [];
       var link = STUDENT_URL + '?c=' + encodeURIComponent(cls.name);
-      var h = '<div class="card"><div class="row between"><h2>' + esc(cls.name) + ' · ' + kids.length + ' сурагч</h2><div class="row"><button class="btn sec" id="xls1">Excel-ээр татах</button><button class="btn dark" id="print1">Кодын карт хэвлэх</button></div></div>' +
+      var h = '<div class="card"><div class="row between"><h2>' + esc(cls.name) + ' · ' + kids.length + ' сурагч</h2><div class="row"><button class="btn green" id="cqr">Ангийн QR</button><button class="btn sec" id="xls1">Excel-ээр татах</button><button class="btn dark" id="print1">Кодын карт хэвлэх</button></div></div>' +
         '<div class="muted">Карт бүрийн QR тухайн хүүхдийн өөрийнх: уншуулахад шууд нэвтэрнэ. Карт алдагдвал "Шинэ тоо" дарахад хуучин QR ажиллахаа болино.</div><div class="muted">Ангийн линк: <a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link) + '</a></div></div>' +
         '<div class="card"><h3>Олноор нэмэх · журналаас</h3><div class="muted">Excel журналаасаа нэрсийн баганыг хуулаад (Cmd+C) энд буулгана (Cmd+V). Мөр бүр нэг сурагч.</div><textarea id="bulk" placeholder="Б.Тэмүүлэн\nГ.Номин"></textarea><button class="btn" id="addS">Нэмэх</button></div>' +
         '<div class="card"><div class="tablebox"><table><thead><tr><th>Нэр</th><th>Код</th><th>Тоо</th><th></th></tr></thead><tbody>' +
@@ -474,6 +546,7 @@ th{font-size:12px;color:#5A6178}
           sb.from('students').update({ active: false }).eq('id', b.dataset.del).then(function (x) { if (!fail(x)) showClasses(); });
         };
       });
+      q('#cqr').onclick = function () { showClassQR(cls); };
       q('#xls1').onclick = function () {
         var lines = [['№', 'Нэр', 'Код', '4 оронтой тоо', 'Анги', 'Шууд нэвтрэх линк (QR-тэй ижил)']].concat(kids.map(function (k, i) { return [i + 1, k.name, k.code, k.pin, cls.name, link + '&s=' + encodeURIComponent(k.code) + '&p=' + k.pin]; }));
         var csv = '\ufeff' + lines.map(function (l) { return l.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\r\n');
