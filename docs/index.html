@@ -155,11 +155,10 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
     var next = L[i + 1];
     var pct = next ? Math.round((xp - L[i][0]) / (next[0] - L[i][0]) * 100) : 100;
     var lazy = (home.pending_old || 0) > 0;
-    var counts = { phone: 0, sleep: 0, late: 0, disrupt: 0 };
-    (home.behavior || []).forEach(function (b) { if (counts[b.kind] != null) counts[b.kind]++; });
-    var beh = [];
-    if (counts.phone) beh.push('Утас ' + counts.phone); if (counts.sleep) beh.push('Унтсан ' + counts.sleep);
-    if (counts.late) beh.push('Хоцорсон ' + counts.late); if (counts.disrupt) beh.push('Саад ' + counts.disrupt);
+    var LBL = { no_notebook: 'Дэвтэргүй', no_supplies: 'Хэрэглэгдэхүүнгүй', phone: 'Утас', sleep: 'Унтсан', talk: 'Ярьсан', disrupt: 'Саад', late: 'Хоцорсон' };
+    var counts = {};
+    (home.behavior || []).forEach(function (b) { if (LBL[b.kind]) counts[b.kind] = (counts[b.kind] || 0) + 1; });
+    var beh = Object.keys(counts).map(function (k) { return LBL[k] + ' ' + counts[k]; });
     var html = '<div class="card"><div style="display:flex;gap:12px;align-items:center">' + avatarSvg(i + 1, lazy) +
       '<div style="flex:1;display:flex;flex-direction:column;gap:5px"><span class="muted">Миний дүр · ' + (i + 1) + '-р түвшин</span>' +
       '<b style="font-size:18px">' + L[i][1] + '</b>' +
