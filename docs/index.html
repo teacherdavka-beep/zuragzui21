@@ -195,8 +195,11 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
     var sent = t.sub_status === 'auto' || t.sub_status === 'ok' || t.sub_status === 'review';
     var lockIcon = '<span class="pill p-blue" style="background:#E1E4EE;color:#5A6178">Хаалттай</span>';
     var html = '<button class="link" id="back">← Сэдвүүд</button><h1>' + esc(t.title) + '</h1>' +
-      '<div class="card"><div class="row"><h2>Видео хичээл</h2><span class="pill p-green">Үргэлж нээлттэй</span></div>' + videoHtml(t.video_url) + '<div class="muted">Ойлгоогүй хэсгээ дахин үзээрэй.</div></div>' +
+      '<div class="card"><div class="row"><h2>Видео хичээл</h2><span class="pill p-green">Үргэлж нээлттэй</span></div>' + (t.video_url || !(t.extra_links || []).length ? videoHtml(t.video_url) : '') +
+        (t.extra_links || []).map(function (x) { return '<a class="btn sec" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.title) + ' ↗</a>'; }).join('') +
+        '<div class="muted">Ойлгоогүй хэсгээ дахин үзээрэй.</div></div>' +
       '<div class="card"><div class="row"><h2>Зурсан зургаа илгээх</h2>' + statusPill(t) + '</div><div class="muted">Үргэлж нээлттэй · хоцорсон бол нөхөж илгээнэ</div>' +
+      mySubsHtml(t) +
       '<button class="btn" id="send">' + (sent ? 'Дахин илгээх' : (t.tasks_open ? 'Зураг илгээх' : 'Нөхөж илгээх')) + '</button></div>';
     html += '<div class="card' + (t.tasks_open ? '' : ' locked') + '"><div class="row"><h2>Дасгал ажил, даалгавар</h2>' + (t.tasks_open ? '' : lockIcon) + '</div>' +
       (t.tasks_open ? '<div class="muted">Багш нээсэн' + (t.due_at ? ' · хугацаа ' + fmtDate(t.due_at) : '') + '</div>' +
@@ -210,8 +213,41 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
     app.innerHTML = html;
     document.getElementById('back').onclick = function () { loadHome(); };
     document.getElementById('send').onclick = showSubmit;
+    bindDel();
     var tb = document.getElementById('test'); if (tb) tb.onclick = showTest;
     window.scrollTo(0, 0);
+  }
+
+  // ---------- SENT LIST / DELETE ----------
+  var SLBL = { auto: ['Журналд орсон', 'p-green'], ok: ['Багш баталсан', 'p-green'], review: ['Багш шалгана', 'p-blue'], redo: ['Дахин зурах', 'p-blue'], fake: ['Хүлээн аваагүй', 'p-blue'] };
+  function mySubsHtml(t) {
+    var subs = t.my_subs || [];
+    if (!subs.length) return '';
+    return '<div style="display:flex;flex-direction:column;gap:10px;margin-top:4px"><b style="font-size:14px">Миний илгээсэн</b>' + subs.map(function (x) {
+      var pv = []; try { pv = JSON.parse(localStorage.getItem('pv_' + x.id) || '[]'); } catch (e) {}
+      var lb = SLBL[x.status] || [x.status, 'p-blue'];
+      return '<div style="border:1px solid #C5CADB;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px">' +
+        '<div class="row"><span class="muted">' + fmtDate(x.at) + ' · ' + x.n + ' зураг</span><span class="pill ' + lb[1] + '">' + lb[0] + '</span></div>' +
+        (pv.length ? '<div class="thumbs">' + pv.map(function (u) { return '<img alt="Илгээсэн зураг" src="' + u + '">'; }).join('') + '</div>' : '') +
+        (x.status === 'fake' ? '' : '<button class="btn sec del" data-id="' + x.id + '" style="color:#B3261E;border-color:#E8B4B0">Устгах</button>') + '</div>';
+    }).join('') + '</div>';
+  }
+  function bindDel() {
+    app.querySelectorAll('.del').forEach(function (b) {
+      b.onclick = function () {
+        if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Үнэхээр устгах уу? Дахин дарна уу'; b.style.background = '#FCE8E6'; return; }
+        b.disabled = true; b.textContent = 'Устгаж байна…';
+        var id = b.dataset.id, tid = curTopic.id;
+        sb.rpc('student_delete_submission', { p_token: token, p_sub: id }).then(function (r) {
+          if (r.error) throw r.error;
+          try { localStorage.removeItem('pv_' + id); } catch (e) {}
+          loadHome(function () {
+            curTopic = home.topics.filter(function (x) { return x.id === tid; })[0] || curTopic;
+            showTopic(); toast('Устгагдлаа. Одоо зөвийг нь илгээнэ үү.');
+          });
+        }).catch(function (e) { console.error(e); b.disabled = false; delete b.dataset.sure; b.textContent = 'Устгах'; toast('Устгаж чадсангүй'); });
+      };
+    });
   }
 
   // ---------- SUBMIT ----------
@@ -230,7 +266,9 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
         }
         var hex = ''; for (var i = 0; i < 64; i += 4) hex += parseInt(bits.substr(i, 4), 2).toString(16);
         URL.revokeObjectURL(url);
-        c.toBlob(function (blob) { res({ blob: blob, hash: hex, preview: c.toDataURL('image/jpeg', 0.5) }); }, 'image/jpeg', 0.82);
+        var pv = document.createElement('canvas'), pk = Math.min(1, 360 / Math.max(c.width, c.height)); pv.width = Math.round(c.width * pk); pv.height = Math.round(c.height * pk);
+        pv.getContext('2d').drawImage(c, 0, 0, pv.width, pv.height);
+        c.toBlob(function (blob) { res({ blob: blob, hash: hex, preview: pv.toDataURL('image/jpeg', 0.6) }); }, 'image/jpeg', 0.82);
       };
       img.onerror = rej; img.src = url;
     });
@@ -273,6 +311,7 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
         return sb.rpc('student_submit', { p_token: token, p_lesson: t.id, p_paths: paths, p_hashes: photos.map(function (p) { return p.hash; }), p_claimed: claim });
       }).then(function (r) {
         if (r.error) throw r.error;
+        try { if (r.data && r.data.id) localStorage.setItem('pv_' + r.data.id, JSON.stringify(photos.map(function (p) { return p.preview; }))); } catch (e) {}
         var auto = r.data && r.data.status === 'auto';
         loadHome(function () {
           curTopic = home.topics.filter(function (x) { return x.id === t.id; })[0] || t;
