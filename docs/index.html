@@ -36,6 +36,13 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
 .err{color:#B42318;font-size:14px}
 .thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .thumbs img{width:100%;height:76px;object-fit:cover;border-radius:8px;border:1px solid #C5CADB}
+.strip{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.strip .ph{position:relative;flex:0 0 auto;width:120px;height:150px;border-radius:10px;overflow:hidden;border:1px solid #C5CADB;background:#EEF1FA;scroll-snap-align:start}
+.strip .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.strip .ph .x{position:absolute;right:4px;top:4px;min-width:34px;height:34px;border-radius:99px;border:0;background:rgba(26,31,54,.8);color:#fff;font-size:15px;font-weight:700;padding:0 10px}
+.strip .ph .x.sure{background:#B42318}
+.strip .ph .no{position:absolute;left:6px;bottom:6px;background:rgba(26,31,54,.8);color:#fff;font-size:12px;border-radius:99px;padding:1px 8px}
+textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10px;padding:10px;font:inherit;box-sizing:border-box}
 .choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .choice button{height:50px;border-radius:10px;border:1.5px solid #C5CADB;background:#fff;font-weight:600;color:#1A1F36}
 .choice button.on{background:#B42318;border-color:#B42318;color:#fff}
@@ -128,6 +135,9 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
     });
   }
   function statusPill(t) {
+    var n = 0; (t.my_subs || []).forEach(function (x) { n += x.n || 0; });
+    if (n && (t.sub_status === 'auto' || t.sub_status === 'ok')) return '<span class="pill p-green">✓ ' + n + ' зураг · +</span>';
+    if (n && t.sub_status === 'review') return '<span class="pill p-blue">✓ ' + n + ' зураг илгээсэн</span>';
     if (t.sub_status === 'auto' || t.sub_status === 'ok') return '<span class="pill p-green">+ Батлагдсан</span>';
     if (t.sub_status === 'review') return '<span class="pill p-blue">Илгээсэн</span>';
     if (t.sub_status === 'redo') return '<span class="pill p-amber">Дахин хийх</span>';
@@ -171,10 +181,11 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
       var isNew = t.tasks_open || t.test_open;
       html += '<button class="topic' + (isNew ? ' now' : '') + '" data-k="' + k + '"><div class="row"><span style="font-size:12px;font-weight:600;color:' + (isNew ? '#2747B8' : '#5A6178') + '">' +
         (isNew ? 'Нээлттэй даалгавартай' : fmtDate(t.opened_at) + ' · ' + esc(t.unit)) + '</span>' + statusPill(t) + '</div>' +
-        '<b style="font-size:16px">' + esc(t.title) + '</b></button>';
+        '<b style="font-size:16px">' + (t.num ? 'Хичээл ' + t.num + ' · ' : '') + esc(t.title) + '</b></button>';
     });
-    html += '<button class="link" id="out">Гарах</button>';
+    html += feedbackCard(null) + '<button class="link" id="out">Гарах</button>';
     app.innerHTML = html;
+    bindFeedback();
     app.querySelectorAll('.topic').forEach(function (b) { b.onclick = function () { curTopic = home.topics[+b.dataset.k]; showTopic(); }; });
     document.getElementById('out').onclick = logout;
     window.scrollTo(0, 0);
@@ -200,7 +211,7 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
         '<div class="muted">Ойлгоогүй хэсгээ дахин үзээрэй.</div></div>' +
       '<div class="card"><div class="row"><h2>Зурсан зургаа илгээх</h2>' + statusPill(t) + '</div><div class="muted">Үргэлж нээлттэй · хоцорсон бол нөхөж илгээнэ</div>' +
       mySubsHtml(t) +
-      '<button class="btn" id="send">' + (sent ? 'Дахин илгээх' : (t.tasks_open ? 'Зураг илгээх' : 'Нөхөж илгээх')) + '</button></div>';
+      '<button class="btn" id="send">' + (myPhotos(t).length ? '+ Зураг нэмж илгээх' : (t.tasks_open ? 'Зураг илгээх' : 'Нөхөж илгээх')) + '</button></div>';
     html += '<div class="card' + (t.tasks_open ? '' : ' locked') + '"><div class="row"><h2>Дасгал ажил, даалгавар</h2>' + (t.tasks_open ? '' : lockIcon) + '</div>' +
       (t.tasks_open ? '<div class="muted">Багш нээсэн' + (t.due_at ? ' · хугацаа ' + fmtDate(t.due_at) : '') + '</div>' +
         (t.exercise_url ? ((/\.(png|jpe?g|webp|gif)(\?|$)/i).test(t.exercise_url) ? '<a href="' + esc(t.exercise_url) + '" target="_blank" rel="noopener"><img alt="Дасгалын хуудас" src="' + esc(t.exercise_url) + '" style="width:100%;border-radius:10px;border:1px solid #C5CADB"></a><div class="muted">Зураг дээр дарж томруулна</div>' : '<a class="btn sec" style="display:flex;align-items:center;justify-content:center;text-decoration:none" target="_blank" rel="noopener" href="' + esc(t.exercise_url) + '">Дасгалын хуудас харах</a>') : '<div class="muted">Дасгалын хуудсыг багш ангид тараана.</div>')
@@ -210,44 +221,87 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
       (t.test_result ? '<div class="muted">Тест өгсөн. Дүн журналд орсон.</div>' :
         (t.test_open && t.test_count ? '<div class="muted">Багш нээсэн · ' + t.test_count + ' асуулт · шууд дүгнэгдэнэ</div><button class="btn sec" id="test">Тест эхлэх</button>' :
           '<div class="muted">Багш нээх үед энд гарна</div>')) + '</div>';
+    html += feedbackCard(t.id);
     app.innerHTML = html;
     document.getElementById('back').onclick = function () { loadHome(); };
     document.getElementById('send').onclick = showSubmit;
     bindDel();
     var tb = document.getElementById('test'); if (tb) tb.onclick = showTest;
+    bindFeedback();
     window.scrollTo(0, 0);
   }
 
   // ---------- SENT LIST / DELETE ----------
-  var SLBL = { auto: ['Журналд орсон', 'p-green'], ok: ['Багш баталсан', 'p-green'], review: ['Багш шалгана', 'p-blue'], redo: ['Дахин зурах', 'p-blue'], fake: ['Хүлээн аваагүй', 'p-blue'] };
+  var SLBL = { auto: ['+ Журналд орсон', 'p-green'], ok: ['+ Багш баталсан', 'p-green'], review: ['Багш шалгаж байна', 'p-blue'], redo: ['Дахин зурах', 'p-amber'], fake: ['Хүлээн аваагүй', 'p-red'] };
+  var photoUrls = {};
+  function myPhotos(t) {
+    var out = [];
+    (t.my_subs || []).forEach(function (x) { (x.paths || []).forEach(function (p) { out.push({ sub: x.id, path: p, status: x.status }); }); });
+    return out;
+  }
+  function localPv(path) { try { return localStorage.getItem('pp_' + path); } catch (e) { return null; } }
   function mySubsHtml(t) {
-    var subs = t.my_subs || [];
-    if (!subs.length) return '';
-    return '<div style="display:flex;flex-direction:column;gap:10px;margin-top:4px"><b style="font-size:14px">Миний илгээсэн</b>' + subs.map(function (x) {
-      var pv = []; try { pv = JSON.parse(localStorage.getItem('pv_' + x.id) || '[]'); } catch (e) {}
-      var lb = SLBL[x.status] || [x.status, 'p-blue'];
-      return '<div style="border:1px solid #C5CADB;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px">' +
-        '<div class="row"><span class="muted">' + fmtDate(x.at) + ' · ' + x.n + ' зураг</span><span class="pill ' + lb[1] + '">' + lb[0] + '</span></div>' +
-        (pv.length ? '<div class="thumbs">' + pv.map(function (u) { return '<img alt="Илгээсэн зураг" src="' + u + '">'; }).join('') + '</div>' : '') +
-        (x.status === 'fake' ? '' : '<button class="btn sec del" data-id="' + x.id + '" style="color:#B3261E;border-color:#E8B4B0">Устгах</button>') + '</div>';
-    }).join('') + '</div>';
+    var ph = myPhotos(t), subs = t.my_subs || [];
+    if (!ph.length) return '<div style="background:#FDECEA;color:#A12A1E;border-radius:10px;padding:12px;font-weight:700">Одоогоор илгээгээгүй байна</div>';
+    var st = subs[0].status, lb = SLBL[st] || [st, 'p-blue'];
+    return '<div style="background:#E3F4EA;color:#1C6B40;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">' +
+      '<b style="font-size:16px">✓ Илгээгдсэн · ' + ph.length + ' зураг</b><span style="font-size:13px">Сүүлд: ' + fmtDate(subs[0].at) + ' · <span class="pill ' + lb[1] + '">' + lb[0] + '</span></span></div>' +
+      '<div class="muted">Буруу зургаа ✕ дарж устгана. Хажуу тийш гүйлгэж бүгдийг харна.</div>' +
+      '<div class="strip">' + ph.map(function (x, i) {
+        var src = photoUrls[x.path] || localPv(x.path) || '';
+        return '<div class="ph">' + (src ? '<img alt="Илгээсэн зураг ' + (i + 1) + '" data-pp="' + esc(x.path) + '" src="' + src + '">' : '<img alt="Илгээсэн зураг ' + (i + 1) + '" data-pp="' + esc(x.path) + '" style="opacity:0">') +
+          '<span class="no">' + (i + 1) + '</span>' +
+          (x.status === 'fake' ? '' : '<button class="x" data-ds="' + x.sub + '" data-dp="' + esc(x.path) + '" aria-label="' + (i + 1) + '-р зургийг устгах">✕</button>') + '</div>';
+      }).join('') + '</div>';
+  }
+  function loadPhotoUrls() {
+    var need = Array.prototype.some.call(app.querySelectorAll('img[data-pp]'), function (im) { return !photoUrls[im.dataset.pp]; });
+    if (!need) return;
+    fetch(C.url + '/functions/v1/student-photos', { method: 'POST', headers: { 'content-type': 'application/json', apikey: C.key }, body: JSON.stringify({ token: token }) })
+      .then(function (r) { return r.json(); }).then(function (d) {
+        Object.keys(d.urls || {}).forEach(function (k) { photoUrls[k] = d.urls[k]; });
+        app.querySelectorAll('img[data-pp]').forEach(function (im) { var u = photoUrls[im.dataset.pp]; if (u) { im.src = u; im.style.opacity = 1; } });
+      }).catch(function () {});
   }
   function bindDel() {
-    app.querySelectorAll('.del').forEach(function (b) {
+    loadPhotoUrls();
+    app.querySelectorAll('[data-ds]').forEach(function (b) {
       b.onclick = function () {
-        if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Үнэхээр устгах уу? Дахин дарна уу'; b.style.background = '#FCE8E6'; return; }
-        b.disabled = true; b.textContent = 'Устгаж байна…';
-        var id = b.dataset.id, tid = curTopic.id;
-        sb.rpc('student_delete_submission', { p_token: token, p_sub: id }).then(function (r) {
+        if (!b.classList.contains('sure')) { app.querySelectorAll('.x.sure').forEach(function (o) { o.classList.remove('sure'); o.textContent = '✕'; }); b.classList.add('sure'); b.textContent = 'Устгах уу?'; return; }
+        b.disabled = true; b.textContent = '…';
+        var tid = curTopic.id, path = b.dataset.dp;
+        sb.rpc('student_delete_photo', { p_token: token, p_sub: b.dataset.ds, p_path: path }).then(function (r) {
           if (r.error) throw r.error;
-          try { localStorage.removeItem('pv_' + id); } catch (e) {}
+          try { localStorage.removeItem('pp_' + path); } catch (e) {}
           loadHome(function () {
             curTopic = home.topics.filter(function (x) { return x.id === tid; })[0] || curTopic;
-            showTopic(); toast('Устгагдлаа. Одоо зөвийг нь илгээнэ үү.');
+            showTopic(); toast('Зураг устгагдлаа');
           });
-        }).catch(function (e) { console.error(e); b.disabled = false; delete b.dataset.sure; b.textContent = 'Устгах'; toast('Устгаж чадсангүй'); });
+        }).catch(function (e) { console.error(e); b.disabled = false; b.classList.remove('sure'); b.textContent = '✕'; toast('Устгаж чадсангүй'); });
       };
     });
+  }
+
+  // ---------- FEEDBACK ----------
+  function feedbackCard(lessonId) {
+    return '<div class="card"><h2>' + (lessonId ? 'Энэ хичээлийн талаар санал' : 'Багшид санал хүсэлт') + '</h2>' +
+      '<div class="muted">Юу ойлгомжгүй байв, юуг сайжруулбал зүгээр вэ? Чөлөөтэй бичээрэй.</div>' +
+      '<textarea id="fbt" maxlength="1000" aria-label="Санал хүсэлт" placeholder="Жишээ: видео хэтэрхий хурдан байсан…"></textarea>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="fba" style="width:20px;height:20px"> Нэрээ нуух</label>' +
+      '<button class="btn sec" id="fbs" data-l="' + (lessonId || '') + '">Илгээх</button></div>';
+  }
+  function bindFeedback() {
+    var b = document.getElementById('fbs'); if (!b) return;
+    b.onclick = function () {
+      var t = document.getElementById('fbt').value.trim();
+      if (t.length < 2) { toast('Саналаа бичнэ үү'); return; }
+      b.disabled = true;
+      sb.rpc('student_feedback', { p_token: token, p_body: t, p_lesson: b.dataset.l || null, p_anon: document.getElementById('fba').checked }).then(function (r) {
+        b.disabled = false;
+        if (r.error) { toast(/too many/.test(r.error.message) ? 'Түр хүлээгээд дахин бичээрэй' : 'Илгээж чадсангүй'); return; }
+        document.getElementById('fbt').value = ''; toast('Баярлалаа! Багшид очлоо');
+      });
+    };
   }
 
   // ---------- SUBMIT ----------
@@ -274,24 +328,31 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
     });
   }
   function showSubmit() {
-    var t = curTopic, photos = [], claim = null;
+    var t = curTopic, photos = [], claim = null, sentPaths = [];
     app.innerHTML = '<button class="link" id="back">← Буцах</button><h1>Зураг илгээх</h1><div class="muted">' + esc(t.title) + '</div>' +
-      '<input id="cam" type="file" accept="image/*" capture="environment" hidden>' +
-      '<button class="btn dark" id="take" style="height:62px;font-size:17px">Зурсан зургаа авах</button>' +
-      '<div id="ph"></div><div class="muted">Хуудсаа гэрэлтэй газар, дээрээс нь шулуун авна. Хүрээ, багшийн улаан "+" бүтэн орсон байх ёстой. 4 хүртэл хуудас.</div>' +
+      '<input id="cam" type="file" accept="image/*" capture="environment" hidden><input id="gal" type="file" accept="image/*" multiple hidden>' +
+      '<div class="choice"><button class="btn dark" id="take" style="height:62px;font-size:16px">📷 Зураг авах</button><button class="btn sec" id="pick" style="height:62px;font-size:16px">🖼 Галерейгаас</button></div>' +
+      '<div id="ph"></div><div class="muted">Хуудсаа гэрэлтэй газар, дээрээс нь шулуун авна. Хүрээ, багшийн улаан "+" бүтэн орсон байх ёстой. Хэдэн ч зураг нэмж болно.</div>' +
       '<div class="card"><label>Багш ангид "+" тавьсан уу?</label><div class="choice"><button id="yes">Тийм, + авсан</button><button id="no">Үзүүлээгүй</button></div>' +
       '<div class="muted">Худал бичвэл илэрнэ: багш санамсаргүй шалгадаг.</div></div>' +
       '<div class="err" id="err"></div><button class="btn" id="go">Илгээх</button>';
     var cam = document.getElementById('cam');
     document.getElementById('back').onclick = showTopic;
-    document.getElementById('take').onclick = function () { if (photos.length >= 4) { toast('4 хүртэл зураг'); return; } cam.click(); };
-    cam.onchange = function () {
-      var f = cam.files[0]; cam.value = ''; if (!f) return;
-      shrink(f).then(function (p) { photos.push(p); drawPh(); }).catch(function () { toast('Зураг уншиж чадсангүй'); });
-    };
+    var gal = document.getElementById('gal'), MAX = 20;
+    document.getElementById('take').onclick = function () { if (photos.length >= MAX) { toast('Нэг удаад ' + MAX + ' хүртэл'); return; } cam.click(); };
+    document.getElementById('pick').onclick = function () { if (photos.length >= MAX) { toast('Нэг удаад ' + MAX + ' хүртэл'); return; } gal.click(); };
+    function addFiles(list) {
+      var fs = Array.prototype.slice.call(list || [], 0, MAX - photos.length);
+      fs.reduce(function (pr, f) { return pr.then(function () { return shrink(f).then(function (p) { photos.push(p); drawPh(); }); }); }, Promise.resolve())
+        .catch(function () { toast('Зураг уншиж чадсангүй'); });
+    }
+    cam.onchange = function () { addFiles(cam.files); cam.value = ''; };
+    gal.onchange = function () { addFiles(gal.files); gal.value = ''; };
     function drawPh() {
-      document.getElementById('ph').innerHTML = photos.length ? '<div class="muted" style="margin-bottom:6px"><b>' + photos.length + ' зураг</b> · дахин дарж нэмнэ</div><div class="thumbs">' +
-        photos.map(function (p) { return '<img alt="" src="' + p.preview + '">'; }).join('') + '</div>' : '';
+      var el = document.getElementById('ph');
+      el.innerHTML = photos.length ? '<div class="muted" style="margin-bottom:6px"><b>' + photos.length + ' зураг</b> бэлэн · ✕ дарж хасна</div><div class="strip">' +
+        photos.map(function (p, i) { return '<div class="ph"><img alt="" src="' + p.preview + '"><span class="no">' + (i + 1) + '</span><button class="x" data-rm="' + i + '" aria-label="Хасах">✕</button></div>'; }).join('') + '</div>' : '';
+      el.querySelectorAll('[data-rm]').forEach(function (b) { b.onclick = function () { photos.splice(+b.dataset.rm, 1); drawPh(); }; });
     }
     var yes = document.getElementById('yes'), no = document.getElementById('no');
     yes.onclick = function () { claim = true; yes.className = 'on'; no.className = ''; };
@@ -308,16 +369,17 @@ select,input[type=password],input[type=text]{height:50px;border:1px solid #C5CAD
         });
         return Promise.all(uploads);
       }).then(function (paths) {
+        sentPaths = paths;
         return sb.rpc('student_submit', { p_token: token, p_lesson: t.id, p_paths: paths, p_hashes: photos.map(function (p) { return p.hash; }), p_claimed: claim });
       }).then(function (r) {
         if (r.error) throw r.error;
-        try { if (r.data && r.data.id) localStorage.setItem('pv_' + r.data.id, JSON.stringify(photos.map(function (p) { return p.preview; }))); } catch (e) {}
+        try { sentPaths.forEach(function (pth, i) { localStorage.setItem('pp_' + pth, photos[i].preview); }); } catch (e) {}
         var auto = r.data && r.data.status === 'auto';
         loadHome(function () {
           curTopic = home.topics.filter(function (x) { return x.id === t.id; })[0] || t;
           app.innerHTML = '<div class="card" style="align-items:center;text-align:center;padding:28px 18px">' +
             '<svg width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Амжилттай"><circle cx="32" cy="32" r="30" fill="#E3F4EA"/><path d="M20 33 L28 41 L45 24" fill="none" stroke="#1C6B40" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-            '<h1>Илгээгдлээ</h1><div class="muted">' + (auto ? '+20 оноо! Журналд автоматаар орлоо.' : 'Багш шалгаад журналд оруулна.') + '</div>' +
+            '<h1>' + sentPaths.length + ' зураг илгээгдлээ ✓</h1><div class="muted">' + (r.data && r.data.added ? 'Өмнө илгээсэн зураг дээр чинь нэмэгдлээ. ' : '') + (auto ? (r.data && r.data.added ? 'Журналд орсон хэвээр.' : '+20 оноо! Журналд автоматаар орлоо.') : 'Багш шалгаад журналд оруулна.') + '</div>' +
             '<button class="btn" id="ok">Сэдэв рүү буцах</button></div>';
           document.getElementById('ok').onclick = showTopic;
         });

@@ -36,8 +36,9 @@ textarea{height:auto;min-height:120px;padding:10px 12px;resize:vertical;width:10
 .chip.on{background:#1E2A5A;border-color:#1E2A5A;color:#fff}
 .pill{font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px}
 .p-red{background:#FDECEA;color:#A12A1E}.p-green{background:#E3F4EA;color:#1C6B40}.p-blue{background:#EEF1FA;color:#2747B8}.p-amber{background:#FFF3E5;color:#8A4B0B}
-.photos{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
-.photos img{width:100%;height:150px;object-fit:cover;border-radius:8px;border:1px solid #C5CADB;cursor:zoom-in}
+.photos{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;min-height:150px}
+.photos img{flex:0 0 auto;width:118px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #C5CADB;cursor:zoom-in;scroll-snap-align:start;background:#E9ECF6}
+.zbtn{position:fixed;top:50%;transform:translateY(-50%);width:52px;height:52px;border-radius:50%;border:0;background:rgba(255,255,255,.9);font-size:24px;font-weight:700;cursor:pointer;z-index:31}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{text-align:left;padding:9px 8px;border-bottom:1px solid #EEF0F5}
 th{font-size:12px;color:#5A6178}
@@ -131,7 +132,7 @@ th{font-size:12px;color:#5A6178}
     });
   }
   function drawTabs() {
-    var T = [['review', 'Журнал'], ['library', 'Материалын сан']];
+    var T = [['review', 'Журнал'], ['library', 'Материалын сан'], ['feedback', 'Санал хүсэлт' + (fbUnseen ? ' (' + fbUnseen + ')' : '')]];
     tabsEl.hidden = false;
     tabsEl.innerHTML = T.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (t[0] === tab ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') +
       '<button data-t="out">Гарах</button>';
@@ -152,7 +153,33 @@ th{font-size:12px;color:#5A6178}
   }
   function showC() { if (cView === 'att') showAttendance(); else if (cView === 'lesson') showLesson(); else if (cView === 'table') showJournal(); else showClasses(); }
   function openClassView(id, view) { curClass = id; cView = view || 'att'; tab = 'review'; drawTabs(); showC(); }
-  function go(t) { tab = t; drawTabs(); ({ review: showReview, library: showLibrary })[t](); }
+  function go(t) { tab = t; drawTabs(); ({ review: showReview, library: showLibrary, feedback: showFeedback })[t](); countFb(); }
+  var fbUnseen = 0, fbClass = null;
+  function countFb() { sb.from('feedback').select('id', { count: 'exact', head: true }).eq('seen', false).then(function (r) { var n = r.count || 0; if (n !== fbUnseen) { fbUnseen = n; drawTabs(); } }); }
+  function showFeedback() {
+    app.innerHTML = '<div class="muted">Ачаалж байна…</div>';
+    var qy = sb.from('feedback').select('id,class_id,body,seen,created_at,students(name),lessons(title,num)').order('created_at', { ascending: false }).limit(300);
+    if (fbClass) qy = qy.eq('class_id', fbClass);
+    qy.then(function (r) {
+      if (fail(r)) return;
+      var rows = r.data || [], cn = {}; classes.forEach(function (c) { cn[c.id] = c.name; });
+      var html = '<div class="row between"><h2>Сурагчдын санал хүсэлт</h2>' + (rows.some(function (x) { return !x.seen; }) ? '<button class="btn sec" id="fball">Бүгдийг уншсан болгох</button>' : '') + '</div>' +
+        '<div class="muted">Сурагчид хуудасныхаа доод хэсгээс бичнэ. "Нэрээ нуух" сонгосон бол нэр нь хадгалагддаггүй.</div>' +
+        '<div class="row"><button class="chip' + (!fbClass ? ' on' : '') + '" data-fc="">Бүх анги</button>' + classes.map(function (c) { return '<button class="chip' + (fbClass === c.id ? ' on' : '') + '" data-fc="' + c.id + '">' + esc(c.name) + '</button>'; }).join('') + '</div>';
+      if (!rows.length) html += '<div class="card muted">Одоогоор санал ирээгүй байна.</div>';
+      rows.forEach(function (x) {
+        html += '<div class="card" style="gap:6px;' + (x.seen ? '' : 'border-left:5px solid #2747B8') + '"><div class="row between"><span style="font-size:13px;font-weight:600">' + esc(cn[x.class_id] || '') + ' · ' + (x.students ? esc(x.students.name) : '<i>Нэргүй</i>') +
+          (x.lessons ? ' · Хичээл ' + x.lessons.num + ' ' + esc(x.lessons.title) : '') + '</span><span class="muted" style="font-size:12px">' + fmt(x.created_at) + '</span></div>' +
+          '<div style="font-size:15px;line-height:1.5;white-space:pre-wrap">' + esc(x.body) + '</div>' +
+          (x.seen ? '' : '<button class="btn ghost" style="align-self:flex-start;height:34px" data-fs="' + x.id + '">Уншсан</button>') + '</div>';
+      });
+      app.innerHTML = html;
+      app.querySelectorAll('[data-fc]').forEach(function (b) { b.onclick = function () { fbClass = b.dataset.fc || null; showFeedback(); }; });
+      app.querySelectorAll('[data-fs]').forEach(function (b) { b.onclick = function () { sb.from('feedback').update({ seen: true }).eq('id', b.dataset.fs).then(function () { showFeedback(); countFb(); }); }; });
+      var all = q('#fball'); if (all) all.onclick = function () { var ids = rows.filter(function (x) { return !x.seen; }).map(function (x) { return x.id; }); sb.from('feedback').update({ seen: true }).in('id', ids).then(function () { showFeedback(); countFb(); }); };
+    });
+  }
+
   function classPicker(cur, cb) {
     return '<div class="row">' + classes.map(function (c) { return '<button class="chip' + (c.id === cur ? ' on' : '') + '" data-c="' + c.id + '">' + esc(c.name) + '</button>'; }).join('') + '</div>';
   }
@@ -184,19 +211,20 @@ th{font-size:12px;color:#5A6178}
   function showReview() {
     app.innerHTML = '<div class="muted">Ачаалж байна…</div>';
     Promise.all([
-      sb.from('lesson_access').select('lesson_id,class_id,opened_at,due_at,lessons(title,num)').order('opened_at', { ascending: false }),
+      sb.from('lesson_access').select('lesson_id,class_id,opened_at,due_at,lessons(title,num,units(sort))').order('opened_at', { ascending: false }),
       sb.from('students').select('id,name,code,class_id').eq('active', true).order('code')
     ]).then(function (r0) {
       var acc = r0[0].data || [], kids = r0[1].data || [];
       var lessonsMap = {}, order = [];
       acc.forEach(function (a) { if (!lessonsMap[a.lesson_id]) { lessonsMap[a.lesson_id] = a.lessons; order.push(a.lesson_id); } });
       if (!boardLesson || !lessonsMap[boardLesson]) boardLesson = order[0] || null;
+      order.sort(function (x, y) { return lessonKey(lessonsMap[x]) - lessonKey(lessonsMap[y]); });
       var subsQ = boardLesson ? sb.from('submissions').select('id,status,reason,photo_paths,created_at,student_id').eq('lesson_id', boardLesson).order('created_at', { ascending: false }) : Promise.resolve({ data: [] });
       Promise.all([subsQ, sb.from('submissions').select('id', { count: 'exact', head: true }).eq('status', 'review')]).then(function (r1) {
         var subs = r1[0].data || [], pendingAll = r1[1].count || 0;
         var latest = {}; subs.forEach(function (s) { if (!latest[s.student_id]) latest[s.student_id] = s; });
         var html = '<div class="row between"><h2>Даалгаврын самбар</h2><span class="pill p-amber">Танд шалгах (бүх сэдэв): ' + pendingAll + '</span></div>';
-        html += order.length ? '<div class="row">' + order.map(function (id) { var l = lessonsMap[id]; return '<button class="chip' + (id === boardLesson ? ' on' : '') + '" data-bl="' + id + '">' + esc(l.title) + '</button>'; }).join('') + '</div>'
+        html += order.length ? '<div class="row">' + order.map(function (id) { var l = lessonsMap[id]; return '<button class="chip' + (id === boardLesson ? ' on' : '') + '" data-bl="' + id + '">Хичээл ' + l.num + ' · ' + esc(l.title) + '</button>'; }).join('') + '</div>'
           : '<div class="muted">Одоогоор ямар ч ангид сэдэв нээгээгүй байна. Материалын сангаас "Ангид илгээх" дарна. Ангиуд доор харагдаж байгаа, QR-ээ авч болно.</div>';
         html += '<div style="overflow-x:auto;padding-bottom:12px"><div style="display:flex;gap:14px;align-items:flex-start;width:max-content">';
         classes.forEach(function (c) {
@@ -226,7 +254,7 @@ th{font-size:12px;color:#5A6178}
             review.forEach(function (k) {
               var s = latest[k.id];
               var R = { noplus: ['Багшид үзүүлээгүй · нөхсөн', 'p-blue', '+ Батлах', 'Дахин хийх'], dup: ['Ижил зураг илэрсэн', 'p-red', 'Зөв', 'Хуулбар'], spot: ['Санамсаргүй шалгалт', 'p-amber', 'Зөв байна', 'Худал'], flagged: ['Өмнө худал бичсэн', 'p-red', 'Зөв байна', 'Худал'] }[s.reason] || ['Шалгах', 'p-blue', '+ Батлах', 'Дахин хийх'];
-              html += '<div class="card" data-id="' + s.id + '"><span class="pill ' + R[1] + '" style="align-self:flex-start">' + R[0] + '</span><b>' + esc(k.name) + '</b><div class="muted">' + fmt(s.created_at) + '</div>' +
+              html += '<div class="card" data-id="' + s.id + '"><span class="pill ' + R[1] + '" style="align-self:flex-start">' + R[0] + '</span><b>' + esc(k.name) + '</b><div class="muted">' + fmt(s.created_at) + ' · <b>' + (s.photo_paths || []).length + ' зураг</b>' + ((s.photo_paths || []).length > 2 ? ' · хажуу тийш гүйлгэнэ →' : '') + '</div>' +
                 '<div class="photos" data-p="' + esc(JSON.stringify(s.photo_paths)) + '"></div>' +
                 '<div class="row"><button class="btn green" data-ok="' + s.id + '">' + R[2] + '</button><button class="btn amber" data-bad="' + s.id + '" data-r="' + s.reason + '" data-st="' + k.id + '">' + R[3] + '</button></div></div>';
             });
@@ -235,9 +263,8 @@ th{font-size:12px;color:#5A6178}
               var lab = s.status === 'redo' ? ['Дахин хийх', 'p-amber'] : (s.status === 'fake' ? ['Худал', 'p-red'] : ['+ Журналд', 'p-green']);
               var pp = s.photo_paths || [];
               html += '<div class="card" style="padding:10px 12px;gap:6px"><div class="row between"><b style="font-size:14px">' + esc(k.name) + '</b><span class="pill ' + lab[1] + '">' + lab[0] + '</span></div>' +
-                '<button data-view="' + esc(JSON.stringify(pp)) + '" aria-label="' + esc(k.name) + '-ийн зураг томруулах" style="position:relative;border:0;padding:0;background:#E9ECF6;border-radius:8px;height:150px;overflow:hidden;cursor:zoom-in">' +
-                '<img alt="" data-tp="' + esc(pp[0] || '') + '" style="width:100%;height:150px;object-fit:cover;display:block">' +
-                (pp.length > 1 ? '<span style="position:absolute;right:6px;bottom:6px;background:rgba(26,31,54,.8);color:#fff;font-size:12px;border-radius:99px;padding:2px 8px">' + pp.length + ' хуудас</span>' : '') + '</button></div>';
+                '<div class="muted" style="font-size:12px">' + pp.length + ' зураг' + (pp.length > 2 ? ' · хажуу тийш гүйлгэнэ →' : '') + '</div>' +
+                '<div class="photos" data-p="' + esc(JSON.stringify(pp)) + '"></div></div>';
             });
           }
           html += '</div>';
@@ -273,8 +300,9 @@ th{font-size:12px;color:#5A6178}
         function zoom(src) { var z = document.createElement('div'); z.className = 'zoom'; z.innerHTML = '<img alt="" src="' + src + '">'; z.onclick = function () { z.remove(); }; document.body.appendChild(z); }
         app.querySelectorAll('.photos').forEach(function (el) {
           sb.storage.from('submissions').createSignedUrls(JSON.parse(el.dataset.p), 3600).then(function (u) {
-            el.innerHTML = (u.data || []).map(function (x) { return '<img alt="Сурагчийн зураг" src="' + esc(x.signedUrl) + '">'; }).join('');
-            el.querySelectorAll('img').forEach(function (im) { im.onclick = function () { zoom(im.src); }; });
+            var list = (u.data || []).filter(function (x) { return x.signedUrl; }).map(function (x) { return x.signedUrl; });
+            el.innerHTML = list.map(function (x, i) { return '<img alt="Сурагчийн зураг ' + (i + 1) + '" data-i="' + i + '" src="' + esc(x) + '" loading="lazy">'; }).join('');
+            el.querySelectorAll('img').forEach(function (im) { im.onclick = function () { gallery(list, +im.dataset.i); }; });
           });
         });
         var tps = Array.prototype.map.call(app.querySelectorAll('img[data-tp]'), function (im) { return im.dataset.tp; }).filter(Boolean);
@@ -302,6 +330,20 @@ th{font-size:12px;color:#5A6178}
         });
       });
     });
+  }
+  function gallery(list, i) {
+    var z = document.createElement('div'); z.className = 'zoom'; z.style.flexDirection = 'column'; z.style.gap = '10px';
+    var draw = function () {
+      z.innerHTML = '<img alt="" src="' + esc(list[i]) + '" style="max-height:84vh;max-width:92vw">' +
+        '<div style="color:#fff;font-size:15px;font-weight:600">' + (i + 1) + ' / ' + list.length + '</div>' +
+        (list.length > 1 ? '<button class="zbtn" data-g="-1" style="left:12px" aria-label="Өмнөх">‹</button><button class="zbtn" data-g="1" style="right:12px" aria-label="Дараах">›</button>' : '');
+      z.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); i = (i + +b.dataset.g + list.length) % list.length; draw(); }; });
+    };
+    var key = function (e) { if (e.key === 'ArrowRight') { i = (i + 1) % list.length; draw(); } else if (e.key === 'ArrowLeft') { i = (i - 1 + list.length) % list.length; draw(); } else if (e.key === 'Escape') close(); };
+    var close = function () { z.remove(); document.removeEventListener('keydown', key); };
+    z.onclick = function (e) { if (e.target === z || e.target.tagName === 'IMG') close(); };
+    document.addEventListener('keydown', key);
+    draw(); document.body.appendChild(z);
   }
   function setStatus(id, st, after) {
     sb.from('submissions').update({ status: st, reviewed_at: new Date().toISOString() }).eq('id', id).then(function (r) {
@@ -421,39 +463,100 @@ th{font-size:12px;color:#5A6178}
   }
 
   // ---------- JOURNAL ----------
+  function lessonKey(l) { return ((l && l.units && l.units.sort) || 0) * 1000 + ((l && l.num) || 0); }
+  var JST = {
+    ok: ['+', '#E3F4EA', '#1C6B40', 'Журналд орсон (+)'],
+    review: ['?', '#FFF3E5', '#8A4B0B', 'Таныг шалгахыг хүлээж байна'],
+    redo: ['↺', '#EEF1FA', '#2747B8', 'Дахин хийлгэхээр буцаасан'],
+    fake: ['✕', '#FDECEA', '#A12A1E', 'Хуулбар / худал'],
+    none: ['', '#fff', '#A9B1CC', 'Илгээгээгүй']
+  };
   function showJournal() {
     if (needClass()) return;
     var cls = classes.filter(function (c) { return c.id === curClass; })[0];
+    app.innerHTML = cTabs() + '<div class="muted">Ачаалж байна…</div>'; bindCTabs();
     Promise.all([
       sb.from('students').select('id,name,code').eq('class_id', curClass).eq('active', true).order('code'),
-      sb.from('lesson_access').select('lesson_id,lessons(title)').eq('class_id', curClass),
-      sb.from('submissions').select('student_id,lesson_id,status'),
+      sb.from('lesson_access').select('lesson_id,lessons(title,num,units(sort))').eq('class_id', curClass),
       sb.from('test_results').select('student_id,lesson_id,score,total'),
       sb.from('behavior_logs').select('student_id,kind').gte('created_at', new Date(Date.now() - 864e5 * 30).toISOString()),
       sb.from('attendance').select('student_id,status')
     ]).then(function (r) {
-      var kids = r[0].data || [], opened = r[1].data || [], subs = r[2].data || [], tests = r[3].data || [], logs = r[4].data || [], att = r[5].data || [];
+      var kids = r[0].data || [], opened = r[1].data || [], tests = r[2].data || [], logs = r[3].data || [], att = r[4].data || [];
+      opened.sort(function (a, b) { return lessonKey(a.lessons) - lessonKey(b.lessons); });
       var lessonIds = opened.map(function (o) { return o.lesson_id; });
-      var rows = kids.map(function (k) {
-        var done = {}; subs.forEach(function (s) { if (s.student_id === k.id && (s.status === 'auto' || s.status === 'ok')) done[s.lesson_id] = 1; });
-        var plus = lessonIds.filter(function (l) { return done[l]; }).length;
-        var ts = tests.filter(function (t) { return t.student_id === k.id; });
-        var avg = ts.length ? Math.round(ts.reduce(function (a, t) { return a + t.score / t.total; }, 0) / ts.length * 100) : null;
-        var b = logs.filter(function (l) { return l.student_id === k.id; }).length;
-        var sk = att.filter(function (x) { return x.student_id === k.id && x.status === 'sick'; }).length, ab = att.filter(function (x) { return x.student_id === k.id && x.status === 'absent'; }).length, lt = att.filter(function (x) { return x.student_id === k.id && x.status === 'late'; }).length;
-        return { k: k, sk: sk, ab: ab, lt: lt, plus: plus, total: lessonIds.length, avg: avg, b: b, weak: lessonIds.length && plus / lessonIds.length < 0.5 };
+      var subsQ = lessonIds.length ? sb.from('submissions').select('id,student_id,lesson_id,status,photo_paths,created_at').in('lesson_id', lessonIds).order('created_at', { ascending: false }) : Promise.resolve({ data: [] });
+      subsQ.then(function (r2) {
+        var cell = {}; // student|lesson -> latest submission
+        (r2.data || []).forEach(function (x) { var k = x.student_id + '|' + x.lesson_id; if (!cell[k]) cell[k] = x; });
+        function st(x) { if (!x) return 'none'; return x.status === 'auto' ? 'ok' : x.status; }
+        var rows = kids.map(function (k) {
+          var plus = lessonIds.filter(function (l) { return st(cell[k.id + '|' + l]) === 'ok'; }).length;
+          var ts = tests.filter(function (t) { return t.student_id === k.id; });
+          var avg = ts.length ? Math.round(ts.reduce(function (a, t) { return a + t.score / t.total; }, 0) / ts.length * 100) : null;
+          var b = logs.filter(function (l) { return l.student_id === k.id; }).length;
+          var cnt = function (s2) { return att.filter(function (x) { return x.student_id === k.id && x.status === s2; }).length; };
+          return { k: k, sk: cnt('sick'), ab: cnt('absent'), lt: cnt('late'), plus: plus, total: lessonIds.length, avg: avg, b: b, weak: lessonIds.length && plus / lessonIds.length < 0.5 };
+        });
+        var waiting = 0; Object.keys(cell).forEach(function (k) { if (cell[k].status === 'review') waiting++; });
+        var html = cTabs() + '<div class="card"><div class="row between"><h2>' + esc(cls.name) + ' · Үнэлгээ</h2><button class="btn sec" id="csv">Excel рүү татах (CSV)</button></div>' +
+          '<div style="background:#F4F6FB;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.6">' +
+          '<b>Яаж бодогддог вэ?</b> Хичээл бүр нэг багана. Сурагч зургаа илгээхдээ "+ авсан" гэвэл <b>автоматаар +</b> болно, та юу ч дарахгүй. ' +
+          'Та зөвхөн <b style="color:#8A4B0B">шар ?</b> нүдийг шалгана (хуулбар сэжиг, + аваагүй, санамсаргүй шалгалт). Батлахад + болж, "Нийт +" тоо нэмэгдэнэ. Нүдэн дээр дарж зургийг нь харна.' +
+          (waiting ? '<div style="margin-top:6px;font-weight:700;color:#8A4B0B">Шалгах: ' + waiting + ' ажил</div>' : '') + '</div>' +
+          '<div class="row" style="gap:6px">' + ['ok', 'review', 'redo', 'fake', 'none'].map(function (k) { var j = JST[k]; return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px"><span style="width:22px;height:22px;border-radius:6px;border:1px solid #C5CADB;background:' + j[1] + ';color:' + j[2] + ';font-weight:700;display:inline-flex;align-items:center;justify-content:center">' + (j[0] || '·') + '</span>' + j[3] + '</span>'; }).join('') + '</div>' +
+          '<div class="tablebox"><table><thead><tr><th style="position:sticky;left:0;background:#F4F6FB;z-index:1">Нэр</th>' +
+          opened.map(function (o) { return '<th title="' + esc(o.lessons.title) + '" style="text-align:center;min-width:46px">Х' + o.lessons.num + '</th>'; }).join('') +
+          '<th style="text-align:center">Нийт +</th><th>Тест</th><th>Тасалсан</th><th>Өвчтэй</th><th>Хоцорсон</th><th>Тэмдэглэл</th></tr></thead><tbody>' +
+          rows.map(function (x) {
+            return '<tr style="background:' + (x.weak ? '#FFF8EF' : '#fff') + '"><td style="position:sticky;left:0;background:inherit;white-space:nowrap"><b>' + esc(x.k.name) + '</b> <span class="muted" style="font-size:11px">' + esc(x.k.code) + '</span></td>' +
+              lessonIds.map(function (l) {
+                var c = cell[x.k.id + '|' + l], j = JST[st(c)];
+                return '<td style="text-align:center;padding:4px">' + (c ? '<button data-jc="' + c.id + '" aria-label="' + esc(x.k.name) + ' ' + j[3] + '" style="width:34px;height:34px;border-radius:8px;border:1px solid ' + j[2] + '33;background:' + j[1] + ';color:' + j[2] + ';font-weight:700;font-size:16px;cursor:pointer;position:relative">' + j[0] + ((c.photo_paths || []).length > 1 ? '<sup style="position:absolute;right:-6px;top:-6px;background:#1E2A5A;color:#fff;border-radius:99px;font-size:10px;padding:1px 5px">' + c.photo_paths.length + '</sup>' : '') + '</button>' : '<span style="color:#C5CADB">·</span>') + '</td>';
+              }).join('') +
+              '<td style="text-align:center"><b>' + x.plus + '</b> / ' + x.total + '</td><td>' + (x.avg == null ? '—' : x.avg + '%') + '</td><td>' + (x.ab || '—') + '</td><td>' + (x.sk || '—') + '</td><td>' + (x.lt || '—') + '</td><td>' + (x.b || '—') + '</td></tr>';
+          }).join('') +
+          '</tbody></table></div>' +
+          '<div class="muted">Х1, Х2… = Хичээл 1, 2 (дээр нь хулганаа аваачвал сэдвийн нэр гарна). Улбар мөр: нээгдсэн хичээлийн талаас бага нь +.</div></div>';
+        app.innerHTML = html;
+        bindCTabs();
+        var subById = {}; (r2.data || []).forEach(function (x) { subById[x.id] = x; });
+        var kidById = {}; kids.forEach(function (k) { kidById[k.id] = k; });
+        var lesById = {}; opened.forEach(function (o) { lesById[o.lesson_id] = o.lessons; });
+        app.querySelectorAll('[data-jc]').forEach(function (b) {
+          b.onclick = function () {
+            var x = subById[b.dataset.jc], j = JST[st(x)];
+            var z = document.createElement('div'); z.className = 'zoom'; z.style.flexDirection = 'column'; z.style.gap = '12px';
+            z.innerHTML = '<div style="color:#fff;text-align:center"><b>' + esc(kidById[x.student_id].name) + '</b> · Хичээл ' + lesById[x.lesson_id].num + ' · ' + esc(lesById[x.lesson_id].title) + '<br><span style="font-size:13px">' + j[3] + ' · ' + fmt(x.created_at) + ' · ' + (x.photo_paths || []).length + ' зураг</span></div>' +
+              '<div id="jimgs" style="display:flex;gap:8px;overflow-x:auto;max-width:96vw;color:#fff">Зураг ачаалж байна…</div>' +
+              '<div class="row" style="justify-content:center">' +
+              (st(x) !== 'ok' ? '<button class="btn green" id="jok">+ Батлах</button>' : '') +
+              (st(x) !== 'redo' ? '<button class="btn amber" id="jredo">Дахин хийлгэх</button>' : '') +
+              '<button class="btn ghost" id="jx" style="background:#fff">Хаах</button></div>';
+            document.body.appendChild(z);
+            z.onclick = function (e) { if (e.target === z) z.remove(); };
+            z.querySelector('#jx').onclick = function () { z.remove(); };
+            var ok = z.querySelector('#jok'); if (ok) ok.onclick = function () { z.remove(); setStatus(x.id, 'ok', showJournal); };
+            var rd = z.querySelector('#jredo'); if (rd) rd.onclick = function () { z.remove(); setStatus(x.id, 'redo', showJournal); };
+            sb.storage.from('submissions').createSignedUrls(x.photo_paths || [], 3600).then(function (u) {
+              var d = (u.data || []).filter(function (y) { return y.signedUrl; });
+              var L2 = d.map(function (y) { return y.signedUrl; });
+              z.querySelector('#jimgs').innerHTML = L2.length ? L2.map(function (y, i) { return '<img alt="Сурагчийн зураг ' + (i + 1) + '" data-gi="' + i + '" src="' + esc(y) + '" style="flex:0 0 auto;height:62vh;max-width:' + (L2.length > 1 ? '70vw' : '92vw') + ';border-radius:8px;cursor:zoom-in;scroll-snap-align:start">'; }).join('') : 'Зураг олдсонгүй';
+              z.querySelector('#jimgs').style.scrollSnapType = 'x mandatory';
+              z.querySelectorAll('[data-gi]').forEach(function (im) { im.onclick = function (e) { e.stopPropagation(); gallery(L2, +im.dataset.gi); }; });
+            });
+          };
+        });
+        q('#csv').onclick = function () {
+          var head = ['Нэр', 'Код'].concat(opened.map(function (o) { return 'Х' + o.lessons.num + ' ' + o.lessons.title; })).concat(['Нийт +', 'Нийт хичээл', 'Тест %', 'Тасалсан', 'Өвчтэй', 'Хоцорсон', 'Тэмдэглэл']);
+          var lines = [head].concat(rows.map(function (x) {
+            return [x.k.name, x.k.code].concat(lessonIds.map(function (l) { var t = st(cell[x.k.id + '|' + l]); return t === 'ok' ? '+' : (t === 'none' ? '' : JST[t][3]); }))
+              .concat([x.plus, x.total, x.avg == null ? '' : x.avg, x.ab, x.sk, x.lt, x.b]);
+          }));
+          var csv = '﻿' + lines.map(function (l) { return l.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+          var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = cls.name + '-unelgee.csv'; a.click();
+        };
       });
-      var html = cTabs() + '<div class="card"><div class="row between"><h2>' + esc(cls.name) + ' · Журнал</h2><button class="btn sec" id="csv">Excel рүү татах (CSV)</button></div>' +
-        '<div class="tablebox"><table><thead><tr><th>Нэр</th><th>Код</th><th>Даалгавар "+"</th><th>Тестийн дундаж</th><th>Тасалсан</th><th>Өвчтэй</th><th>Хоцорсон</th><th>Тэмдэглэл (30 хоног)</th></tr></thead><tbody>' +
-        rows.map(function (x) { return '<tr style="background:' + (x.weak ? '#FFF3E5' : '#fff') + '"><td><b>' + esc(x.k.name) + '</b></td><td>' + esc(x.k.code) + '</td><td>' + x.plus + ' / ' + x.total + '</td><td>' + (x.avg == null ? '—' : x.avg + '%') + '</td><td>' + (x.ab || '—') + '</td><td>' + (x.sk || '—') + '</td><td>' + (x.lt || '—') + '</td><td>' + (x.b || '—') + '</td></tr>'; }).join('') +
-        '</tbody></table></div><div class="muted">Улбар мөр: нээгдсэн даалгаврын талаас бага нь "+" авсан.</div></div>';
-      app.innerHTML = html;
-      bindCTabs();
-      q('#csv').onclick = function () {
-        var lines = [['Нэр', 'Код', 'Даалгавар +', 'Нийт', 'Тест %', 'Тасалсан', 'Өвчтэй', 'Хоцорсон', 'Тэмдэглэл']].concat(rows.map(function (x) { return [x.k.name, x.k.code, x.plus, x.total, x.avg == null ? '' : x.avg, x.ab, x.sk, x.lt, x.b]; }));
-        var csv = '﻿' + lines.map(function (l) { return l.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
-        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = cls.name + '-journal.csv'; a.click();
-      };
     });
   }
 
@@ -520,6 +623,7 @@ th{font-size:12px;color:#5A6178}
         sb.storage.from(f.bucket).createSignedUrl(f.path, 3600, { download: f.name }).then(function (r) { if (fail(r)) { if (w) w.close(); return; } if (w) w.location = r.data.signedUrl; else location.href = r.data.signedUrl; });
       };
     });
+    loadThumbs(files);
     app.querySelectorAll('[data-fdel]').forEach(function (b) {
       b.onclick = function () {
         if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = 'Тийм, устга'; b.style.background = '#A12A1E'; b.style.color = '#fff'; return; }
@@ -535,6 +639,76 @@ th{font-size:12px;color:#5A6178}
     });
   }
   var libUnit = null, libPanel = null;
+  var _scripts = {};
+  function loadScript(u) { return _scripts[u] || (_scripts[u] = new Promise(function (res, rej) { var sc = document.createElement('script'); sc.src = u; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); })); }
+  var LIB = {
+    zip: 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+    pdf: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
+    pdfw: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js',
+    docx: 'https://cdn.jsdelivr.net/npm/docx-preview@0.3.3/dist/docx-preview.min.js',
+    xlsx: 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
+  };
+  var thumbCache = {};
+  function fileUrl(f) {
+    if (f.bucket === 'public-materials') return Promise.resolve(sb.storage.from(f.bucket).getPublicUrl(f.path).data.publicUrl);
+    return sb.storage.from(f.bucket).createSignedUrl(f.path, 3600).then(function (r) { if (r.error) throw r.error; return r.data.signedUrl; });
+  }
+  function fitInto(box, el, w) { // scale a wide page element down into the box
+    var k = box.clientWidth / w; el.style.cssText += ';position:absolute;left:0;top:0;width:' + w + 'px;transform:scale(' + k + ');transform-origin:0 0;background:#fff;pointer-events:none';
+    box.innerHTML = ''; box.style.background = '#fff'; box.appendChild(el);
+  }
+  function setImg(box, src, cover) { box.innerHTML = '<img alt="" src="' + src + '" style="width:100%;height:100%;object-fit:' + (cover ? 'cover' : 'contain') + ';object-position:top;background:#fff">'; }
+  function loadThumbs(files) {
+    app.querySelectorAll('[data-thumb]').forEach(function (box) {
+      var f = files.filter(function (x) { return x.id === box.dataset.thumb; })[0]; if (!f) return;
+      var e = (f.name.match(/\.([a-z0-9]+)$/i) || ['', ''])[1].toLowerCase();
+      if (thumbCache[f.id]) { setImg(box, thumbCache[f.id], true); return; }
+      fileUrl(f).then(function (url) {
+        if (/^(png|jpe?g|webp|gif)$/.test(e)) { setImg(box, url, true); return; }
+        if (/^(mp4|mov|webm|m4v)$/.test(e)) {
+          box.innerHTML = '<video muted playsinline preload="metadata" src="' + url + '#t=2" style="width:100%;height:100%;object-fit:cover;background:#000;pointer-events:none"></video>' +
+            '<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 3 L17 10 L6 17 Z" fill="#fff"/></svg></span>';
+          return;
+        }
+        if (e === 'pdf') {
+          return loadScript(LIB.pdf).then(function () {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = LIB.pdfw;
+            return window.pdfjsLib.getDocument(url).promise;
+          }).then(function (doc) { return doc.getPage(1); }).then(function (pg) {
+            var v0 = pg.getViewport({ scale: 1 }), k = 400 / v0.width, v = pg.getViewport({ scale: k });
+            var c = document.createElement('canvas'); c.width = v.width; c.height = v.height;
+            return pg.render({ canvasContext: c.getContext('2d'), viewport: v }).promise.then(function () { thumbCache[f.id] = c.toDataURL('image/jpeg', 0.8); setImg(box, thumbCache[f.id], true); });
+          });
+        }
+        if (!/^(docx|xlsx|pptx|doc|xls|ppt)$/.test(e)) return;
+        return Promise.all([fetch(url).then(function (r) { return r.blob(); }), loadScript(LIB.zip)]).then(function (a) {
+          var blob = a[0];
+          // 1) Office files often carry a ready preview picture inside
+          return window.JSZip.loadAsync(blob).then(function (z) {
+            var t = z.file(/docProps\/thumbnail\.(jpe?g|png)$/i)[0];
+            if (t) return t.async('base64').then(function (b64) { thumbCache[f.id] = 'data:image/' + (/png$/i.test(t.name) ? 'png' : 'jpeg') + ';base64,' + b64; setImg(box, thumbCache[f.id], true); return true; });
+            return false;
+          }).catch(function () { return false; }).then(function (done) {
+            if (done) return;
+            if (e === 'docx') return loadScript(LIB.docx).then(function () {
+              var holder = document.createElement('div');
+              return window.docx.renderAsync(blob, holder, null, { inWrapper: false, ignoreLastRenderedPageBreak: false, breakPages: true }).then(function () {
+                var page = holder.querySelector('section') || holder; fitInto(box, holder, page.scrollWidth || 800);
+              });
+            });
+            if (e === 'xlsx') return loadScript(LIB.xlsx).then(function () {
+              return blob.arrayBuffer().then(function (buf) {
+                var wb = window.XLSX.read(buf, { type: 'array', sheetRows: 30 });
+                var html = window.XLSX.utils.sheet_to_html(wb.Sheets[wb.SheetNames[0]]);
+                var d = document.createElement('div'); d.innerHTML = '<style>.xth table{border-collapse:collapse;font:12px sans-serif}.xth td{border:1px solid #D0D5E2;padding:2px 6px;white-space:nowrap}</style><div class="xth">' + html + '</div>';
+                fitInto(box, d, 900);
+              });
+            });
+          });
+        });
+      }).catch(function (err) { console.warn('thumb', f.name, err); });
+    });
+  }
   function ficon(name) {
     var e = (name.match(/\.([a-z0-9]+)$/i) || ['', ''])[1].toLowerCase();
     var m = { pdf: ['PDF', '#B42318'], doc: ['W', '#2747B8'], docx: ['W', '#2747B8'], xls: ['X', '#1C7C4A'], xlsx: ['X', '#1C7C4A'], ppt: ['P', '#C2410C'], pptx: ['P', '#C2410C'], png: ['IMG', '#6B2FA3'], jpg: ['IMG', '#6B2FA3'], jpeg: ['IMG', '#6B2FA3'], webp: ['IMG', '#6B2FA3'] }[e] || ['FILE', '#5A6178'];
@@ -547,8 +721,10 @@ th{font-size:12px;color:#5A6178}
   }
   function fileTiles(fs) {
     return fs.map(function (f) {
-      return '<div style="background:#fff;border:1px solid #E1E4EE;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:120px"><div class="row" style="flex-wrap:nowrap">' + ficon(f.name) +
-        '<div style="min-width:0"><b style="font-size:13px;word-break:break-word">' + esc(f.name) + '</b><div class="muted" style="font-size:11px">' + KINDS[f.kind] + '</div></div></div>' +
+      return '<div style="background:#fff;border:1px solid #E1E4EE;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:120px">' +
+        '<button data-open="' + f.id + '" data-thumb="' + f.id + '" aria-label="' + esc(f.name) + ' нээх" style="position:relative;height:150px;border:1px solid #E1E4EE;border-radius:8px;background:#F4F6FB;overflow:hidden;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center">' + ficon(f.name) + '</button>' +
+        '<div class="row" style="flex-wrap:nowrap">' +
+        '<div style="min-width:0"><b style="font-size:13px;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + esc(f.name) + '</b><div class="muted" style="font-size:11px">' + KINDS[f.kind] + '</div></div></div>' +
         '<div class="row" style="margin-top:auto"><button class="btn ghost" style="height:34px;padding:0 10px" data-open="' + f.id + '">Нээх</button><button class="btn red" style="height:34px;padding:0 10px" data-fdel="' + f.id + '">Устгах</button></div></div>';
     }).join('');
   }
@@ -556,6 +732,39 @@ th{font-size:12px;color:#5A6178}
     return '<div style="border:1.5px dashed #A9B1CC;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;justify-content:center;min-height:120px">' +
       (kinds.length > 1 ? '<select id="k_' + id + '" aria-label="Файлын төрөл">' + kinds.map(function (k) { return '<option value="' + k + '">' + KINDS[k] + '</option>'; }).join('') + '</select>' : '<span class="muted" style="font-size:12px">' + KINDS[kinds[0]] + '</span>') +
       '<label class="btn sec" style="display:inline-flex;align-items:center;justify-content:center;cursor:pointer">+ Файл нэмэх<input type="file" hidden data-up="' + id + '" data-kinds="' + kinds.join(',') + '"></label></div>';
+  }
+  function vidInfo(url) {
+    if (!url) return null;
+    var m = url.match(/(?:youtu\.be\/|v=|shorts\/|embed\/|live\/)([\w-]{11})/);
+    if (m) return { kind: 'yt', id: m[1], thumb: 'https://i.ytimg.com/vi/' + m[1] + '/hqdefault.jpg', embed: 'https://www.youtube-nocookie.com/embed/' + m[1] + '?autoplay=1' };
+    var d = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([\w-]+)/);
+    if (d) return { kind: 'drive', id: d[1], thumb: 'https://drive.google.com/thumbnail?id=' + d[1] + '&sz=w640', embed: 'https://drive.google.com/file/d/' + d[1] + '/preview' };
+    if (/drive\.google\.com\/drive\/folders/.test(url)) return { kind: 'folder' };
+    return { kind: 'other' };
+  }
+  function host(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } }
+  function vidPreview(url) {
+    var v = vidInfo(url);
+    if (!v) return '<div style="aspect-ratio:16/9;max-width:520px;border:1.5px dashed #A9B1CC;border-radius:12px;display:flex;align-items:center;justify-content:center" class="muted">Видео оруулаагүй</div>';
+    if (v.kind === 'folder') return '<div class="pill p-red" style="align-self:flex-start">✕ Энэ нь Drive-ийн ХАВТАСНЫ линк. Видео файлаа нээгээд түүний линкийг хуулна уу.</div>';
+    if (v.kind === 'other') return '<div class="pill p-amber" style="align-self:flex-start">⚠ YouTube/Drive биш линк · хуудсан дотор тоглогдохгүй, сурагчид шинэ цонхонд нээгдэнэ</div><a class="btn ghost" style="align-self:flex-start;display:inline-flex;align-items:center;text-decoration:none" target="_blank" rel="noopener" href="' + esc(url) + '">' + esc(host(url)) + ' нээж шалгах ↗</a>';
+    return '<button data-play="' + esc(v.embed) + '" aria-label="Видеог тоглуулах" style="position:relative;aspect-ratio:16/9;width:100%;max-width:520px;border:0;padding:0;border-radius:12px;overflow:hidden;background:#1E2A5A;cursor:pointer">' +
+      '<img alt="" src="' + v.thumb + '" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display=\'none\';this.nextSibling.nextSibling.style.display=\'block\'">' +
+      '<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 3 L17 10 L6 17 Z" fill="#fff"/></svg></span>' +
+      '<span style="display:none;position:absolute;left:0;right:0;bottom:12px;color:#fff;font-size:13px;text-align:center">Нүүр зураг харагдахгүй байна: Drive-ийн хандалтыг "Anyone with the link" болгоно уу</span></button>' +
+      '<span class="pill p-green" style="align-self:flex-start">✓ ' + (v.kind === 'yt' ? 'YouTube видео' : 'Google Drive видео') + ' · дарж шалгаарай</span>';
+  }
+  function linksPreview(links) {
+    return (links || []).map(function (x) {
+      return '<a href="' + esc(x.url) + '" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #E1E4EE;border-radius:12px;text-decoration:none;color:#1A1F36;background:#fff;max-width:520px">' +
+        '<img alt="" src="https://www.google.com/s2/favicons?sz=64&domain=' + encodeURIComponent(host(x.url)) + '" style="width:28px;height:28px;border-radius:6px">' +
+        '<span style="flex:1;min-width:0"><b style="font-size:14px">' + esc(x.title) + '</b><br><span class="muted" style="font-size:12px">' + esc(host(x.url)) + '</span></span><span style="color:#2747B8;font-weight:600">Нээх ↗</span></a>';
+    }).join('');
+  }
+  function bindPlay(root) {
+    (root || app).querySelectorAll('[data-play]').forEach(function (b) {
+      b.onclick = function () { var f = document.createElement('div'); f.style.cssText = 'aspect-ratio:16/9;width:100%;max-width:520px;border-radius:12px;overflow:hidden'; f.innerHTML = '<iframe src="' + b.dataset.play + '" allow="autoplay; fullscreen" allowfullscreen style="width:100%;height:100%;border:0" title="Видео"></iframe>'; b.replaceWith(f); };
+    });
   }
   var GRID = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px">';
   function showLibrary() {
@@ -620,16 +829,17 @@ th{font-size:12px;color:#5A6178}
         var a2 = acc.filter(function (x) { return x.lesson_id === L.id; });
         var vid = L.video_url ? '<div style="width:44px;height:54px;border-radius:6px;background:#1E2A5A;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 3 L17 10 L6 17 Z" fill="#fff"/></svg></div>' : '<div style="width:44px;height:54px;border-radius:6px;border:1.5px dashed #A9B1CC"></div>';
         html += '<div class="row"><button class="btn green" data-panel="send">Ангид илгээх' + (a2.length ? ' (' + a2.length + ' ангид нээлттэй)' : '') + '</button><button class="btn ghost" data-panel="edit">Гарчиг, видео засах</button></div>';
-        html += GRID + tile('data-panel="edit"', vid, 'Видео, линкүүд', (L.video_url ? 'Видеотой' : 'Видеогүй') + ((L.extra_links || []).length ? ' · ' + L.extra_links.length + ' нэмэлт линк' : '') + ' · засах') +
-          tile('data-panel="test"', '<div style="width:44px;height:54px;border-radius:6px;background:#2747B8;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center">?</div>', 'Тест', (L.test || []).length + ' асуулт · засах') +
+        html += '<div class="card"><div class="row between"><h3>Видео, линкүүд</h3><button class="btn ghost" data-panel="edit">Засах</button></div>' + vidPreview(L.video_url) +
+          ((L.extra_links || []).length ? '<div class="muted" style="margin-top:4px">Нэмэлт линкүүд</div>' + linksPreview(L.extra_links) : '') + '</div>';
+        html += GRID + tile('data-panel="test"', '<div style="width:44px;height:54px;border-radius:6px;background:#2747B8;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center">?</div>', 'Тест', (L.test || []).length + ' асуулт · засах') +
           fileTiles(files.filter(function (f) { return f.lesson_id === L.id; })) +
           addFileTile('x_' + L.id, ['exercise']) + addFileTile('l_' + L.id, ['lesson_plan', 'ppt', 'other']) + '</div>' +
           '<div class="muted">Дасгалын хуудсыг сурагчид харна. Төлөвлөлт, PPT зөвхөн танд харагдана.</div>';
         if (libPanel === 'edit') {
           html += '<div class="card" style="border:2px solid #2747B8"><div class="row between"><h3>Гарчиг, видео</h3><button class="btn ghost" data-panel="">Хаах</button></div>' +
             '<label class="muted">Гарчиг</label><input type="text" id="lt" value="' + esc(L.title) + '">' +
-            '<label class="muted">Видео линк (YouTube эсвэл Google Drive, "Anyone with the link") · хуудсан дотор тоглогдоно</label><input type="url" id="lv" value="' + esc(L.video_url || '') + '">' +
-            '<label class="muted">Нэмэлт линк (Medle г.м.) · мөр бүрт нэг: Нэр | линк</label><textarea id="lx2" style="min-height:90px" placeholder="Medle хичээл | https://medle.mn/lesson/...">' + esc((L.extra_links || []).map(function (x) { return x.title + ' | ' + x.url; }).join('\n')) + '</textarea>' +
+            '<label class="muted">Видео линк (YouTube эсвэл Google Drive, "Anyone with the link") · хуудсан дотор тоглогдоно</label><input type="url" id="lv" value="' + esc(L.video_url || '') + '"><div id="lvp" style="display:flex;flex-direction:column;gap:8px">' + vidPreview(L.video_url) + '</div>' +
+            '<label class="muted">Нэмэлт линк (Medle г.м.) · мөр бүрт нэг: Нэр | линк</label><textarea id="lx2" style="min-height:90px" placeholder="Medle хичээл | https://medle.mn/lesson/...">' + esc((L.extra_links || []).map(function (x) { return x.title + ' | ' + x.url; }).join('\n')) + '</textarea><div id="lxp" style="display:flex;flex-direction:column;gap:8px">' + linksPreview(L.extra_links) + '</div>' +
             '<button class="btn" id="saveE">Хадгалах</button></div>';
         }
         if (libPanel === 'test') {
@@ -674,6 +884,10 @@ th{font-size:12px;color:#5A6178}
         };
       });
       if (L) {
+        bindPlay();
+        var parseLinks = function () { return q('#lx2').value.split('\n').map(function (s) { s = s.trim(); if (!s) return null; var i = s.lastIndexOf('|'); var title = i > 0 ? s.slice(0, i).trim() : 'Нэмэлт материал'; var url = (i > 0 ? s.slice(i + 1) : s).trim(); return /^https?:\/\//.test(url) ? { title: title || 'Нэмэлт материал', url: url } : null; }).filter(Boolean); };
+        if (q('#lv')) q('#lv').oninput = function () { q('#lvp').innerHTML = vidPreview(this.value.trim()); bindPlay(q('#lvp')); };
+        if (q('#lx2')) q('#lx2').oninput = function () { q('#lxp').innerHTML = linksPreview(parseLinks()); };
         var se = q('#saveE'); if (se) se.onclick = function () {
           var links = q('#lx2').value.split('\n').map(function (s) { s = s.trim(); if (!s) return null; var i = s.lastIndexOf('|'); var title = i > 0 ? s.slice(0, i).trim() : 'Нэмэлт материал'; var url = (i > 0 ? s.slice(i + 1) : s).trim(); return /^https?:\/\//.test(url) ? { title: title || 'Нэмэлт материал', url: url } : null; }).filter(Boolean);
           sb.from('lessons').update({ title: q('#lt').value.trim() || L.title, video_url: q('#lv').value.trim() || null, extra_links: links }).eq('id', L.id).then(function (x) { if (!fail(x)) { toast('Хадгалагдлаа'); libPanel = null; showLibrary(); } });
