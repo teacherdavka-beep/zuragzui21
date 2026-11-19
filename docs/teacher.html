@@ -38,6 +38,7 @@ textarea{height:auto;min-height:120px;padding:10px 12px;resize:vertical;width:10
 .p-red{background:#FDECEA;color:#A12A1E}.p-green{background:#E3F4EA;color:#1C6B40}.p-blue{background:#EEF1FA;color:#2747B8}.p-amber{background:#FFF3E5;color:#8A4B0B}
 .photos{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;min-height:150px}
 .photos img{flex:0 0 auto;width:118px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #C5CADB;cursor:zoom-in;scroll-snap-align:start;background:#E9ECF6}
+.zx{position:fixed;top:14px;right:14px;height:48px;padding:0 18px;border-radius:99px;border:0;background:#fff;color:#1A1F36;font-size:16px;font-weight:700;cursor:pointer;z-index:32;box-shadow:0 4px 14px rgba(0,0,0,.3)}
 .zbtn{position:fixed;top:50%;transform:translateY(-50%);width:52px;height:52px;border-radius:50%;border:0;background:rgba(255,255,255,.9);font-size:24px;font-weight:700;cursor:pointer;z-index:31}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{text-align:left;padding:9px 8px;border-bottom:1px solid #EEF0F5}
@@ -297,12 +298,13 @@ th{font-size:12px;color:#5A6178}
         });
         app.querySelectorAll('[data-cr]').forEach(function (b) { b.onclick = function () { openClassView(b.dataset.cr, 'roster'); }; });
         app.querySelectorAll('[data-cv2]').forEach(function (b) { b.onclick = function () { openClassView(b.dataset.cid, b.dataset.cv2); }; });
-        function zoom(src) { var z = document.createElement('div'); z.className = 'zoom'; z.innerHTML = '<img alt="" src="' + src + '">'; z.onclick = function () { z.remove(); }; document.body.appendChild(z); }
+        function zoom(src) { var z = document.createElement('div'); z.className = 'zoom'; z.innerHTML = '<img alt="" src="' + src + '"><button class="zx" aria-label="Хаах">✕ Хаах</button>'; z.onclick = function () { z.remove(); }; document.body.appendChild(z); }
         app.querySelectorAll('.photos').forEach(function (el) {
           sb.storage.from('submissions').createSignedUrls(JSON.parse(el.dataset.p), 3600).then(function (u) {
             var list = (u.data || []).filter(function (x) { return x.signedUrl; }).map(function (x) { return x.signedUrl; });
             el.innerHTML = list.map(function (x, i) { return '<img alt="Сурагчийн зураг ' + (i + 1) + '" data-i="' + i + '" src="' + esc(x) + '" loading="lazy">'; }).join('');
             el.querySelectorAll('img').forEach(function (im) { im.onclick = function () { gallery(list, +im.dataset.i); }; });
+            stripArrows(el);
           });
         });
         var tps = Array.prototype.map.call(app.querySelectorAll('img[data-tp]'), function (im) { return im.dataset.tp; }).filter(Boolean);
@@ -331,13 +333,30 @@ th{font-size:12px;color:#5A6178}
       });
     });
   }
+  function stripArrows(el) {
+    if (!el || el.dataset.arr) return; el.dataset.arr = '1';
+    var w = document.createElement('div'); w.style.cssText = 'position:relative';
+    el.parentNode.insertBefore(w, el); w.appendChild(el);
+    var mk = function (d) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = d < 0 ? '‹' : '›'; b.setAttribute('aria-label', d < 0 ? 'Өмнөх зураг' : 'Дараах зураг');
+      b.style.cssText = 'position:absolute;top:50%;transform:translateY(-50%);' + (d < 0 ? 'left:4px' : 'right:4px') + ';width:40px;height:40px;border-radius:50%;border:0;background:rgba(26,31,54,.8);color:#fff;font-size:24px;font-weight:700;line-height:1;cursor:pointer;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.25)';
+      b.onclick = function (e) { e.stopPropagation(); el.scrollBy({ left: d * Math.max(120, el.clientWidth * 0.8), behavior: 'smooth' }); };
+      w.appendChild(b); return b;
+    };
+    var L = mk(-1), Rb = mk(1);
+    var upd = function () { var max = el.scrollWidth - el.clientWidth - 2; L.style.display = el.scrollLeft > 2 ? '' : 'none'; Rb.style.display = el.scrollLeft < max ? '' : 'none'; };
+    el.addEventListener('scroll', upd); setTimeout(upd, 50); setTimeout(upd, 800);
+    el.querySelectorAll('img').forEach(function (im) { im.addEventListener('load', upd); });
+  }
   function gallery(list, i) {
     var z = document.createElement('div'); z.className = 'zoom'; z.style.flexDirection = 'column'; z.style.gap = '10px';
     var draw = function () {
       z.innerHTML = '<img alt="" src="' + esc(list[i]) + '" style="max-height:84vh;max-width:92vw">' +
         '<div style="color:#fff;font-size:15px;font-weight:600">' + (i + 1) + ' / ' + list.length + '</div>' +
-        (list.length > 1 ? '<button class="zbtn" data-g="-1" style="left:12px" aria-label="Өмнөх">‹</button><button class="zbtn" data-g="1" style="right:12px" aria-label="Дараах">›</button>' : '');
+        (list.length > 1 ? '<button class="zbtn" data-g="-1" style="left:12px" aria-label="Өмнөх">‹</button><button class="zbtn" data-g="1" style="right:12px" aria-label="Дараах">›</button>' : '') +
+        '<button class="zx" aria-label="Хаах">✕ Хаах</button>';
       z.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); i = (i + +b.dataset.g + list.length) % list.length; draw(); }; });
+      z.querySelector('.zx').onclick = function (e) { e.stopPropagation(); close(); };
     };
     var key = function (e) { if (e.key === 'ArrowRight') { i = (i + 1) % list.length; draw(); } else if (e.key === 'ArrowLeft') { i = (i - 1 + list.length) % list.length; draw(); } else if (e.key === 'Escape') close(); };
     var close = function () { z.remove(); document.removeEventListener('keydown', key); };
@@ -471,17 +490,20 @@ th{font-size:12px;color:#5A6178}
     fake: ['✕', '#FDECEA', '#A12A1E', 'Хуулбар / худал'],
     none: ['', '#fff', '#A9B1CC', 'Илгээгээгүй']
   };
+  var jView = 'task';
   function showJournal() {
     if (needClass()) return;
     var cls = classes.filter(function (c) { return c.id === curClass; })[0];
     app.innerHTML = cTabs() + '<div class="muted">Ачаалж байна…</div>'; bindCTabs();
     Promise.all([
       sb.from('students').select('id,name,code').eq('class_id', curClass).eq('active', true).order('code'),
-      sb.from('lesson_access').select('lesson_id,lessons(title,num,units(sort))').eq('class_id', curClass),
+      sb.from('lesson_access').select('lesson_id,lessons(title,num,test,kind,units(sort))').eq('class_id', curClass),
       sb.from('test_results').select('student_id,lesson_id,score,total'),
       sb.from('behavior_logs').select('student_id,kind').gte('created_at', new Date(Date.now() - 864e5 * 30).toISOString()),
-      sb.from('attendance').select('student_id,status')
+      sb.from('attendance').select('student_id,status'),
+      sb.from('teachers').select('weights').eq('id', me.id).maybeSingle()
     ]).then(function (r) {
+      var W = (r[5].data && r[5].data.weights) || { att: 25, yavts: 25, bd: 25, exam: 25 };
       var kids = r[0].data || [], opened = r[1].data || [], tests = r[2].data || [], logs = r[3].data || [], att = r[4].data || [];
       opened.sort(function (a, b) { return lessonKey(a.lessons) - lessonKey(b.lessons); });
       var lessonIds = opened.map(function (o) { return o.lesson_id; });
@@ -499,14 +521,14 @@ th{font-size:12px;color:#5A6178}
           return { k: k, sk: cnt('sick'), ab: cnt('absent'), lt: cnt('late'), plus: plus, total: lessonIds.length, avg: avg, b: b, weak: lessonIds.length && plus / lessonIds.length < 0.5 };
         });
         var waiting = 0; Object.keys(cell).forEach(function (k) { if (cell[k].status === 'review') waiting++; });
-        var html = cTabs() + '<div class="card"><div class="row between"><h2>' + esc(cls.name) + ' · Үнэлгээ</h2><button class="btn sec" id="csv">Excel рүү татах (CSV)</button></div>' +
+        var taskHtml = 
           '<div style="background:#F4F6FB;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.6">' +
           '<b>Яаж бодогддог вэ?</b> Хичээл бүр нэг багана. Сурагч зургаа илгээхдээ "+ авсан" гэвэл <b>автоматаар +</b> болно, та юу ч дарахгүй. ' +
           'Та зөвхөн <b style="color:#8A4B0B">шар ?</b> нүдийг шалгана (хуулбар сэжиг, + аваагүй, санамсаргүй шалгалт). Батлахад + болж, "Нийт +" тоо нэмэгдэнэ. Нүдэн дээр дарж зургийг нь харна.' +
           (waiting ? '<div style="margin-top:6px;font-weight:700;color:#8A4B0B">Шалгах: ' + waiting + ' ажил</div>' : '') + '</div>' +
           '<div class="row" style="gap:6px">' + ['ok', 'review', 'redo', 'fake', 'none'].map(function (k) { var j = JST[k]; return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px"><span style="width:22px;height:22px;border-radius:6px;border:1px solid #C5CADB;background:' + j[1] + ';color:' + j[2] + ';font-weight:700;display:inline-flex;align-items:center;justify-content:center">' + (j[0] || '·') + '</span>' + j[3] + '</span>'; }).join('') + '</div>' +
           '<div class="tablebox"><table><thead><tr><th style="position:sticky;left:0;background:#F4F6FB;z-index:1">Нэр</th>' +
-          opened.map(function (o) { return '<th title="' + esc(o.lessons.title) + '" style="text-align:center;min-width:46px">Х' + o.lessons.num + '</th>'; }).join('') +
+          opened.map(function (o) { return '<th title="' + esc(o.lessons.title) + '" style="text-align:center;min-width:46px">Х' + o.lessons.num + (o.lessons.kind === 'bd' ? '<div style="font-size:10px;color:#6B2FA3">БД</div>' : '') + '</th>'; }).join('') +
           '<th style="text-align:center">Нийт +</th><th>Тест</th><th>Тасалсан</th><th>Өвчтэй</th><th>Хоцорсон</th><th>Тэмдэглэл</th></tr></thead><tbody>' +
           rows.map(function (x) {
             return '<tr style="background:' + (x.weak ? '#FFF8EF' : '#fff') + '"><td style="position:sticky;left:0;background:inherit;white-space:nowrap"><b>' + esc(x.k.name) + '</b> <span class="muted" style="font-size:11px">' + esc(x.k.code) + '</span></td>' +
@@ -517,9 +539,71 @@ th{font-size:12px;color:#5A6178}
               '<td style="text-align:center"><b>' + x.plus + '</b> / ' + x.total + '</td><td>' + (x.avg == null ? '—' : x.avg + '%') + '</td><td>' + (x.ab || '—') + '</td><td>' + (x.sk || '—') + '</td><td>' + (x.lt || '—') + '</td><td>' + (x.b || '—') + '</td></tr>';
           }).join('') +
           '</tbody></table></div>' +
-          '<div class="muted">Х1, Х2… = Хичээл 1, 2 (дээр нь хулганаа аваачвал сэдвийн нэр гарна). Улбар мөр: нээгдсэн хичээлийн талаас бага нь +.</div></div>';
+          '<div class="muted">Х1, Х2… = Хичээл 1, 2 (дээр нь хулганаа аваачвал сэдвийн нэр гарна). Улбар мөр: нээгдсэн хичээлийн талаас бага нь +.</div>';
+        // ---- test matrix
+        var testLessons = opened.filter(function (o) { return (o.lessons.test || []).length || tests.some(function (t) { return t.lesson_id === o.lesson_id; }); });
+        var tcell = {}; tests.forEach(function (t) { tcell[t.student_id + '|' + t.lesson_id] = t; });
+        function pc(v) { return v == null ? '<span style="color:#C5CADB">—</span>' : '<span style="display:inline-block;min-width:44px;padding:4px 8px;border-radius:8px;font-weight:700;background:' + (v >= 80 ? '#E3F4EA;color:#1C6B40' : v >= 50 ? '#EEF1FA;color:#2747B8' : '#FFF3E5;color:#8A4B0B') + '">' + v + '%</span>'; }
+        var testHtml = '<div style="background:#F4F6FB;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.6"><b>Тест</b> автоматаар дүгнэгдэнэ. Нүдэнд зөв хариулсан / нийт асуулт. Тест нээгээгүй хичээл энд гарахгүй.</div>' +
+          (testLessons.length ? '<div class="tablebox"><table><thead><tr><th style="position:sticky;left:0;background:#F4F6FB;z-index:1">Нэр</th>' +
+            testLessons.map(function (o) { return '<th title="' + esc(o.lessons.title) + '" style="text-align:center">Х' + o.lessons.num + '</th>'; }).join('') + '<th style="text-align:center">Дундаж</th></tr></thead><tbody>' +
+            rows.map(function (x) {
+              return '<tr><td style="position:sticky;left:0;background:#fff;white-space:nowrap"><b>' + esc(x.k.name) + '</b></td>' + testLessons.map(function (o) {
+                var t = tcell[x.k.id + '|' + o.lesson_id]; if (!t) return '<td style="text-align:center;color:#C5CADB">·</td>';
+                var v = Math.round(t.score / t.total * 100);
+                return '<td style="text-align:center"><span style="font-weight:700;color:' + (v >= 80 ? '#1C6B40' : v >= 50 ? '#2747B8' : '#8A4B0B') + '">' + t.score + '/' + t.total + '</span></td>';
+              }).join('') + '<td style="text-align:center">' + pc(x.avg) + '</td></tr>';
+            }).join('') + '</tbody></table></div>'
+            : '<div class="card muted">Энэ ангид одоогоор тест нээгээгүй байна. Материалын сан → хичээл → Тест хэсэгт асуултаа оруулаад "Ангид илгээх" дээр тестийг нээнэ.</div>');
+        // ---- combined: Ирц · Явц · Бие даалт · Шалгалт
+        var clsL = opened.filter(function (o) { return o.lessons.kind !== 'bd'; }).map(function (o) { return o.lesson_id; });
+        var bdL = opened.filter(function (o) { return o.lessons.kind === 'bd'; }).map(function (o) { return o.lesson_id; });
+        var PARTS = [['att', 'Ирц'], ['yavts', 'Явц'], ['bd', 'Бие даалт'], ['exam', 'Шалгалт']];
+        rows.forEach(function (x) {
+          var plusIn = function (ids) { return ids.filter(function (l) { return st(cell[x.k.id + '|' + l]) === 'ok'; }).length; };
+          x.taskP = x.total ? Math.round(x.plus / x.total * 100) : null;
+          x.yP = clsL.length ? Math.round(plusIn(clsL) / clsL.length * 100) : null; x.yN = plusIn(clsL);
+          x.bdP = bdL.length ? Math.round(plusIn(bdL) / bdL.length * 100) : null; x.bdN = plusIn(bdL);
+          var days = att.filter(function (a) { return a.student_id === x.k.id && a.status !== 'sick' && a.status !== 'excused'; });
+          var here = days.filter(function (a) { return a.status === 'present' || a.status === 'late'; }).length;
+          x.attP = days.length ? Math.round(here / days.length * 100) : null;
+          var v = { att: x.attP, yavts: x.yP, bd: x.bdP, exam: x.avg }, sw = 0, sv = 0;
+          PARTS.forEach(function (p) { if (v[p[0]] != null && +W[p[0]] > 0) { sw += +W[p[0]]; sv += v[p[0]] * W[p[0]]; } });
+          x.allP = sw ? Math.round(sv / sw) : null;
+        });
+        var wsum = PARTS.reduce(function (a, p) { return a + (+W[p[0]] || 0); }, 0);
+        var sumHtml = '<div style="background:#F4F6FB;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.6;display:flex;flex-direction:column;gap:8px">' +
+          '<div><b>Нэгдсэн үнэлгээ</b> 4 хэсгээс бүрдэнэ. Хувийг нь та өөрөө тохируулна (нийт 100%).</div>' +
+          '<div class="row" style="gap:10px">' + PARTS.map(function (p) { return '<label style="display:flex;align-items:center;gap:6px;font-weight:600">' + p[1] + ' <input type="number" min="0" max="100" data-w="' + p[0] + '" value="' + (+W[p[0]] || 0) + '" style="width:70px;height:40px">%</label>'; }).join('') +
+          '<button class="btn sec" id="wsave" style="height:40px">Хадгалах</button><span id="wtot" class="muted">Нийт: ' + wsum + '%</span></div>' +
+          '<div style="font-size:13px"><b>Ирц</b>: Ирсэн+Хоцорсон ÷ бүртгэсэн өдөр (өвчтэй, чөлөөтэй тооцохгүй) · <b>Явц</b>: ангийн даалгаврын + · <b>Бие даалт</b>: "Бие даалт" гэж тэмдэглэсэн хичээлийн + · <b>Шалгалт</b>: тестийн дундаж. Аль нэг хэсэг хараахан байхгүй бол бусдаар нь бодно.</div>' +
+          (bdL.length ? '' : '<div style="font-size:13px;color:#6B2FA3">Бие даалтын ажил одоогоор алга. Материалын сан → хичээл → "Гарчиг, видео засах" → Төрөл: <b>Бие даалтын ажил</b> гэж сонгоно.</div>') +
+          '<div><span style="color:#1C6B40;font-weight:700">80%+ сайн</span> · <span style="color:#2747B8;font-weight:700">50–79% дунд</span> · <span style="color:#8A4B0B;font-weight:700">50%-иас доош анхаарах</span></div></div>' +
+          '<div class="tablebox"><table><thead><tr><th style="position:sticky;left:0;background:#F4F6FB;z-index:1">Нэр</th>' +
+          PARTS.map(function (p) { return '<th style="text-align:center">' + p[1] + '<div class="muted" style="font-size:11px">' + (+W[p[0]] || 0) + '%</div></th>'; }).join('') +
+          '<th style="text-align:center">Нэгдсэн</th><th>Тасалсан</th><th>Өвчтэй</th><th>Хоцорсон</th><th>Тэмдэглэл</th></tr></thead><tbody>' +
+          rows.map(function (x) {
+            return '<tr><td style="position:sticky;left:0;background:#fff;white-space:nowrap"><b>' + esc(x.k.name) + '</b></td>' +
+              '<td style="text-align:center">' + pc(x.attP) + '</td>' +
+              '<td style="text-align:center">' + pc(x.yP) + (clsL.length ? '<div class="muted" style="font-size:11px">' + x.yN + '/' + clsL.length + '</div>' : '') + '</td>' +
+              '<td style="text-align:center">' + pc(x.bdP) + (bdL.length ? '<div class="muted" style="font-size:11px">' + x.bdN + '/' + bdL.length + '</div>' : '') + '</td>' +
+              '<td style="text-align:center">' + pc(x.avg) + '</td>' +
+              '<td style="text-align:center;font-size:15px;background:#F4F6FB">' + pc(x.allP) + '</td><td>' + (x.ab || '—') + '</td><td>' + (x.sk || '—') + '</td><td>' + (x.lt || '—') + '</td><td>' + (x.b || '—') + '</td></tr>';
+          }).join('') + '</tbody></table></div>';
+        var JV = [['task', 'Даалгавар'], ['test', 'Тест'], ['sum', 'Нэгдсэн үнэлгээ']];
+        var html = cTabs() + '<div class="card"><div class="row between"><h2>' + esc(cls.name) + ' · Үнэлгээ</h2><button class="btn sec" id="csv">Excel рүү татах (CSV)</button></div>' +
+          '<div class="row" style="gap:6px">' + JV.map(function (v) { return '<button class="chip' + (jView === v[0] ? ' on' : '') + '" data-jv="' + v[0] + '">' + v[1] + '</button>'; }).join('') + '</div>' +
+          (jView === 'test' ? testHtml : jView === 'sum' ? sumHtml : taskHtml) + '</div>';
         app.innerHTML = html;
         bindCTabs();
+        app.querySelectorAll('[data-jv]').forEach(function (b) { b.onclick = function () { jView = b.dataset.jv; showJournal(); }; });
+        var wIn = app.querySelectorAll('[data-w]');
+        wIn.forEach(function (i) { i.oninput = function () { var t = 0; wIn.forEach(function (j) { t += +j.value || 0; }); var e = q('#wtot'); e.textContent = 'Нийт: ' + t + '%'; e.style.color = t === 100 ? '' : '#B42318'; }; });
+        var ws = q('#wsave'); if (ws) ws.onclick = function () {
+          var nw = {}, t = 0; wIn.forEach(function (j) { nw[j.dataset.w] = Math.max(0, +j.value || 0); t += nw[j.dataset.w]; });
+          if (t !== 100) { toast('Нийлбэр 100% байх ёстой (одоо ' + t + '%)'); return; }
+          sb.from('teachers').update({ weights: nw }).eq('id', me.id).then(function (x) { if (!fail(x)) { toast('Хувь хадгалагдлаа'); showJournal(); } });
+        };
         var subById = {}; (r2.data || []).forEach(function (x) { subById[x.id] = x; });
         var kidById = {}; kids.forEach(function (k) { kidById[k.id] = k; });
         var lesById = {}; opened.forEach(function (o) { lesById[o.lesson_id] = o.lessons; });
@@ -533,9 +617,11 @@ th{font-size:12px;color:#5A6178}
               (st(x) !== 'ok' ? '<button class="btn green" id="jok">+ Батлах</button>' : '') +
               (st(x) !== 'redo' ? '<button class="btn amber" id="jredo">Дахин хийлгэх</button>' : '') +
               '<button class="btn ghost" id="jx" style="background:#fff">Хаах</button></div>';
+            z.insertAdjacentHTML('beforeend', '<button class="zx" id="jx2" aria-label="Хаах">✕ Хаах</button>');
             document.body.appendChild(z);
             z.onclick = function (e) { if (e.target === z) z.remove(); };
             z.querySelector('#jx').onclick = function () { z.remove(); };
+            z.querySelector('#jx2').onclick = function () { z.remove(); };
             var ok = z.querySelector('#jok'); if (ok) ok.onclick = function () { z.remove(); setStatus(x.id, 'ok', showJournal); };
             var rd = z.querySelector('#jredo'); if (rd) rd.onclick = function () { z.remove(); setStatus(x.id, 'redo', showJournal); };
             sb.storage.from('submissions').createSignedUrls(x.photo_paths || [], 3600).then(function (u) {
@@ -543,15 +629,17 @@ th{font-size:12px;color:#5A6178}
               var L2 = d.map(function (y) { return y.signedUrl; });
               z.querySelector('#jimgs').innerHTML = L2.length ? L2.map(function (y, i) { return '<img alt="Сурагчийн зураг ' + (i + 1) + '" data-gi="' + i + '" src="' + esc(y) + '" style="flex:0 0 auto;height:62vh;max-width:' + (L2.length > 1 ? '70vw' : '92vw') + ';border-radius:8px;cursor:zoom-in;scroll-snap-align:start">'; }).join('') : 'Зураг олдсонгүй';
               z.querySelector('#jimgs').style.scrollSnapType = 'x mandatory';
+              stripArrows(z.querySelector('#jimgs'));
               z.querySelectorAll('[data-gi]').forEach(function (im) { im.onclick = function (e) { e.stopPropagation(); gallery(L2, +im.dataset.gi); }; });
             });
           };
         });
         q('#csv').onclick = function () {
-          var head = ['Нэр', 'Код'].concat(opened.map(function (o) { return 'Х' + o.lessons.num + ' ' + o.lessons.title; })).concat(['Нийт +', 'Нийт хичээл', 'Тест %', 'Тасалсан', 'Өвчтэй', 'Хоцорсон', 'Тэмдэглэл']);
+          var head = ['Нэр', 'Код'].concat(opened.map(function (o) { return 'Х' + o.lessons.num + ' ' + o.lessons.title; })).concat(['Нийт +', 'Нийт хичээл']).concat(testLessons.map(function (o) { return 'Тест Х' + o.lessons.num; })).concat(['Ирц %', 'Явц %', 'Бие даалт %', 'Шалгалт %', 'Нэгдсэн %', 'Тасалсан', 'Өвчтэй', 'Хоцорсон', 'Тэмдэглэл']);
           var lines = [head].concat(rows.map(function (x) {
             return [x.k.name, x.k.code].concat(lessonIds.map(function (l) { var t = st(cell[x.k.id + '|' + l]); return t === 'ok' ? '+' : (t === 'none' ? '' : JST[t][3]); }))
-              .concat([x.plus, x.total, x.avg == null ? '' : x.avg, x.ab, x.sk, x.lt, x.b]);
+              .concat([x.plus, x.total]).concat(testLessons.map(function (o) { var t = tcell[x.k.id + '|' + o.lesson_id]; return t ? t.score + '/' + t.total : ''; }))
+              .concat([x.attP, x.yP, x.bdP, x.avg, x.allP].map(function (v) { return v == null ? '' : v; })).concat([x.ab, x.sk, x.lt, x.b]);
           }));
           var csv = '﻿' + lines.map(function (l) { return l.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
           var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = cls.name + '-unelgee.csv'; a.click();
@@ -819,7 +907,7 @@ th{font-size:12px;color:#5A6178}
         ls.forEach(function (l) {
           var ok = l.video_url && l.exercise_url && (l.test || []).length;
           var sent = acc.filter(function (a) { return a.lesson_id === l.id; }).map(function (a) { var c = classes.filter(function (k) { return k.id === a.class_id; })[0]; return c ? c.name : ''; }).join(', ');
-          html += tile('data-l="' + l.id + '"', '<div style="position:relative">' + FOLDER + '<span style="position:absolute;left:0;right:0;top:16px;text-align:center;font-weight:700;font-size:15px;color:#7A5A00">' + l.num + '</span></div>', esc(l.title),
+          html += tile('data-l="' + l.id + '"', '<div style="position:relative">' + FOLDER + '<span style="position:absolute;left:0;right:0;top:16px;text-align:center;font-weight:700;font-size:15px;color:#7A5A00">' + l.num + '</span></div>', (l.kind === 'bd' ? '<span style="color:#6B2FA3">Бие даалт · </span>' : '') + esc(l.title),
             '<span class="pill ' + (ok ? 'p-green' : 'p-amber') + '" style="font-size:11px">' + (ok ? 'Бэлэн' : 'Дутуу') + '</span>' + (sent ? ' ' + esc(sent) : ''));
         });
         html += '<div style="border:1.5px dashed #A9B1CC;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;justify-content:center;min-height:120px"><input type="text" placeholder="Ээлжит хичээлийн гарчиг" aria-label="Ээлжит хичээлийн гарчиг" data-lt="' + U.id + '"><button class="btn" data-addl="' + U.id + '" data-n="' + (ls.length + 1) + '">+ Ээлжит нэмэх</button></div></div>';
@@ -838,6 +926,7 @@ th{font-size:12px;color:#5A6178}
         if (libPanel === 'edit') {
           html += '<div class="card" style="border:2px solid #2747B8"><div class="row between"><h3>Гарчиг, видео</h3><button class="btn ghost" data-panel="">Хаах</button></div>' +
             '<label class="muted">Гарчиг</label><input type="text" id="lt" value="' + esc(L.title) + '">' +
+            '<label class="muted">Төрөл (үнэлгээнд хаана орох)</label><select id="lk"><option value="class"' + (L.kind !== 'bd' ? ' selected' : '') + '>Ангийн даалгавар → Явц</option><option value="bd"' + (L.kind === 'bd' ? ' selected' : '') + '>Бие даалтын ажил → Бие даалт</option></select>' +
             '<label class="muted">Видео линк (YouTube эсвэл Google Drive, "Anyone with the link") · хуудсан дотор тоглогдоно</label><input type="url" id="lv" value="' + esc(L.video_url || '') + '"><div id="lvp" style="display:flex;flex-direction:column;gap:8px">' + vidPreview(L.video_url) + '</div>' +
             '<label class="muted">Нэмэлт линк (Medle г.м.) · мөр бүрт нэг: Нэр | линк</label><textarea id="lx2" style="min-height:90px" placeholder="Medle хичээл | https://medle.mn/lesson/...">' + esc((L.extra_links || []).map(function (x) { return x.title + ' | ' + x.url; }).join('\n')) + '</textarea><div id="lxp" style="display:flex;flex-direction:column;gap:8px">' + linksPreview(L.extra_links) + '</div>' +
             '<button class="btn" id="saveE">Хадгалах</button></div>';
@@ -890,7 +979,7 @@ th{font-size:12px;color:#5A6178}
         if (q('#lx2')) q('#lx2').oninput = function () { q('#lxp').innerHTML = linksPreview(parseLinks()); };
         var se = q('#saveE'); if (se) se.onclick = function () {
           var links = q('#lx2').value.split('\n').map(function (s) { s = s.trim(); if (!s) return null; var i = s.lastIndexOf('|'); var title = i > 0 ? s.slice(0, i).trim() : 'Нэмэлт материал'; var url = (i > 0 ? s.slice(i + 1) : s).trim(); return /^https?:\/\//.test(url) ? { title: title || 'Нэмэлт материал', url: url } : null; }).filter(Boolean);
-          sb.from('lessons').update({ title: q('#lt').value.trim() || L.title, video_url: q('#lv').value.trim() || null, extra_links: links }).eq('id', L.id).then(function (x) { if (!fail(x)) { toast('Хадгалагдлаа'); libPanel = null; showLibrary(); } });
+          sb.from('lessons').update({ title: q('#lt').value.trim() || L.title, kind: q('#lk').value, video_url: q('#lv').value.trim() || null, extra_links: links }).eq('id', L.id).then(function (x) { if (!fail(x)) { toast('Хадгалагдлаа'); libPanel = null; showLibrary(); } });
         };
         var stt = q('#saveT'); if (stt) stt.onclick = function () {
           var test = parseTest(q('#lq').value);

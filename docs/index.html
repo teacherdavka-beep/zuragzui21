@@ -263,8 +263,35 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
         app.querySelectorAll('img[data-pp]').forEach(function (im) { var u = photoUrls[im.dataset.pp]; if (u) { im.src = u; im.style.opacity = 1; } });
       }).catch(function () {});
   }
+  function stripArrows(el) {
+    if (!el || el.dataset.arr) return; el.dataset.arr = '1';
+    var w = document.createElement('div'); w.style.cssText = 'position:relative';
+    el.parentNode.insertBefore(w, el); w.appendChild(el);
+    var mk = function (d) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = d < 0 ? '‹' : '›'; b.setAttribute('aria-label', d < 0 ? 'Өмнөх зураг' : 'Дараах зураг');
+      b.style.cssText = 'position:absolute;top:50%;transform:translateY(-50%);' + (d < 0 ? 'left:4px' : 'right:4px') + ';width:40px;height:40px;border-radius:50%;border:0;background:rgba(26,31,54,.8);color:#fff;font-size:24px;font-weight:700;line-height:1;cursor:pointer;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.25)';
+      b.onclick = function (e) { e.stopPropagation(); el.scrollBy({ left: d * Math.max(120, el.clientWidth * 0.8), behavior: 'smooth' }); };
+      w.appendChild(b); return b;
+    };
+    var L = mk(-1), Rb = mk(1);
+    var upd = function () { var max = el.scrollWidth - el.clientWidth - 2; L.style.display = el.scrollLeft > 2 ? '' : 'none'; Rb.style.display = el.scrollLeft < max ? '' : 'none'; };
+    el.addEventListener('scroll', upd); setTimeout(upd, 50); setTimeout(upd, 800);
+    el.querySelectorAll('img').forEach(function (im) { im.addEventListener('load', upd); });
+  }
   function bindDel() {
     loadPhotoUrls();
+    app.querySelectorAll('.strip').forEach(stripArrows);
+    app.querySelectorAll('img[data-pp]').forEach(function (im) {
+      im.style.cursor = 'zoom-in';
+      im.onclick = function () {
+        if (!im.src || im.style.opacity === '0') return;
+        var z = document.createElement('div');
+        z.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;z-index:50';
+        z.innerHTML = '<img alt="" src="' + im.src + '" style="max-width:96vw;max-height:88vh"><button aria-label="Хаах" style="position:fixed;top:14px;right:14px;height:48px;padding:0 18px;border-radius:99px;border:0;background:#fff;font-size:16px;font-weight:700">✕ Хаах</button>';
+        z.onclick = function () { z.remove(); };
+        document.body.appendChild(z);
+      };
+    });
     app.querySelectorAll('[data-ds]').forEach(function (b) {
       b.onclick = function () {
         if (!b.classList.contains('sure')) { app.querySelectorAll('.x.sure').forEach(function (o) { o.classList.remove('sure'); o.textContent = '✕'; }); b.classList.add('sure'); b.textContent = 'Устгах уу?'; return; }
@@ -353,6 +380,7 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
       el.innerHTML = photos.length ? '<div class="muted" style="margin-bottom:6px"><b>' + photos.length + ' зураг</b> бэлэн · ✕ дарж хасна</div><div class="strip">' +
         photos.map(function (p, i) { return '<div class="ph"><img alt="" src="' + p.preview + '"><span class="no">' + (i + 1) + '</span><button class="x" data-rm="' + i + '" aria-label="Хасах">✕</button></div>'; }).join('') + '</div>' : '';
       el.querySelectorAll('[data-rm]').forEach(function (b) { b.onclick = function () { photos.splice(+b.dataset.rm, 1); drawPh(); }; });
+      var stp = el.querySelector('.strip'); if (stp) { stripArrows(stp); stp.scrollLeft = stp.scrollWidth; }
     }
     var yes = document.getElementById('yes'), no = document.getElementById('no');
     yes.onclick = function () { claim = true; yes.className = 'on'; no.className = ''; };
