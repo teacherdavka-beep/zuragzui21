@@ -529,14 +529,14 @@ th{font-size:12px;color:#5A6178}
           '<div class="row" style="gap:6px">' + ['ok', 'review', 'redo', 'fake', 'none'].map(function (k) { var j = JST[k]; return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px"><span style="width:22px;height:22px;border-radius:6px;border:1px solid #C5CADB;background:' + j[1] + ';color:' + j[2] + ';font-weight:700;display:inline-flex;align-items:center;justify-content:center">' + (j[0] || '·') + '</span>' + j[3] + '</span>'; }).join('') + '</div>' +
           '<div class="tablebox"><table><thead><tr><th style="position:sticky;left:0;background:#F4F6FB;z-index:1">Нэр</th>' +
           opened.map(function (o) { return '<th title="' + esc(o.lessons.title) + '" style="text-align:center;min-width:46px">Х' + o.lessons.num + (o.lessons.kind === 'bd' ? '<div style="font-size:10px;color:#6B2FA3">БД</div>' : '') + '</th>'; }).join('') +
-          '<th style="text-align:center">Нийт +</th><th>Тест</th><th>Тасалсан</th><th>Өвчтэй</th><th>Хоцорсон</th><th>Тэмдэглэл</th></tr></thead><tbody>' +
+          '<th style="text-align:center">Нийт +</th><th>Тест</th></tr></thead><tbody>' +
           rows.map(function (x) {
             return '<tr style="background:' + (x.weak ? '#FFF8EF' : '#fff') + '"><td style="position:sticky;left:0;background:inherit;white-space:nowrap"><b>' + esc(x.k.name) + '</b> <span class="muted" style="font-size:11px">' + esc(x.k.code) + '</span></td>' +
               lessonIds.map(function (l) {
                 var c = cell[x.k.id + '|' + l], j = JST[st(c)];
                 return '<td style="text-align:center;padding:4px">' + (c ? '<button data-jc="' + c.id + '" aria-label="' + esc(x.k.name) + ' ' + j[3] + '" style="width:34px;height:34px;border-radius:8px;border:1px solid ' + j[2] + '33;background:' + j[1] + ';color:' + j[2] + ';font-weight:700;font-size:16px;cursor:pointer;position:relative">' + j[0] + ((c.photo_paths || []).length > 1 ? '<sup style="position:absolute;right:-6px;top:-6px;background:#1E2A5A;color:#fff;border-radius:99px;font-size:10px;padding:1px 5px">' + c.photo_paths.length + '</sup>' : '') + '</button>' : '<span style="color:#C5CADB">·</span>') + '</td>';
               }).join('') +
-              '<td style="text-align:center"><b>' + x.plus + '</b> / ' + x.total + '</td><td>' + (x.avg == null ? '—' : x.avg + '%') + '</td><td>' + (x.ab || '—') + '</td><td>' + (x.sk || '—') + '</td><td>' + (x.lt || '—') + '</td><td>' + (x.b || '—') + '</td></tr>';
+              '<td style="text-align:center"><b>' + x.plus + '</b> / ' + x.total + '</td><td>' + (x.avg == null ? '—' : x.avg + '%') + '</td></tr>';
           }).join('') +
           '</tbody></table></div>' +
           '<div class="muted">Х1, Х2… = Хичээл 1, 2 (дээр нь хулганаа аваачвал сэдвийн нэр гарна). Улбар мөр: нээгдсэн хичээлийн талаас бага нь +.</div>';
@@ -576,19 +576,19 @@ th{font-size:12px;color:#5A6178}
           '<div><b>Нэгдсэн үнэлгээ</b> 4 хэсгээс бүрдэнэ. Хувийг нь та өөрөө тохируулна (нийт 100%).</div>' +
           '<div class="row" style="gap:10px">' + PARTS.map(function (p) { return '<label style="display:flex;align-items:center;gap:6px;font-weight:600">' + p[1] + ' <input type="number" min="0" max="100" data-w="' + p[0] + '" value="' + (+W[p[0]] || 0) + '" style="width:70px;height:40px">%</label>'; }).join('') +
           '<button class="btn sec" id="wsave" style="height:40px">Хадгалах</button><span id="wtot" class="muted">Нийт: ' + wsum + '%</span></div>' +
-          '<div style="font-size:13px"><b>Ирц</b>: Ирсэн+Хоцорсон ÷ бүртгэсэн өдөр (өвчтэй, чөлөөтэй тооцохгүй) · <b>Явц</b>: ангийн даалгаврын + · <b>Бие даалт</b>: "Бие даалт" гэж тэмдэглэсэн хичээлийн + · <b>Шалгалт</b>: тестийн дундаж. Аль нэг хэсэг хараахан байхгүй бол бусдаар нь бодно.</div>' +
+          '<div style="font-size:13px"><b>Ирц</b>: "Ирц бүртгэх" хэсгээс автоматаар бодогдоно · <b>Явц</b>: ангийн даалгаврын + · <b>Бие даалт</b>: "Бие даалт" гэж тэмдэглэсэн хичээлийн + · <b>Шалгалт</b>: тестийн дундаж. Аль нэг хэсэг хараахан байхгүй бол бусдаар нь бодно.</div>' +
           (bdL.length ? '' : '<div style="font-size:13px;color:#6B2FA3">Бие даалтын ажил одоогоор алга. Материалын сан → хичээл → "Гарчиг, видео засах" → Төрөл: <b>Бие даалтын ажил</b> гэж сонгоно.</div>') +
           '<div><span style="color:#1C6B40;font-weight:700">80%+ сайн</span> · <span style="color:#2747B8;font-weight:700">50–79% дунд</span> · <span style="color:#8A4B0B;font-weight:700">50%-иас доош анхаарах</span></div></div>' +
           '<div class="tablebox"><table><thead><tr><th style="position:sticky;left:0;background:#F4F6FB;z-index:1">Нэр</th>' +
           PARTS.map(function (p) { return '<th style="text-align:center">' + p[1] + '<div class="muted" style="font-size:11px">' + (+W[p[0]] || 0) + '%</div></th>'; }).join('') +
-          '<th style="text-align:center">Нэгдсэн</th><th>Тасалсан</th><th>Өвчтэй</th><th>Хоцорсон</th><th>Тэмдэглэл</th></tr></thead><tbody>' +
+          '<th style="text-align:center">Нэгдсэн</th></tr></thead><tbody>' +
           rows.map(function (x) {
             return '<tr><td style="position:sticky;left:0;background:#fff;white-space:nowrap"><b>' + esc(x.k.name) + '</b></td>' +
               '<td style="text-align:center">' + pc(x.attP) + '</td>' +
               '<td style="text-align:center">' + pc(x.yP) + (clsL.length ? '<div class="muted" style="font-size:11px">' + x.yN + '/' + clsL.length + '</div>' : '') + '</td>' +
               '<td style="text-align:center">' + pc(x.bdP) + (bdL.length ? '<div class="muted" style="font-size:11px">' + x.bdN + '/' + bdL.length + '</div>' : '') + '</td>' +
               '<td style="text-align:center">' + pc(x.avg) + '</td>' +
-              '<td style="text-align:center;font-size:15px;background:#F4F6FB">' + pc(x.allP) + '</td><td>' + (x.ab || '—') + '</td><td>' + (x.sk || '—') + '</td><td>' + (x.lt || '—') + '</td><td>' + (x.b || '—') + '</td></tr>';
+              '<td style="text-align:center;font-size:15px;background:#F4F6FB">' + pc(x.allP) + '</td></tr>';
           }).join('') + '</tbody></table></div>';
         var JV = [['task', 'Даалгавар'], ['test', 'Тест'], ['sum', 'Нэгдсэн үнэлгээ']];
         var html = cTabs() + '<div class="card"><div class="row between"><h2>' + esc(cls.name) + ' · Үнэлгээ</h2><button class="btn sec" id="csv">Excel рүү татах (CSV)</button></div>' +
@@ -635,11 +635,11 @@ th{font-size:12px;color:#5A6178}
           };
         });
         q('#csv').onclick = function () {
-          var head = ['Нэр', 'Код'].concat(opened.map(function (o) { return 'Х' + o.lessons.num + ' ' + o.lessons.title; })).concat(['Нийт +', 'Нийт хичээл']).concat(testLessons.map(function (o) { return 'Тест Х' + o.lessons.num; })).concat(['Ирц %', 'Явц %', 'Бие даалт %', 'Шалгалт %', 'Нэгдсэн %', 'Тасалсан', 'Өвчтэй', 'Хоцорсон', 'Тэмдэглэл']);
+          var head = ['Нэр', 'Код'].concat(opened.map(function (o) { return 'Х' + o.lessons.num + ' ' + o.lessons.title; })).concat(['Нийт +', 'Нийт хичээл']).concat(testLessons.map(function (o) { return 'Тест Х' + o.lessons.num; })).concat(['Ирц %', 'Явц %', 'Бие даалт %', 'Шалгалт %', 'Нэгдсэн %']);
           var lines = [head].concat(rows.map(function (x) {
             return [x.k.name, x.k.code].concat(lessonIds.map(function (l) { var t = st(cell[x.k.id + '|' + l]); return t === 'ok' ? '+' : (t === 'none' ? '' : JST[t][3]); }))
               .concat([x.plus, x.total]).concat(testLessons.map(function (o) { var t = tcell[x.k.id + '|' + o.lesson_id]; return t ? t.score + '/' + t.total : ''; }))
-              .concat([x.attP, x.yP, x.bdP, x.avg, x.allP].map(function (v) { return v == null ? '' : v; })).concat([x.ab, x.sk, x.lt, x.b]);
+              .concat([x.attP, x.yP, x.bdP, x.avg, x.allP].map(function (v) { return v == null ? '' : v; }));
           }));
           var csv = '﻿' + lines.map(function (l) { return l.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
           var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = cls.name + '-unelgee.csv'; a.click();
