@@ -209,8 +209,66 @@ th{font-size:12px;color:#5A6178}
   }
   // ---------- BOARD (padlet-like) ----------
   var boardLesson = null, openMiss = {};
+  var boardKeep = null;
+  function openClassGrid(cls, ck, latest, lessonTitle) {
+    var changed = false, filt = 'all';
+    var z = document.createElement('div');
+    z.style.cssText = 'position:fixed;inset:0;background:#F5F6FA;z-index:40;overflow:auto;font-family:inherit';
+    var sent = ck.filter(function (k) { return latest[k.id]; });
+    var urls = {};
+    var LB = { review: ['Шалгах', 'p-amber'], ok: ['+ Журналд', 'p-green'], auto: ['+ Журналд', 'p-green'], redo: ['Дахин хийх', 'p-blue'], fake: ['Хуулбар', 'p-red'] };
+    function close() { z.remove(); document.removeEventListener('keydown', esc1); if (changed) { var bx = app.querySelector('[data-boardx]'); boardKeep = { y: window.scrollY, x: bx ? bx.scrollLeft : 0 }; showReview(); } }
+    function esc1(e) { if (e.key === 'Escape' && !document.querySelector('.zoom')) close(); }
+    function draw() {
+      var list = sent.filter(function (k) { var st = latest[k.id].status; return filt === 'all' || (filt === 'review' ? st === 'review' : (st === 'ok' || st === 'auto')); });
+      var nRev = sent.filter(function (k) { return latest[k.id].status === 'review'; }).length;
+      z.innerHTML = '<div style="position:sticky;top:0;background:#1E2A5A;color:#fff;padding:14px 24px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;z-index:2">' +
+        '<div><div style="font-size:20px;font-weight:700">' + esc(cls.name) + ' анги · бүх зураг</div><div style="font-size:13px;color:#C9D1F0">' + esc(lessonTitle) + ' · ' + sent.length + ' / ' + ck.length + ' сурагч илгээсэн</div></div>' +
+        '<button class="btn" id="gx" style="background:#fff;color:#1A1F36">✕ Хаах</button></div>' +
+        '<div style="padding:16px 24px;display:flex;flex-direction:column;gap:14px">' +
+        '<div class="row">' + [['all', 'Бүгд (' + sent.length + ')'], ['review', 'Шалгах (' + nRev + ')'], ['ok', 'Журналд орсон (' + (sent.length - nRev) + ')']].map(function (f) { return '<button class="chip' + (filt === f[0] ? ' on' : '') + '" data-gf="' + f[0] + '">' + f[1] + '</button>'; }).join('') + '</div>' +
+        (list.length ? '' : '<div class="card muted">Энд харуулах ажил алга.</div>') +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px">' +
+        list.map(function (k) {
+          var s = latest[k.id], pp = s.photo_paths || [], lb = LB[s.status] || [s.status, 'p-blue'];
+          return '<div class="card" data-gc="' + s.id + '" style="padding:10px;gap:8px">' +
+            '<button data-gv="' + k.id + '" aria-label="' + esc(k.name) + '-ийн зураг томруулах" style="position:relative;height:200px;border:0;padding:0;border-radius:8px;overflow:hidden;background:#E9ECF6;cursor:zoom-in">' +
+            '<img alt="" data-gp="' + esc(pp[0] || '') + '" style="width:100%;height:100%;object-fit:cover;display:block">' +
+            (pp.length > 1 ? '<span style="position:absolute;right:6px;bottom:6px;background:rgba(26,31,54,.85);color:#fff;font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px">' + pp.length + ' зураг</span>' : '') + '</button>' +
+            '<div class="row between" style="flex-wrap:nowrap"><b style="font-size:14px">' + esc(k.name) + '</b><span class="pill ' + lb[1] + '" data-gs>' + lb[0] + '</span></div>' +
+            (s.status === 'review' ? '<div class="row" style="flex-wrap:nowrap" data-gb><button class="btn green" style="flex:1;height:40px;padding:0 8px" data-gok="' + s.id + '">+ Батлах</button><button class="btn amber" style="flex:1;height:40px;padding:0 8px" data-gredo="' + s.id + '">Дахин хийх</button></div>' : '') +
+            '</div>';
+        }).join('') + '</div>' +
+        (ck.length > sent.length ? '<div class="card" style="font-size:14px;line-height:1.6"><b>Илгээгээгүй (' + (ck.length - sent.length) + '):</b> ' + ck.filter(function (k) { return !latest[k.id]; }).map(function (k) { return esc(k.name); }).join(', ') + '</div>' : '') +
+        '</div>';
+      z.querySelector('#gx').onclick = close;
+      z.querySelectorAll('[data-gf]').forEach(function (b) { b.onclick = function () { filt = b.dataset.gf; draw(); }; });
+      z.querySelectorAll('img[data-gp]').forEach(function (im) { if (urls[im.dataset.gp]) im.src = urls[im.dataset.gp]; });
+      z.querySelectorAll('[data-gv]').forEach(function (b) {
+        b.onclick = function () { var pp = latest[b.dataset.gv].photo_paths || []; var l = pp.map(function (p) { return urls[p]; }).filter(Boolean); if (l.length) gallery(l, 0); };
+      });
+      var act = function (id, st, card) {
+        sb.from('submissions').update({ status: st, reviewed_at: new Date().toISOString() }).eq('id', id).then(function (r) {
+          if (fail(r)) return; changed = true;
+          sent.forEach(function (k) { if (latest[k.id].id === id) latest[k.id].status = st; });
+          var lb = LB[st]; var pill = card.querySelector('[data-gs]'); pill.className = 'pill ' + lb[1]; pill.textContent = lb[0];
+          var bb = card.querySelector('[data-gb]'); if (bb) bb.remove();
+          toast(st === 'ok' ? 'Журналд орлоо' : 'Дахин хийх гэж буцаав');
+        });
+      };
+      z.querySelectorAll('[data-gok]').forEach(function (b) { b.onclick = function () { b.disabled = true; act(b.dataset.gok, 'ok', b.closest('[data-gc]')); }; });
+      z.querySelectorAll('[data-gredo]').forEach(function (b) { b.onclick = function () { b.disabled = true; act(b.dataset.gredo, 'redo', b.closest('[data-gc]')); }; });
+    }
+    document.body.appendChild(z); document.addEventListener('keydown', esc1);
+    draw();
+    var all = []; sent.forEach(function (k) { all = all.concat(latest[k.id].photo_paths || []); });
+    if (all.length) sb.storage.from('submissions').createSignedUrls(all, 3600).then(function (u) {
+      (u.data || []).forEach(function (x) { if (x.path && x.signedUrl) urls[x.path] = x.signedUrl; });
+      z.querySelectorAll('img[data-gp]').forEach(function (im) { if (urls[im.dataset.gp]) im.src = urls[im.dataset.gp]; });
+    });
+  }
   function showReview() {
-    app.innerHTML = '<div class="muted">Ачаалж байна…</div>';
+    if (!boardKeep) app.innerHTML = '<div class="muted">Ачаалж байна…</div>';
     Promise.all([
       sb.from('lesson_access').select('lesson_id,class_id,opened_at,due_at,lessons(title,num,units(sort))').order('opened_at', { ascending: false }),
       sb.from('students').select('id,name,code,class_id').eq('active', true).order('code')
@@ -227,7 +285,7 @@ th{font-size:12px;color:#5A6178}
         var html = '<div class="row between"><h2>Даалгаврын самбар</h2><span class="pill p-amber">Танд шалгах (бүх сэдэв): ' + pendingAll + '</span></div>';
         html += order.length ? '<div class="row">' + order.map(function (id) { var l = lessonsMap[id]; return '<button class="chip' + (id === boardLesson ? ' on' : '') + '" data-bl="' + id + '">Хичээл ' + l.num + ' · ' + esc(l.title) + '</button>'; }).join('') + '</div>'
           : '<div class="muted">Одоогоор ямар ч ангид сэдэв нээгээгүй байна. Материалын сангаас "Ангид илгээх" дарна. Ангиуд доор харагдаж байгаа, QR-ээ авч болно.</div>';
-        html += '<div style="overflow-x:auto;padding-bottom:12px"><div style="display:flex;gap:14px;align-items:flex-start;width:max-content">';
+        html += '<div data-boardx style="overflow-x:auto;padding-bottom:12px"><div style="display:flex;gap:14px;align-items:flex-start;width:max-content">';
         classes.forEach(function (c) {
           var ck = kids.filter(function (k) { return k.class_id === c.id; });
           var opened = acc.some(function (a) { return a.class_id === c.id && a.lesson_id === boardLesson; });
@@ -250,6 +308,7 @@ th{font-size:12px;color:#5A6178}
             '<button class="btn ghost" style="width:100%;border:0;text-align:left" data-cr="' + c.id + '">Код, нэрс</button></div></div>';
           if (opened) {
             html += '<div style="background:#E3F4EA;border-radius:10px;padding:8px 12px" class="row between"><span style="font-size:13px;font-weight:600;color:#1C6B40">Журналд орсон</span><b style="color:#1C6B40">' + done.length + '</b></div>';
+            html += '<button class="btn sec" data-grid="' + c.id + '">▦ Бүх зургийг нэг дор харах (' + sent.length + ')</button>';
             html += '<button class="btn amber" style="text-align:left" data-miss="' + c.id + '">' + missing.length + ' сурагч илгээгээгүй ' + (openMiss[c.id] ? '▲' : '▼') + '</button>';
             if (openMiss[c.id]) html += '<div class="card" style="padding:10px;font-size:13px;line-height:1.6">' + (missing.map(function (k) { return esc(k.name); }).join(', ') || 'Бүгд илгээсэн') + '</div>';
             review.forEach(function (k) {
@@ -286,6 +345,10 @@ th{font-size:12px;color:#5A6178}
         };
         app.querySelectorAll('[data-oc]').forEach(function (b) { b.onclick = function () { openClassView(b.dataset.oc, 'att'); }; });
         app.querySelectorAll('[data-bl]').forEach(function (b) { b.onclick = function () { boardLesson = b.dataset.bl; showReview(); }; });
+        app.querySelectorAll('[data-grid]').forEach(function (b) {
+          b.onclick = function () { var c = classes.filter(function (x) { return x.id === b.dataset.grid; })[0]; openClassGrid(c, kids.filter(function (k) { return k.class_id === c.id; }), latest, 'Хичээл ' + lessonsMap[boardLesson].num + ' · ' + lessonsMap[boardLesson].title); };
+        });
+        if (boardKeep) { var bk = boardKeep; boardKeep = null; var bx = app.querySelector('[data-boardx]'); if (bx) bx.scrollLeft = bk.x; window.scrollTo(0, bk.y); }
         app.querySelectorAll('[data-miss]').forEach(function (b) { b.onclick = function () { openMiss[b.dataset.miss] = !openMiss[b.dataset.miss]; showReview(); }; });
         app.querySelectorAll('[data-menu]').forEach(function (b) {
           b.onclick = function (e) { e.stopPropagation(); var m = app.querySelector('[data-menubox="' + b.dataset.menu + '"]'); var was = m.hidden; app.querySelectorAll('[data-menubox]').forEach(function (x) { x.hidden = true; }); m.hidden = !was; };
@@ -322,11 +385,11 @@ th{font-size:12px;color:#5A6178}
             });
           };
         });
-        app.querySelectorAll('[data-ok]').forEach(function (b) { b.onclick = function () { setStatus(b.dataset.ok, 'ok', showReview); }; });
+        app.querySelectorAll('[data-ok]').forEach(function (b) { b.onclick = function () { b.disabled = true; setStatus(b.dataset.ok, 'ok'); }; });
         app.querySelectorAll('[data-bad]').forEach(function (b) {
           b.onclick = function () {
             var lie = b.dataset.r === 'spot' || b.dataset.r === 'flagged' || b.dataset.r === 'dup';
-            setStatus(b.dataset.bad, lie ? 'fake' : 'redo', showReview);
+            b.disabled = true; setStatus(b.dataset.bad, lie ? 'fake' : 'redo');
             if (b.dataset.r === 'spot' || b.dataset.r === 'flagged') sb.from('students').update({ no_auto: true }).eq('id', b.dataset.st).then(function () {});
           };
         });
@@ -367,7 +430,16 @@ th{font-size:12px;color:#5A6178}
   function setStatus(id, st, after) {
     sb.from('submissions').update({ status: st, reviewed_at: new Date().toISOString() }).eq('id', id).then(function (r) {
       if (fail(r)) return;
-      var el = app.querySelector('.card[data-id="' + id + '"]'); if (el) el.remove(); if (after) setTimeout(after, 600);
+      var el = app.querySelector('.card[data-id="' + id + '"]');
+      if (el) {
+        var nm = (el.querySelector('b') || {}).textContent || '';
+        var d = document.createElement('div');
+        d.style.cssText = 'border-radius:10px;padding:10px 12px;font-size:14px;font-weight:600;' + (st === 'ok' ? 'background:#E3F4EA;color:#1C6B40' : 'background:#FFF3E5;color:#8A4B0B');
+        d.textContent = (st === 'ok' ? '✓ ' : '↺ ') + nm + (st === 'ok' ? ' · журналд орлоо' : (st === 'fake' ? ' · хуулбар гэж тэмдэглэв' : ' · дахин хийлгэхээр буцаав'));
+        el.replaceWith(d);
+        var pill = app.querySelector('.pill.p-amber'); if (pill) pill.textContent = pill.textContent.replace(/(\d+)$/, function (m) { return Math.max(0, +m - 1); });
+      }
+      if (after) after();
       toast(st === 'ok' ? 'Журналд орлоо' : (st === 'fake' ? 'Тэмдэглэгдлээ · энэ сурагчийн автомат батлалт зогслоо' : 'Сурагчид "Дахин хийх" гэж харагдана'));
     });
   }
@@ -491,10 +563,12 @@ th{font-size:12px;color:#5A6178}
     none: ['', '#fff', '#A9B1CC', 'Илгээгээгүй']
   };
   var jView = 'task';
+  var jKeep = null;
+  function journalKeep() { var tb = app.querySelector('.tablebox'); jKeep = { y: window.scrollY, x: tb ? tb.scrollLeft : 0 }; showJournal(); }
   function showJournal() {
     if (needClass()) return;
     var cls = classes.filter(function (c) { return c.id === curClass; })[0];
-    app.innerHTML = cTabs() + '<div class="muted">Ачаалж байна…</div>'; bindCTabs();
+    if (!jKeep) { app.innerHTML = cTabs() + '<div class="muted">Ачаалж байна…</div>'; bindCTabs(); }
     Promise.all([
       sb.from('students').select('id,name,code').eq('class_id', curClass).eq('active', true).order('code'),
       sb.from('lesson_access').select('lesson_id,lessons(title,num,test,kind,units(sort))').eq('class_id', curClass),
@@ -607,6 +681,7 @@ th{font-size:12px;color:#5A6178}
           '<div class="row" style="gap:6px">' + JV.map(function (v) { return '<button class="chip' + (jView === v[0] ? ' on' : '') + '" data-jv="' + v[0] + '">' + v[1] + '</button>'; }).join('') + '</div>' +
           (jView === 'test' ? testHtml : jView === 'sum' ? sumHtml : taskHtml) + '</div>';
         app.innerHTML = html;
+        if (jKeep) { var kk = jKeep; jKeep = null; var tb2 = app.querySelector('.tablebox'); if (tb2) tb2.scrollLeft = kk.x; window.scrollTo(0, kk.y); }
         bindCTabs();
         app.querySelectorAll('[data-jv]').forEach(function (b) { b.onclick = function () { jView = b.dataset.jv; showJournal(); }; });
         var wIn = app.querySelectorAll('[data-w]');
@@ -634,8 +709,8 @@ th{font-size:12px;color:#5A6178}
             z.onclick = function (e) { if (e.target === z) z.remove(); };
             z.querySelector('#jx').onclick = function () { z.remove(); };
             z.querySelector('#jx2').onclick = function () { z.remove(); };
-            var ok = z.querySelector('#jok'); if (ok) ok.onclick = function () { z.remove(); setStatus(x.id, 'ok', showJournal); };
-            var rd = z.querySelector('#jredo'); if (rd) rd.onclick = function () { z.remove(); setStatus(x.id, 'redo', showJournal); };
+            var ok = z.querySelector('#jok'); if (ok) ok.onclick = function () { z.remove(); setStatus(x.id, 'ok', journalKeep); };
+            var rd = z.querySelector('#jredo'); if (rd) rd.onclick = function () { z.remove(); setStatus(x.id, 'redo', journalKeep); };
             sb.storage.from('submissions').createSignedUrls(x.photo_paths || [], 3600).then(function (u) {
               var d = (u.data || []).filter(function (y) { return y.signedUrl; });
               var L2 = d.map(function (y) { return y.signedUrl; });
