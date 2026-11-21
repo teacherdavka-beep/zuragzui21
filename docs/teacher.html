@@ -165,7 +165,7 @@ th{font-size:12px;color:#5A6178}
   }
   function drawTabs() {
     var T = [['review', 'Журнал'], ['library', 'Материалын сан'], ['feedback', 'Санал хүсэлт' + (fbUnseen ? ' (' + fbUnseen + ')' : '')]];
-    if (isOwner) T.push(['team', 'Багш нар']);
+    T.push(isOwner ? ['team', 'Багш нар'] : ['myfb', 'Санал өгөх']);
     tabsEl.hidden = false;
     tabsEl.innerHTML = T.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (t[0] === tab ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') +
       '<button data-t="out">Гарах</button>';
@@ -186,7 +186,24 @@ th{font-size:12px;color:#5A6178}
   }
   function showC() { if (cView === 'att') showAttendance(); else if (cView === 'lesson') showLesson(); else if (cView === 'table') showJournal(); else showClasses(); }
   function openClassView(id, view) { curClass = id; cView = view || 'att'; tab = 'review'; drawTabs(); showC(); }
-  function go(t) { tab = t; drawTabs(); ({ review: showReview, library: showLibrary, feedback: showFeedback, team: showTeam })[t](); countFb(); }
+  function go(t) { tab = t; drawTabs(); ({ review: showReview, library: showLibrary, feedback: showFeedback, team: showTeam, myfb: showMyFeedback })[t](); countFb(); }
+  function showMyFeedback() {
+    var rating = 0;
+    app.innerHTML = '<div class="card" style="max-width:640px"><h2>Платформын талаарх санал</h2><div class="muted">Таны санал платформыг сайжруулахад шууд ашиглагдана. Долоо хоногт нэг удаа бөглөхөд хангалттай.</div>' +
+      '<label class="muted">1. Платформ ажилд тань хэр тус болж байна вэ?</label><div class="row" id="rt">' + [1, 2, 3, 4, 5].map(function (i) { return '<button class="btn ghost" data-rt="' + i + '" style="width:52px">' + i + '</button>'; }).join('') + '</div>' +
+      '<label class="muted" for="hs">2. Долоо хоногт ойролцоогоор хэдэн цаг хэмнэсэн бэ?</label><input id="hs" type="number" min="0" max="100" step="0.5" placeholder="жишээ: 2">' +
+      '<label class="muted" for="hp">3. Юу хамгийн их тус болсон бэ?</label><textarea id="hp"></textarea>' +
+      '<label class="muted" for="ms">4. Юу дутуу байна, юуг засах вэ?</label><textarea id="ms"></textarea>' +
+      '<button class="btn" id="fbsend">Илгээх</button><div class="muted" id="fbprev"></div></div>';
+    app.querySelectorAll('[data-rt]').forEach(function (b) { b.onclick = function () { rating = +b.dataset.rt; app.querySelectorAll('[data-rt]').forEach(function (x) { x.className = 'btn ' + (+x.dataset.rt === rating ? '' : 'ghost'); }); }; });
+    sb.from('teacher_feedback').select('created_at').order('created_at', { ascending: false }).limit(1).then(function (r) { if (r.data && r.data[0]) q('#fbprev').textContent = 'Сүүлд илгээсэн: ' + fmt(r.data[0].created_at); });
+    q('#fbsend').onclick = function () {
+      var hs = q('#hs').value, row = { rating: rating || null, hours_saved: hs === '' ? null : Number(hs), helped: q('#hp').value.trim() || null, missing: q('#ms').value.trim() || null };
+      if (!row.rating && !row.helped && !row.missing) { toast('Ядаж нэг асуултад хариулна уу'); return; }
+      this.disabled = true;
+      sb.from('teacher_feedback').insert(row).then(function (x) { if (fail(x)) { q('#fbsend').disabled = false; return; } toast('Баярлалаа! Санал тань хүрлээ'); isOwner ? showTeam() : showMyFeedback(); });
+    };
+  }
   function showTeam() {
     app.innerHTML = '<div class="muted">Ачаалж байна…</div>';
     sb.rpc('owner_overview').then(function (r) {
@@ -204,7 +221,20 @@ th{font-size:12px;color:#5A6178}
         (d.teachers || []).map(function (x) {
           return '<tr><td><b>' + esc(x.name) + '</b><div class="muted">' + esc(x.school || '') + '</div></td><td>' + esc(x.subject) + '</td><td>' + esc(x.invite || 'эзэн') + '</td><td>' + x.classes + '</td><td>' + x.students + '</td><td>' + x.submissions + '</td><td>' + fmt(x.created_at) + '</td></tr>';
         }).join('') + '</tbody></table></div></div>';
+      var fb = d.feedback || [], n = fb.length;
+      var avg = function (k) { var v = fb.filter(function (x) { return x[k] != null; }); return v.length ? (v.reduce(function (s, x) { return s + Number(x[k]); }, 0) / v.length).toFixed(1) : '–'; };
+      h += '<div class="card"><div class="row between"><h2>Багш нарын санал сэтгэгдэл · ' + n + '</h2><div class="row"><button class="btn sec" id="fbx">Excel-ээр татах</button><button class="btn ghost" id="fbme">Өөрөө санал өгөх</button></div></div>' +
+        '<div class="row" style="gap:28px;margin:6px 0 10px"><div><b style="font-size:28px">' + avg('rating') + '</b> <span class="muted">/ 5 · дундаж үнэлгээ</span></div><div><b style="font-size:28px">' + avg('hours_saved') + '</b> <span class="muted">цаг · долоо хоногт хэмнэсэн (дундаж)</span></div></div>' +
+        (n ? '<div class="tablebox"><table><thead><tr><th>Багш</th><th>Үнэлгээ</th><th>Хэмнэсэн цаг</th><th>Юу тус болсон</th><th>Юу дутуу, засах</th><th>Огноо</th></tr></thead><tbody>' +
+          fb.map(function (x) { return '<tr><td><b>' + esc(x.name) + '</b><div class="muted">' + esc(x.subject) + ' · ' + esc(x.invite || 'эзэн') + '</div></td><td>' + (x.rating || '–') + '</td><td>' + (x.hours_saved == null ? '–' : x.hours_saved) + '</td><td>' + esc(x.helped || '') + '</td><td>' + esc(x.missing || '') + '</td><td>' + fmt(x.created_at) + '</td></tr>'; }).join('') +
+          '</tbody></table></div>' : '<div class="muted">Одоогоор санал ирээгүй байна. Багш нар «Санал өгөх» цэснээс бөглөнө.</div>') + '</div>';
       app.innerHTML = h;
+      q('#fbme').onclick = function () { showMyFeedback(); };
+      q('#fbx').onclick = function () {
+        var lines = [['Багш', 'Хичээл', 'Бүлэг (код)', 'Үнэлгээ 1-5', 'Долоо хоногт хэмнэсэн цаг', 'Юу тус болсон', 'Юу дутуу, засах', 'Огноо']].concat(fb.map(function (x) { return [x.name, x.subject, x.invite || 'эзэн', x.rating, x.hours_saved, x.helped, x.missing, fmt(x.created_at)]; }));
+        var csv = '\ufeff' + lines.map(function (l) { return l.map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(','); }).join('\r\n');
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'bagsh-nariin-sanal.csv'; a.click();
+      };
       var cp = function (s) { (navigator.clipboard ? navigator.clipboard.writeText(s) : Promise.reject()).then(function () { toast('Хуулагдлаа: ' + s); }, function () { toast(s); }); };
       app.querySelectorAll('[data-inv]').forEach(function (b) { b.onclick = function () { cp('EduSolveMN багшийн хэсэг: ' + link + '\nУрилгын код: ' + b.dataset.inv); }; });
       q('#tlink').onclick = function () { cp(link); };
