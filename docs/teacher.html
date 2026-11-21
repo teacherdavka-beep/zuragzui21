@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Багшийн хэсэг · Зураг зүй</title>
+<title>EduSolveMN · Багшийн хэсэг</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -64,7 +64,7 @@ th{font-size:12px;color:#5A6178}
 </head>
 <body>
 <header>
-  <div><div class="sub" id="who">Багшийн хэсэг</div><h1>Зураг зүй · Г.Даваасүрэн багшийн самбар</h1></div>
+  <div><div class="sub" id="who">Багшийн хэсэг</div><h1 id="tTitle">EduSolveMN · Багшийн самбар</h1></div>
   <nav class="tabs" id="tabs" hidden></nav>
 </header>
 <main id="app"><div class="muted">Ачаалж байна…</div></main>
@@ -77,7 +77,7 @@ th{font-size:12px;color:#5A6178}
   var C = window.APP_CONFIG;
   var sb = window.supabase.createClient(C.url, C.key);
   var app = document.getElementById('app'), tabsEl = document.getElementById('tabs');
-  var me = null, classes = [], tab = 'review';
+  var me = null, T = { name: '', subject: '', school: '' }, classes = [], tab = 'review';
   var KIND = { no_notebook: 'Дэвтэргүй', no_supplies: 'Хэрэглэгдэхүүнгүй', phone: 'Утас', sleep: 'Унтсан', talk: 'Ярьсан', disrupt: 'Саад', late: 'Хоцорсон' };
   var STUDENT_URL = new URL('index.html', location.href).href;
 
@@ -94,8 +94,14 @@ th{font-size:12px;color:#5A6178}
       '<label class="muted" for="em">Имэйл</label><input id="em" type="email" autocomplete="email">' +
       '<label class="muted" for="pw">Нууц үг (8+ тэмдэгт)</label><div class="row" style="flex-wrap:nowrap"><input id="pw" type="password" autocomplete="current-password" style="flex:1;min-width:0"><button class="btn ghost" id="eye" type="button" aria-pressed="false">Харах</button></div>' +
       '<div class="muted" id="msg" style="color:#B42318">' + esc(msg || '') + '</div>' +
-      '<button class="btn" id="in">Нэвтрэх</button><button class="btn ghost" id="up">Анх удаа: бүртгүүлэх</button>' +
-      '<div class="muted">Анх бүртгүүлсэн хүн л багш болно. Бусад хүн бүртгүүлсэн ч юу ч харахгүй.</div></div>';
+      '<button class="btn" id="in">Нэвтрэх</button>' +
+      '<details id="reg" style="margin-top:6px"><summary class="muted" style="cursor:pointer">Анх удаа бүртгүүлэх бол энд дарна уу</summary>' +
+      '<label class="muted" for="rn">Нэр (жишээ: Г.Даваасүрэн)</label><input id="rn" autocomplete="name">' +
+      '<label class="muted" for="rs">Хичээл</label><input id="rs" placeholder="Зураг зүй">' +
+      '<label class="muted" for="rsc">Сургууль</label><input id="rsc" placeholder="21-р сургууль">' +
+      '<label class="muted" for="ri">Урилгын код</label><input id="ri" autocomplete="off">' +
+      '<button class="btn ghost" id="up">Бүртгүүлэх</button></details>' +
+      '<div class="muted">Шинэ багш урилгын кодоор бүртгүүлнэ.</div></div>';
     q('#eye').onclick = function () { var p = q('#pw'), show = p.type === 'password'; p.type = show ? 'text' : 'password'; this.textContent = show ? 'Нуух' : 'Харах'; this.setAttribute('aria-pressed', show); };
     q('#in').onclick = function () {
       sb.auth.signInWithPassword({ email: q('#em').value.trim(), password: q('#pw').value }).then(function (r) {
@@ -104,6 +110,9 @@ th{font-size:12px;color:#5A6178}
     };
     q('#up').onclick = function () {
       var pw = q('#pw').value; if (pw.length < 8) { q('#msg').textContent = 'Нууц үг 8+ тэмдэгт байх ёстой.'; return; }
+      var pend = { name: q('#rn').value.trim(), subject: q('#rs').value.trim(), school: q('#rsc').value.trim(), invite: q('#ri').value.trim() };
+      if (!pend.name || !pend.subject || !pend.invite) { q('#msg').textContent = 'Нэр, хичээл, урилгын кодоо бөглөнө үү.'; return; }
+      try { localStorage.setItem('pendingT', JSON.stringify(pend)); } catch (e) {}
       sb.auth.signUp({ email: q('#em').value.trim(), password: pw, options: { emailRedirectTo: location.href } }).then(function (r) {
         if (r.error) q('#msg').textContent = r.error.message;
         else if (!r.data.session) q('#msg').textContent = 'Имэйл рүү тань баталгаажуулах линк явууллаа. Линк дээр дараад энд буцаж нэвтэрнэ үү.';
@@ -115,16 +124,35 @@ th{font-size:12px;color:#5A6178}
   function boot() {
     sb.auth.getSession().then(function (r) {
       var s = r.data.session; if (!s) { showAuth(); return; }
-      sb.rpc('claim_teacher', { p_name: 'Г.Даваасүрэн' }).then(function (c) {
-        if (c.data !== true) { app.innerHTML = '<div class="card">Энэ бүртгэл багшийн эрхгүй байна.</div>'; return; }
+      var pend = {}; try { pend = JSON.parse(localStorage.getItem('pendingT') || '{}'); } catch (e) {}
+      sb.rpc('claim_teacher', { p_name: pend.name || '', p_subject: pend.subject || '', p_school: pend.school || '', p_invite: pend.invite || '' }).then(function (c) {
+        if (c.data !== true) {
+          app.innerHTML = '<div class="card"><h2>Багшийн эрх идэвхжээгүй байна</h2><div class="muted">Урилгын код буруу эсвэл хэрэглэгдэж дууссан байна. Платформын эзэнтэй холбогдоно уу.</div><button class="btn ghost" id="lo">Гарах</button></div>';
+          q('#lo').onclick = function () { sb.auth.signOut().then(function () { showAuth(); }); }; return;
+        }
+        try { localStorage.removeItem('pendingT'); } catch (e) {}
         me = s.user; document.getElementById('who').textContent = me.email;
-        cleanupPhotos();
-        loadClasses().then(function () { drawTabs(); go('review'); });
+        sb.from('teachers').select('name,subject,school').eq('id', me.id).maybeSingle().then(function (tr) {
+          if (tr.data) T = tr.data;
+          document.getElementById('tTitle').textContent = (T.subject || 'EduSolveMN') + ' · ' + (T.name || '') + ' багшийн самбар';
+          document.title = 'EduSolveMN · ' + (T.name || 'Багшийн хэсэг');
+          cleanupPhotos();
+          loadClasses().then(function () { drawTabs(); go('review'); });
+        });
       });
     });
   }
   function loadClasses() { return sb.from('classes').select('*').order('name').then(function (r) { classes = r.data || []; }); }
   function cleanupPhotos() {
+    var cut = new Date(Date.now() - 30 * 864e5).toISOString();
+    sb.from('submissions').select('id,photo_paths').in('status', ['ok', 'auto']).lt('created_at', cut).neq('photo_paths', '{}').limit(500).then(function (r) {
+      var rows = r.data || []; if (!rows.length) return;
+      var paths = []; rows.forEach(function (x) { paths = paths.concat(x.photo_paths || []); });
+      sb.storage.from('submissions').remove(paths).then(function (d) {
+        if (d.error) return;
+        sb.from('submissions').update({ photo_paths: [], image_hashes: [] }).in('id', rows.map(function (x) { return x.id; })).then(function () {});
+      });
+    });
     sb.from('behavior_logs').select('id,photo_path').lt('photo_expires_at', new Date().toISOString()).not('photo_path', 'is', null).then(function (r) {
       var rows = r.data || []; if (!rows.length) return;
       sb.storage.from('behavior').remove(rows.map(function (x) { return x.photo_path; })).then(function () {
@@ -189,11 +217,11 @@ th{font-size:12px;color:#5A6178}
   function needClass() { if (!classes.length) { app.innerHTML = '<div class="card"><h2>Эхлээд анги үүсгэнэ үү</h2><button class="btn" id="g">Анги цонх руу</button></div>'; q('#g').onclick = function () { go('review'); }; return true; } if (!curClass) curClass = classes[0].id; return false; }
 
   function showClassQR(cls) {
-    var link = STUDENT_URL + '?c=' + encodeURIComponent(cls.name);
+    var link = STUDENT_URL + '?c=' + encodeURIComponent(cls.key || cls.name);
     var qr = qrcode(0, 'M'); qr.addData(link); qr.make();
         var z = document.createElement('div'); z.className = 'zoom'; z.style.flexDirection = 'column'; z.style.gap = '14px';
         z.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:10px;max-width:92vw">' +
-          '<b style="font-size:24px">' + esc(cls.name) + ' анги · ' + esc(C.subject) + '</b><div class="muted">Утасны камераар уншуулаад кодоо сонгоно</div>' +
+          '<b style="font-size:24px">' + esc(cls.name) + ' анги · ' + esc(T.subject) + '</b><div class="muted">Утасны камераар уншуулаад кодоо сонгоно</div>' +
           '<div id="qrbox" style="width:min(70vw,420px)">' + qr.createSvgTag({ cellSize: 10, margin: 2, scalable: true }) + '</div>' +
           '<div class="muted" style="word-break:break-all;text-align:center">' + esc(link) + '</div>' +
           '<div class="row"><button class="btn" id="qcopy">Линк хуулах</button><button class="btn sec" id="qdl">Зураг татах</button><button class="btn ghost" id="qx">Хаах</button></div></div>';
@@ -357,7 +385,7 @@ th{font-size:12px;color:#5A6178}
         function clsById(id) { return classes.filter(function (c) { return c.id === id; })[0]; }
         app.querySelectorAll('[data-cq]').forEach(function (b) { b.onclick = function () { showClassQR(clsById(b.dataset.cq)); }; });
         app.querySelectorAll('[data-cl]').forEach(function (b) {
-          b.onclick = function () { var l = STUDENT_URL + '?c=' + encodeURIComponent(clsById(b.dataset.cl).name); (navigator.clipboard ? navigator.clipboard.writeText(l) : Promise.reject()).then(function () { toast('Линк хуулагдлаа · группт буулгана'); }, function () { toast(l); }); };
+          b.onclick = function () { var l = STUDENT_URL + '?c=' + encodeURIComponent(clsById(b.dataset.cl).key || clsById(b.dataset.cl).name); (navigator.clipboard ? navigator.clipboard.writeText(l) : Promise.reject()).then(function () { toast('Линк хуулагдлаа · группт буулгана'); }, function () { toast(l); }); };
         });
         app.querySelectorAll('[data-cr]').forEach(function (b) { b.onclick = function () { openClassView(b.dataset.cr, 'roster'); }; });
         app.querySelectorAll('[data-cv2]').forEach(function (b) { b.onclick = function () { openClassView(b.dataset.cid, b.dataset.cv2); }; });
@@ -1098,7 +1126,7 @@ th{font-size:12px;color:#5A6178}
     var cls = classes.filter(function (c) { return c.id === curClass; })[0];
     sb.from('students').select('*').eq('class_id', curClass).eq('active', true).order('code').then(function (r) {
       var kids = r.data || [];
-      var link = STUDENT_URL + '?c=' + encodeURIComponent(cls.name);
+      var link = STUDENT_URL + '?c=' + encodeURIComponent(cls.key || cls.name);
       var h = '<div class="card"><div class="row between"><h2>' + esc(cls.name) + ' · ' + kids.length + ' сурагч</h2><div class="row"><button class="btn green" id="cqr">Ангийн QR</button><button class="btn sec" id="xls1">Excel-ээр татах</button><button class="btn dark" id="print1">Кодын карт хэвлэх</button></div></div>' +
         '<div class="muted">Карт бүрийн QR тухайн хүүхдийн өөрийнх: уншуулахад шууд нэвтэрнэ. Карт алдагдвал "Шинэ тоо" дарахад хуучин QR ажиллахаа болино.</div><div class="muted">Ангийн линк: <a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link) + '</a></div></div>' +
         '<div class="card"><h3>Олноор нэмэх · журналаас</h3><div class="muted">Excel журналаасаа нэрсийн баганыг хуулаад (Cmd+C) энд буулгана (Cmd+V). Мөр бүр нэг сурагч.</div><textarea id="bulk" placeholder="Б.Тэмүүлэн\nГ.Номин"></textarea><button class="btn" id="addS">Нэмэх</button></div>' +
@@ -1129,7 +1157,7 @@ th{font-size:12px;color:#5A6178}
         var p = document.getElementById('print');
         p.innerHTML = '<div class="cards">' + kids.map(function (k) {
           var qr = qrcode(0, 'M'); qr.addData(link + '&s=' + encodeURIComponent(k.code) + '&p=' + k.pin); qr.make();
-          return '<div class="pc"><div style="flex:1"><b>' + esc(k.name) + '</b><div>' + esc(cls.name) + ' · ' + esc(C.subject) + '</div><div>Код: <b>' + esc(k.code) + '</b></div><div>Тоо: <b>' + esc(k.pin) + '</b></div></div>' + qr.createSvgTag(3, 0) + '</div>';
+          return '<div class="pc"><div style="flex:1"><b>' + esc(k.name) + '</b><div>' + esc(cls.name) + ' · ' + esc(T.subject) + '</div><div>Код: <b>' + esc(k.code) + '</b></div><div>Тоо: <b>' + esc(k.pin) + '</b></div></div>' + qr.createSvgTag(3, 0) + '</div>';
         }).join('') + '</div>';
         setTimeout(function () { window.print(); }, 100);
       };

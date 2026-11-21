@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Зураг зүй · Ангийн самбар</title>
+<title>EduSolveMN · Ангийн самбар</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -59,7 +59,7 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
 <body>
 <div class="wrap">
   <header>
-    <div class="sub" id="hSub">Зураг зүй</div>
+    <div class="sub" id="hSub">EduSolveMN</div>
     <div class="ttl" id="hTitle">Ангийн самбар</div>
     <div class="sub" id="hWho"></div>
   </header>
@@ -77,13 +77,14 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
   var preCode = params.get('s') || '';
   if (cls) { try { localStorage.setItem('cls', cls); } catch (e) {} }
   var token = null; try { token = localStorage.getItem('tok'); } catch (e) {}
-  var home = null, curTopic = null;
+  var home = null, curTopic = null, info = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function toast(t) { var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 3200); }
   function setHeader() {
-    document.getElementById('hSub').textContent = C.school + ' · ' + C.subject;
-    document.getElementById('hTitle').textContent = (home ? home['class'] : cls) ? ((home ? home['class'] : cls) + ' анги') : 'Ангийн самбар';
+    document.getElementById('hSub').textContent = info ? (info.school + ' · ' + info.subject) : 'EduSolveMN';
+    var cn = home ? home['class'] : (info ? info['class'] : '');
+    document.getElementById('hTitle').textContent = cn ? (cn + ' анги') : 'Ангийн самбар';
     document.getElementById('hWho').textContent = home ? (home.name + ' · ' + home.code) : '';
   }
   function fmtDate(d) { if (!d) return ''; var x = new Date(d); return (x.getMonth() + 1) + '/' + x.getDate(); }
@@ -116,7 +117,7 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
       if (p.length !== 4) { err.textContent = '4 оронтой тоо бичнэ үү.'; return; }
       this.disabled = true;
       var b = this;
-      sb.rpc('student_login', { p_code: code, p_pin: p }).then(function (r) {
+      sb.rpc('student_login', { p_code: code, p_pin: p, p_class: cls }).then(function (r) {
         b.disabled = false;
         var d = r.data || {};
         if (d.token) { token = d.token; try { localStorage.setItem('tok', token); } catch (e) {} loadHome(); }
@@ -336,7 +337,7 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
     return new Promise(function (res, rej) {
       var img = new Image(); var url = URL.createObjectURL(file);
       img.onload = function () {
-        var max = 1600, w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h));
+        var max = 1280, w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h));
         var c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         var s = document.createElement('canvas'); s.width = 9; s.height = 8; var sx = s.getContext('2d');
@@ -349,7 +350,7 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
         URL.revokeObjectURL(url);
         var pv = document.createElement('canvas'), pk = Math.min(1, 360 / Math.max(c.width, c.height)); pv.width = Math.round(c.width * pk); pv.height = Math.round(c.height * pk);
         pv.getContext('2d').drawImage(c, 0, 0, pv.width, pv.height);
-        c.toBlob(function (blob) { res({ blob: blob, hash: hex, preview: pv.toDataURL('image/jpeg', 0.6) }); }, 'image/jpeg', 0.82);
+        c.toBlob(function (blob) { res({ blob: blob, hash: hex, preview: pv.toDataURL('image/jpeg', 0.6) }); }, 'image/jpeg', 0.72);
       };
       img.onerror = rej; img.src = url;
     });
@@ -458,11 +459,12 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
     });
   }
 
+  if (cls) sb.rpc('class_info', { p_class: cls }).then(function (r) { if (r.data) { info = r.data; setHeader(); } });
   var autoPin = params.get('p');
   if (preCode && autoPin) {
     try { history.replaceState(null, '', location.pathname + '?c=' + encodeURIComponent(cls)); } catch (e) {}
     app.innerHTML = '<div class="muted">Нэвтэрч байна…</div>';
-    sb.rpc('student_login', { p_code: preCode, p_pin: autoPin }).then(function (r) {
+    sb.rpc('student_login', { p_code: preCode, p_pin: autoPin, p_class: cls }).then(function (r) {
       var d = r.data || {};
       if (d.token) { token = d.token; try { localStorage.setItem('tok', token); } catch (e) {} loadHome(); }
       else showLogin(d.error === 'locked' ? 'Олон удаа буруу оролдсон. 15 минутын дараа дахин оролдоно уу.' : 'Энэ QR хуучирсан байна. Багшаасаа шинэ карт аваарай.');
