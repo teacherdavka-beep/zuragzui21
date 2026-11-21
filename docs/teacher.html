@@ -77,7 +77,7 @@ th{font-size:12px;color:#5A6178}
   var C = window.APP_CONFIG;
   var sb = window.supabase.createClient(C.url, C.key);
   var app = document.getElementById('app'), tabsEl = document.getElementById('tabs');
-  var me = null, T = { name: '', subject: '', school: '' }, classes = [], tab = 'review';
+  var me = null, T = { name: '', subject: '', school: '' }, isOwner = false, classes = [], tab = 'review';
   var KIND = { no_notebook: 'Дэвтэргүй', no_supplies: 'Хэрэглэгдэхүүнгүй', phone: 'Утас', sleep: 'Унтсан', talk: 'Ярьсан', disrupt: 'Саад', late: 'Хоцорсон' };
   var STUDENT_URL = new URL('index.html', location.href).href;
 
@@ -137,7 +137,10 @@ th{font-size:12px;color:#5A6178}
           document.getElementById('tTitle').textContent = (T.subject || 'EduSolveMN') + ' · ' + (T.name || '') + ' багшийн самбар';
           document.title = 'EduSolveMN · ' + (T.name || 'Багшийн хэсэг');
           cleanupPhotos();
-          loadClasses().then(function () { drawTabs(); go('review'); });
+          sb.rpc('owner_overview').then(function (o) {
+            isOwner = !!(o.data && o.data.owner);
+            loadClasses().then(function () { drawTabs(); go('review'); });
+          });
         });
       });
     });
@@ -162,6 +165,7 @@ th{font-size:12px;color:#5A6178}
   }
   function drawTabs() {
     var T = [['review', 'Журнал'], ['library', 'Материалын сан'], ['feedback', 'Санал хүсэлт' + (fbUnseen ? ' (' + fbUnseen + ')' : '')]];
+    if (isOwner) T.push(['team', 'Багш нар']);
     tabsEl.hidden = false;
     tabsEl.innerHTML = T.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (t[0] === tab ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') +
       '<button data-t="out">Гарах</button>';
@@ -182,7 +186,30 @@ th{font-size:12px;color:#5A6178}
   }
   function showC() { if (cView === 'att') showAttendance(); else if (cView === 'lesson') showLesson(); else if (cView === 'table') showJournal(); else showClasses(); }
   function openClassView(id, view) { curClass = id; cView = view || 'att'; tab = 'review'; drawTabs(); showC(); }
-  function go(t) { tab = t; drawTabs(); ({ review: showReview, library: showLibrary, feedback: showFeedback })[t](); countFb(); }
+  function go(t) { tab = t; drawTabs(); ({ review: showReview, library: showLibrary, feedback: showFeedback, team: showTeam })[t](); countFb(); }
+  function showTeam() {
+    app.innerHTML = '<div class="muted">Ачаалж байна…</div>';
+    sb.rpc('owner_overview').then(function (r) {
+      if (fail(r)) return; var d = r.data || {};
+      if (!d.owner) { app.innerHTML = '<div class="card">Энэ хэсэг зөвхөн платформын эзэнд харагдана.</div>'; return; }
+      var link = new URL('teacher.html', location.href).href;
+      var h = '<div class="card"><h2>Урилгын кодууд</h2><div class="muted">Шинэ багшид багшийн хэсгийн хаяг болон доорх кодыг өгнө. Код бүрийг тодорхой тооны хүн ашиглана.</div>' +
+        '<div class="tablebox"><table><thead><tr><th>Код</th><th>Хэнд</th><th>Ашигласан</th><th></th></tr></thead><tbody>' +
+        (d.invites || []).map(function (v) {
+          return '<tr><td><b style="font-size:20px;letter-spacing:1px">' + esc(v.code) + '</b></td><td>' + esc(v.label || '') + '</td><td>' + v.used + ' / ' + v.max + '</td>' +
+            '<td style="text-align:right"><button class="btn ghost" data-inv="' + esc(v.code) + '">Хуулах</button></td></tr>';
+        }).join('') + '</tbody></table></div>' +
+        '<div class="row" style="margin-top:10px"><span class="muted" style="word-break:break-all">' + esc(link) + '</span><button class="btn sec" id="tlink">Хаяг хуулах</button></div></div>' +
+        '<div class="card"><h2>Бүртгэлтэй багш нар · ' + (d.teachers || []).length + '</h2><div class="tablebox"><table><thead><tr><th>Нэр</th><th>Хичээл</th><th>Код</th><th>Анги</th><th>Сурагч</th><th>Илгээлт</th><th>Бүртгүүлсэн</th></tr></thead><tbody>' +
+        (d.teachers || []).map(function (x) {
+          return '<tr><td><b>' + esc(x.name) + '</b><div class="muted">' + esc(x.school || '') + '</div></td><td>' + esc(x.subject) + '</td><td>' + esc(x.invite || 'эзэн') + '</td><td>' + x.classes + '</td><td>' + x.students + '</td><td>' + x.submissions + '</td><td>' + fmt(x.created_at) + '</td></tr>';
+        }).join('') + '</tbody></table></div></div>';
+      app.innerHTML = h;
+      var cp = function (s) { (navigator.clipboard ? navigator.clipboard.writeText(s) : Promise.reject()).then(function () { toast('Хуулагдлаа: ' + s); }, function () { toast(s); }); };
+      app.querySelectorAll('[data-inv]').forEach(function (b) { b.onclick = function () { cp('EduSolveMN багшийн хэсэг: ' + link + '\nУрилгын код: ' + b.dataset.inv); }; });
+      q('#tlink').onclick = function () { cp(link); };
+    });
+  }
   var fbUnseen = 0, fbClass = null;
   function countFb() { sb.from('feedback').select('id', { count: 'exact', head: true }).eq('seen', false).then(function (r) { var n = r.count || 0; if (n !== fbUnseen) { fbUnseen = n; drawTabs(); } }); }
   function showFeedback() {
