@@ -88,36 +88,61 @@ th{font-size:12px;color:#5A6178}
   function fail(r) { if (r && r.error) { toast('Алдаа: ' + r.error.message); console.error(r.error); return true; } return false; }
 
   // ---------- AUTH ----------
+  function phEmail(v) { return 'p' + String(v || '').replace(/\D/g, '') + '@edusolve.mn'; }
   function showAuth(msg) {
     tabsEl.hidden = true;
-    app.innerHTML = '<div class="card" style="max-width:420px;margin:30px auto"><h2>Багшаар нэвтрэх</h2>' +
+    app.innerHTML = '<div class="card" style="max-width:420px;margin:30px auto;display:flex;flex-direction:column;gap:8px"><h2>Багшаар нэвтрэх</h2>' +
+      '<div id="byPhone" style="display:flex;flex-direction:column;gap:8px">' +
+      '<label class="muted" for="ph">Утасны дугаар</label><input id="ph" type="tel" inputmode="numeric" autocomplete="tel" placeholder="99112233" maxlength="8">' +
+      '<label class="muted" for="pin">PIN код (6 оронтой тоо)</label><div class="row" style="flex-wrap:nowrap"><input id="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" style="flex:1;min-width:0"><button class="btn ghost" id="eye" type="button" aria-pressed="false">Харах</button></div></div>' +
+      '<div id="byEmail" hidden style="display:flex;flex-direction:column;gap:8px">' +
       '<label class="muted" for="em">Имэйл</label><input id="em" type="email" autocomplete="email">' +
-      '<label class="muted" for="pw">Нууц үг (8+ тэмдэгт)</label><div class="row" style="flex-wrap:nowrap"><input id="pw" type="password" autocomplete="current-password" style="flex:1;min-width:0"><button class="btn ghost" id="eye" type="button" aria-pressed="false">Харах</button></div>' +
+      '<label class="muted" for="pw">Нууц үг</label><input id="pw" type="password" autocomplete="current-password"></div>' +
       '<div class="muted" id="msg" style="color:#B42318">' + esc(msg || '') + '</div>' +
       '<button class="btn" id="in">Нэвтрэх</button>' +
       '<details id="reg" style="margin-top:6px"><summary class="muted" style="cursor:pointer">Анх удаа бүртгүүлэх бол энд дарна уу</summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">' +
+      '<div class="muted">Дээр утасны дугаараа бичээд өөрөө санахад амар 6 оронтой PIN зохиож оруулна уу. Дараа нь доорхыг бөглөнө.</div>' +
       '<label class="muted" for="rn">Нэр (жишээ: Г.Даваасүрэн)</label><input type="text" id="rn" autocomplete="name">' +
       '<label class="muted" for="rs">Хичээл</label><input type="text" id="rs" placeholder="Зураг зүй">' +
       '<label class="muted" for="rsc">Сургууль</label><input type="text" id="rsc" placeholder="21-р сургууль">' +
       '<label class="muted" for="ri">Урилгын код</label><input type="text" id="ri" autocomplete="off">' +
       '<button class="btn ghost" id="up">Бүртгүүлэх</button></div></details>' +
-      '<div class="muted">Шинэ багш урилгын кодоор бүртгүүлнэ.</div></div>';
-    q('#eye').onclick = function () { var p = q('#pw'), show = p.type === 'password'; p.type = show ? 'text' : 'password'; this.textContent = show ? 'Нуух' : 'Харах'; this.setAttribute('aria-pressed', show); };
+      '<div class="muted" style="font-size:13px">PIN-ээ мартсан бол платформын эзэнд хэлээрэй. · <a href="#" id="sw">Имэйлээр нэвтрэх</a></div></div>';
+    var emailMode = false;
+    q('#sw').onclick = function (e) {
+      e.preventDefault(); emailMode = !emailMode;
+      q('#byPhone').hidden = emailMode; q('#byEmail').hidden = !emailMode; q('#byEmail').style.display = emailMode ? 'flex' : 'none';
+      q('#reg').hidden = emailMode; this.textContent = emailMode ? 'Утсаар нэвтрэх' : 'Имэйлээр нэвтрэх'; q('#msg').textContent = '';
+    };
+    q('#byEmail').style.display = 'none';
+    q('#eye').onclick = function () { var p = q('#pin'), show = p.type === 'password'; p.type = show ? 'text' : 'password'; this.textContent = show ? 'Нуух' : 'Харах'; this.setAttribute('aria-pressed', show); };
+    var phone = function () { return q('#ph').value.replace(/\D/g, ''); };
     q('#in').onclick = function () {
-      sb.auth.signInWithPassword({ email: q('#em').value.trim(), password: q('#pw').value }).then(function (r) {
-        if (r.error) q('#msg').textContent = /rate|seconds/i.test(r.error.message) ? mnErr(r.error.message) : 'Нэвтэрч чадсангүй: имэйл, нууц үгээ шалгана уу.'; else boot();
+      var cred;
+      if (emailMode) cred = { email: q('#em').value.trim(), password: q('#pw').value };
+      else {
+        if (phone().length !== 8) { q('#msg').textContent = 'Утасны дугаараа 8 оронтойгоор бичнэ үү.'; return; }
+        if (!/^\d{6}$/.test(q('#pin').value)) { q('#msg').textContent = 'PIN 6 оронтой тоо байна.'; return; }
+        cred = { email: phEmail(phone()), password: q('#pin').value };
+      }
+      q('#msg').textContent = '';
+      sb.auth.signInWithPassword(cred).then(function (r) {
+        if (r.error) q('#msg').textContent = /rate|seconds/i.test(r.error.message) ? mnErr(r.error.message) : (emailMode ? 'Имэйл эсвэл нууц үг буруу байна.' : 'Утасны дугаар эсвэл PIN буруу байна. Бүртгүүлээгүй бол доорх «Анх удаа бүртгүүлэх»-ийг дарна уу.');
+        else boot();
       });
     };
     q('#up').onclick = function () {
-      var pw = q('#pw').value; if (pw.length < 8) { q('#msg').textContent = 'Нууц үг 8+ тэмдэгт байх ёстой.'; return; }
-      var pend = { name: q('#rn').value.trim(), subject: q('#rs').value.trim(), school: q('#rsc').value.trim(), invite: q('#ri').value.trim() };
-      if (!pend.name || !pend.subject || !pend.invite) { q('#msg').textContent = 'Нэр, хичээл, урилгын кодоо бөглөнө үү.'; return; }
-      try { localStorage.setItem('pendingT', JSON.stringify(pend)); } catch (e) {}
-      sb.auth.signUp({ email: q('#em').value.trim(), password: pw, options: { emailRedirectTo: location.href } }).then(function (r) {
-        if (r.error) { q('#msg').textContent = mnErr(r.error.message); return; }
-        if (r.data.session) { boot(); return; }
-        sb.auth.signInWithPassword({ email: q('#em').value.trim(), password: pw }).then(function (r2) {
-          if (r2.error) q('#msg').textContent = mnErr(r2.error.message); else boot();
+      var d = { name: q('#rn').value.trim(), subject: q('#rs').value.trim(), school: q('#rsc').value.trim(), invite: q('#ri').value.trim() };
+      if (phone().length !== 8) { q('#msg').textContent = 'Дээр утасны дугаараа 8 оронтойгоор бичнэ үү.'; return; }
+      if (!/^\d{6}$/.test(q('#pin').value)) { q('#msg').textContent = 'Дээр 6 оронтой PIN зохиож бичнэ үү.'; return; }
+      if (!d.name || !d.subject || !d.invite) { q('#msg').textContent = 'Нэр, хичээл, урилгын кодоо бөглөнө үү.'; return; }
+      var btn = this; btn.disabled = true;
+      sb.rpc('register_teacher_phone', { p_phone: phone(), p_pin: q('#pin').value, p_name: d.name, p_subject: d.subject, p_school: d.school, p_invite: d.invite }).then(function (r) {
+        var m = { pin: '111111, 123456 шиг хэт амархан PIN болохгүй. Өөр 6 оронтой тоо сонгоно уу.', phone: 'Утасны дугаар 8 оронтой байна.', name: 'Нэрээ бичнэ үү.',
+          exists: 'Энэ дугаар бүртгэлтэй байна. «Нэвтрэх» товчийг дарна уу.', invite: 'Урилгын код буруу эсвэл хэрэглэгдэж дууссан байна.' };
+        if (r.error || r.data !== 'ok') { btn.disabled = false; q('#msg').textContent = r.error ? mnErr(r.error.message) : (m[r.data] || 'Алдаа гарлаа.'); return; }
+        sb.auth.signInWithPassword({ email: phEmail(phone()), password: q('#pin').value }).then(function (r2) {
+          btn.disabled = false; if (r2.error) q('#msg').textContent = mnErr(r2.error.message); else boot();
         });
       });
     };
@@ -154,7 +179,7 @@ th{font-size:12px;color:#5A6178}
           q('#lo').onclick = function () { sb.auth.signOut().then(function () { showAuth(); }); }; return;
         }
         try { localStorage.removeItem('pendingT'); } catch (e) {}
-        me = s.user; document.getElementById('who').textContent = me.email;
+        me = s.user; var _em = me.email || ''; document.getElementById('who').textContent = /^p\d{8}@edusolve\.mn$/.test(_em) ? _em.slice(1, 9) : _em;
         sb.from('teachers').select('name,subject,school').eq('id', me.id).maybeSingle().then(function (tr) {
           if (tr.data) T = tr.data;
           document.getElementById('tTitle').textContent = (T.subject || 'EduSolveMN') + ' · ' + (T.name || '') + ' багшийн самбар';
@@ -240,9 +265,10 @@ th{font-size:12px;color:#5A6178}
             '<td style="text-align:right"><button class="btn ghost" data-inv="' + esc(v.code) + '">Хуулах</button></td></tr>';
         }).join('') + '</tbody></table></div>' +
         '<div class="row" style="margin-top:10px"><span class="muted" style="word-break:break-all">' + esc(link) + '</span><button class="btn sec" id="tlink">Хаяг хуулах</button></div></div>' +
-        '<div class="card"><h2>Бүртгэлтэй багш нар · ' + (d.teachers || []).length + '</h2><div class="tablebox"><table><thead><tr><th>Нэр</th><th>Хичээл</th><th>Код</th><th>Анги</th><th>Сурагч</th><th>Илгээлт</th><th>Бүртгүүлсэн</th></tr></thead><tbody>' +
+        '<div class="card"><h2>Бүртгэлтэй багш нар · ' + (d.teachers || []).length + '</h2><div class="tablebox"><table><thead><tr><th>Нэр</th><th>Хичээл</th><th>Код</th><th>Утас</th><th>Анги</th><th>Сурагч</th><th>Илгээлт</th><th>Бүртгүүлсэн</th><th></th></tr></thead><tbody>' +
         (d.teachers || []).map(function (x) {
-          return '<tr><td><b>' + esc(x.name) + '</b><div class="muted">' + esc(x.school || '') + '</div></td><td>' + esc(x.subject) + '</td><td>' + esc(x.invite || 'эзэн') + '</td><td>' + x.classes + '</td><td>' + x.students + '</td><td>' + x.submissions + '</td><td>' + fmt(x.created_at) + '</td></tr>';
+          return '<tr><td><b>' + esc(x.name) + '</b><div class="muted">' + esc(x.school || '') + '</div></td><td>' + esc(x.subject) + '</td><td>' + esc(x.invite || 'эзэн') + '</td><td>' + esc(x.phone || '–') + '</td><td>' + x.classes + '</td><td>' + x.students + '</td><td>' + x.submissions + '</td><td>' + fmt(x.created_at) + '</td>' +
+            '<td style="text-align:right"><button class="btn ghost" data-pin="' + esc(x.id) + '" data-ph="' + esc(x.phone || '') + '" data-nm="' + esc(x.name) + '">PIN шинэчлэх</button></td></tr>';
         }).join('') + '</tbody></table></div></div>';
       var fb = d.feedback || [], n = fb.length;
       var avg = function (k) { var v = fb.filter(function (x) { return x[k] != null; }); return v.length ? (v.reduce(function (s, x) { return s + Number(x[k]); }, 0) / v.length).toFixed(1) : '–'; };
@@ -261,6 +287,29 @@ th{font-size:12px;color:#5A6178}
       var cp = function (s) { (navigator.clipboard ? navigator.clipboard.writeText(s) : Promise.reject()).then(function () { toast('Хуулагдлаа: ' + s); }, function () { toast(s); }); };
       app.querySelectorAll('[data-inv]').forEach(function (b) { b.onclick = function () { cp('EduSolveMN багшийн хэсэг: ' + link + '\nУрилгын код: ' + b.dataset.inv); }; });
       q('#tlink').onclick = function () { cp(link); };
+      app.querySelectorAll('[data-pin]').forEach(function (b) {
+        b.onclick = function () {
+          var box = document.createElement('div'); box.className = 'card';
+          box.innerHTML = '<h2>' + esc(b.dataset.nm) + ' · PIN шинэчлэх</h2><div style="display:flex;flex-direction:column;gap:8px;max-width:360px">' +
+            '<label class="muted">Утасны дугаар (нэвтрэх дугаар)</label><input type="tel" id="rp_ph" inputmode="numeric" maxlength="8" value="' + esc(b.dataset.ph) + '">' +
+            '<label class="muted">Шинэ PIN (6 оронтой)</label><input type="text" id="rp_pin" inputmode="numeric" maxlength="6">' +
+            '<div class="muted" id="rp_msg" style="color:#B42318"></div><div class="row"><button class="btn" id="rp_ok">Хадгалах</button><button class="btn ghost" id="rp_no">Болих</button></div>' +
+            '<div class="muted" style="font-size:13px">Имэйлээр нэвтэрдэг багшид утасны дугаар бичвэл тэр цаашид утас + PIN-ээр нэвтэрнэ.</div></div>';
+          var old = q('#rpbox'); if (old) old.remove(); box.id = 'rpbox'; app.insertBefore(box, app.firstChild); box.scrollIntoView({ behavior: 'smooth' });
+          q('#rp_no').onclick = function () { box.remove(); };
+          q('#rp_ok').onclick = function () {
+            var ph = q('#rp_ph').value.replace(/\D/g, ''), pin = q('#rp_pin').value.trim();
+            if (ph && ph.length !== 8) { q('#rp_msg').textContent = 'Утасны дугаар 8 оронтой байна.'; return; }
+            if (!/^\d{6}$/.test(pin)) { q('#rp_msg').textContent = 'PIN 6 оронтой тоо байна.'; return; }
+            sb.rpc('owner_reset_pin', { p_teacher: b.dataset.pin, p_pin: pin, p_phone: ph || null }).then(function (r) {
+              var m = { pin: 'Хэт амархан PIN байна, өөрийг сонгоно уу.', phone: 'Утасны дугаар буруу байна.', exists: 'Энэ дугаар өөр багшид бүртгэлтэй байна.', denied: 'Эрх хүрэхгүй байна.' };
+              if (r.error || r.data !== 'ok') { q('#rp_msg').textContent = r.error ? r.error.message : (m[r.data] || 'Алдаа гарлаа.'); return; }
+              toast('Шинэчиллээ. Багшид хэлэх: утас ' + (ph || b.dataset.ph || '(имэйл)') + ', PIN ' + pin);
+              showTeam();
+            });
+          };
+        };
+      });
     });
   }
   var fbUnseen = 0, fbClass = null;
