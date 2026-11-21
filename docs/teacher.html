@@ -105,7 +105,7 @@ th{font-size:12px;color:#5A6178}
     q('#eye').onclick = function () { var p = q('#pw'), show = p.type === 'password'; p.type = show ? 'text' : 'password'; this.textContent = show ? 'Нуух' : 'Харах'; this.setAttribute('aria-pressed', show); };
     q('#in').onclick = function () {
       sb.auth.signInWithPassword({ email: q('#em').value.trim(), password: q('#pw').value }).then(function (r) {
-        if (r.error) q('#msg').textContent = 'Нэвтэрч чадсангүй: имэйл, нууц үгээ шалгана уу.'; else boot();
+        if (r.error) q('#msg').textContent = /rate|seconds/i.test(r.error.message) ? mnErr(r.error.message) : 'Нэвтэрч чадсангүй: имэйл, нууц үгээ шалгана уу.'; else boot();
       });
     };
     q('#up').onclick = function () {
@@ -114,20 +114,43 @@ th{font-size:12px;color:#5A6178}
       if (!pend.name || !pend.subject || !pend.invite) { q('#msg').textContent = 'Нэр, хичээл, урилгын кодоо бөглөнө үү.'; return; }
       try { localStorage.setItem('pendingT', JSON.stringify(pend)); } catch (e) {}
       sb.auth.signUp({ email: q('#em').value.trim(), password: pw, options: { emailRedirectTo: location.href } }).then(function (r) {
-        if (r.error) q('#msg').textContent = r.error.message;
-        else if (!r.data.session) q('#msg').textContent = 'Имэйл рүү тань баталгаажуулах линк явууллаа. Линк дээр дараад энд буцаж нэвтэрнэ үү.';
-        else boot();
+        if (r.error) { q('#msg').textContent = mnErr(r.error.message); return; }
+        if (r.data.session) { boot(); return; }
+        sb.auth.signInWithPassword({ email: q('#em').value.trim(), password: pw }).then(function (r2) {
+          if (r2.error) q('#msg').textContent = mnErr(r2.error.message); else boot();
+        });
       });
     };
   }
 
+  function mnErr(m) {
+    var t = String(m || '');
+    var sec = t.match(/(\d+)\s*seconds?/i);
+    if (sec) return sec[1] + ' секундын дараа дахин оролдоно уу.';
+    if (/already registered|already exists/i.test(t)) return 'Энэ имэйл бүртгэлтэй байна. Дээрх «Нэвтрэх» товчийг дарна уу.';
+    if (/invalid login|invalid credentials/i.test(t)) return 'Имэйл эсвэл нууц үг буруу байна.';
+    if (/invalid.*email|email.*invalid/i.test(t)) return 'Имэйл хаяг буруу байна.';
+    return 'Алдаа гарлаа: ' + t;
+  }
   function boot() {
     sb.auth.getSession().then(function (r) {
       var s = r.data.session; if (!s) { showAuth(); return; }
       var pend = {}; try { pend = JSON.parse(localStorage.getItem('pendingT') || '{}'); } catch (e) {}
       sb.rpc('claim_teacher', { p_name: pend.name || '', p_subject: pend.subject || '', p_school: pend.school || '', p_invite: pend.invite || '' }).then(function (c) {
         if (c.data !== true) {
-          app.innerHTML = '<div class="card"><h2>Багшийн эрх идэвхжээгүй байна</h2><div class="muted">Урилгын код буруу эсвэл хэрэглэгдэж дууссан байна. Платформын эзэнтэй холбогдоно уу.</div><button class="btn ghost" id="lo">Гарах</button></div>';
+          app.innerHTML = '<div class="card" style="display:flex;flex-direction:column;gap:8px"><h2>Бүртгэлээ дуусгана уу</h2><div class="muted">Нэр, хичээл, урилгын кодоо оруулаад «Идэвхжүүлэх» дарна уу.</div>' +
+            '<label class="muted" for="an">Нэр (жишээ: Г.Даваасүрэн)</label><input type="text" id="an" value="' + esc(pend.name || '') + '">' +
+            '<label class="muted" for="as">Хичээл</label><input type="text" id="as" value="' + esc(pend.subject || '') + '">' +
+            '<label class="muted" for="asc">Сургууль</label><input type="text" id="asc" value="' + esc(pend.school || '') + '">' +
+            '<label class="muted" for="ai">Урилгын код</label><input type="text" id="ai" autocomplete="off" value="' + esc(pend.invite || '') + '">' +
+            '<div class="muted" id="amsg" style="color:#B42318"></div><button class="btn" id="act">Идэвхжүүлэх</button><button class="btn ghost" id="lo">Гарах</button></div>';
+          q('#act').onclick = function () {
+            var d = { name: q('#an').value.trim(), subject: q('#as').value.trim(), school: q('#asc').value.trim(), invite: q('#ai').value.trim() };
+            if (!d.name || !d.subject || !d.invite) { q('#amsg').textContent = 'Нэр, хичээл, урилгын кодоо бөглөнө үү.'; return; }
+            sb.rpc('claim_teacher', { p_name: d.name, p_subject: d.subject, p_school: d.school, p_invite: d.invite }).then(function (c2) {
+              if (c2.data === true) boot(); else q('#amsg').textContent = 'Урилгын код буруу эсвэл хэрэглэгдэж дууссан байна.';
+            });
+          };
           q('#lo').onclick = function () { sb.auth.signOut().then(function () { showAuth(); }); }; return;
         }
         try { localStorage.removeItem('pendingT'); } catch (e) {}
