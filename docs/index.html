@@ -159,6 +159,62 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
       '<path d="M12 104 L20 76 L28 104 M20 76 v-6" fill="none" stroke="#1E2A5A" stroke-width="2.5" stroke-linecap="round" opacity="' + (lv >= 3 ? 1 : 0) + '"/>' +
       '<path d="M55 80 l3 6 7 1 -5 5 1 7 -6 -3 -6 3 1 -7 -5 -5 7 -1 z" fill="#F5D547" stroke="#1E2A5A" stroke-width="1.2" opacity="' + (lv >= 5 ? 1 : 0) + '"/></svg>';
   }
+  // ---------- ШАЛГАЛТ (student) ----------
+  var EXN = { garaa: 'Гарааны шалгалт', yavts: 'Явцын шалгалт', ulir: 'Улирлын шалгалт' };
+  function loadExams() {
+    var box = document.getElementById('exBox'); if (!box) return;
+    sb.rpc('student_exams', { p_token: token }).then(function (r) {
+      var list = (r.data || []).filter(function (e) { return !e.done ? new Date(e.ends_at) > new Date() : true; });
+      if (!list.length) { box.innerHTML = ''; return; }
+      box.innerHTML = list.map(function (e) {
+        var open = !e.done && new Date(e.ends_at) > new Date();
+        return '<div class="card" style="border:2px solid ' + (open ? '#B42318' : '#C5CADB') + ';gap:8px"><div class="row"><span class="pill ' + (open ? 'p-red' : 'p-green') + '">' + (EXN[e.type] || 'Шалгалт') + '</span>' +
+          (open ? '<span class="muted">' + fmtDate(e.ends_at) + ' хүртэл</span>' : '') + '</div><b style="font-size:17px">' + esc(e.name) + '</b>' +
+          (e.done ? '<div style="font-weight:700;color:#1C6B40">✓ Өгсөн' + (e.result ? ' · ' + e.result.score + '/' + e.result.total : '') + '</div>'
+            : '<button class="btn" data-exstart="' + e.id + '">Шалгалт эхлэх</button>') + '</div>';
+      }).join('');
+      box.querySelectorAll('[data-exstart]').forEach(function (b) { b.onclick = function () { startExam(b.dataset.exstart); }; });
+    });
+  }
+  function startExam(id) {
+    app.innerHTML = '<div class="muted">Шалгалт ачаалж байна…</div>';
+    sb.rpc('student_exam', { p_token: token, p_exam: id }).then(function (r) {
+      var d = r.data || {};
+      if (d.error) { toast(d.error === 'done' ? 'Та энэ шалгалтыг өгсөн байна' : 'Шалгалт хаагдсан байна'); showHome(); return; }
+      var ans = {}, n, html = '<button class="link" id="back">← Буцах</button><span class="pill p-red" style="align-self:flex-start">' + (EXN[d.type] || 'Шалгалт') + '</span><h1>' + esc(d.name) + '</h1>' +
+        '<div class="muted" id="exLeft"></div>';
+      if (d.mode === 'forms') {
+        html += '<div class="card" style="gap:10px"><div>Энэ шалгалтыг Google Forms дээр өгнө. <b>"Таны код"</b> асуултад <b style="font-size:18px">' + esc(home.code) + '</b> гэж заавал бичнэ үү.</div><a class="btn" style="display:flex;align-items:center;justify-content:center;text-decoration:none" target="_blank" rel="noopener" href="' + esc(d.forms_url) + '">Шалгалт нээх ↗</a><div class="muted">Дүнг багш оруулна.</div></div>';
+        app.innerHTML = html; document.getElementById('back').onclick = showHome; return;
+      }
+      if (d.mode === 'file') {
+        var L = (d.labels === 'cyr' ? 'АБВГДЕ' : 'abcdef').slice(0, d.opts || 4).split(''); n = d.n;
+        html += '<div class="card">' + (d.files || []).map(function (u, i) { return /\.pdf(\?|$)/i.test(u) ? '<a class="btn sec" style="display:flex;align-items:center;justify-content:center;text-decoration:none" target="_blank" rel="noopener" href="' + esc(u) + '">Шалгалтын хуудас ' + (i + 1) + ' нээх (PDF) ↗</a>' : '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img alt="Шалгалтын хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;border-radius:10px;border:1px solid #C5CADB;background:#fff"></a>'; }).join('') + '<div class="muted">Зураг дээр дарж томруулна.</div></div>' +
+          '<div class="card"><h2>Хариултын хуудас</h2>' + Array.apply(null, { length: n }).map(function (_, i) { return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #EEF1FA"><b style="width:34px;font-size:16px">' + (i + 1) + '.</b>' + L.map(function (l, j) { return '<button class="opt" data-q="' + i + '" data-o="' + j + '" style="flex:1;min-width:0;height:44px;padding:0;text-align:center;font-weight:700;font-size:17px">' + l + '</button>'; }).join('') + '</div>'; }).join('') + '</div>';
+      } else {
+        var Q = d.questions || []; n = Q.length;
+        html += Q.map(function (x, i) { return '<div class="card"><b style="line-height:1.4">' + (i + 1) + '. ' + esc(x.q) + '</b>' + (x.img ? '<a href="' + esc(x.img) + '" target="_blank" rel="noopener"><img alt="" src="' + esc(x.img) + '" style="width:100%;border-radius:8px"></a>' : '') +
+          (x.opts || []).map(function (o, j) { return '<button class="opt" data-q="' + i + '" data-o="' + j + '">' + 'ABCDEF'[j] + '. ' + esc(o) + '</button>'; }).join('') + '</div>'; }).join('');
+      }
+      html += '<div class="muted" id="cnt">0 / ' + n + ' хариулсан</div><div class="err" id="err"></div><button class="btn" id="fin">Шалгалт илгээх</button>';
+      app.innerHTML = html; window.scrollTo(0, 0);
+      document.getElementById('back').onclick = showHome;
+      var tick = function () { var el = document.getElementById('exLeft'); if (!el) { clearInterval(tm); return; } var m = Math.ceil((new Date(d.ends_at) - new Date()) / 60000); el.textContent = m > 0 ? 'Үлдсэн хугацаа: ' + m + ' минут' : 'Хугацаа дууслаа — хариултаа илгээнэ үү'; };
+      var tm = setInterval(tick, 20000); tick();
+      app.querySelectorAll('.opt').forEach(function (b) { b.onclick = function () { ans[b.dataset.q] = +b.dataset.o; app.querySelectorAll('.opt[data-q="' + b.dataset.q + '"]').forEach(function (x) { x.classList.toggle('on', x === b); }); document.getElementById('cnt').textContent = Object.keys(ans).length + ' / ' + n + ' хариулсан'; }; });
+      document.getElementById('fin').onclick = function () {
+        var err = document.getElementById('err'), b = this;
+        if (Object.keys(ans).length < n) { var miss = []; for (var i = 0; i < n; i++) if (ans[i] == null) miss.push(i + 1); if (!b.dataset.sure) { b.dataset.sure = 1; err.textContent = 'Хариулаагүй: ' + miss.join(', ') + '. Ингээд илгээх бол дахин дарна уу.'; return; } }
+        b.disabled = true; b.textContent = 'Илгээж байна…';
+        sb.rpc('student_finish_exam', { p_token: token, p_exam: id, p_answers: ans }).then(function (r2) {
+          var d2 = r2.data || {}; clearInterval(tm);
+          if (d2.error) { toast(d2.error === 'done' ? 'Аль хэдийн өгсөн байна' : 'Шалгалт хаагдсан байна'); showHome(); return; }
+          app.innerHTML = '<div class="card" style="align-items:center;text-align:center;padding:28px 18px"><h1>Таны дүн: ' + d2.score + '/' + d2.total + '</h1><div class="muted">Дүн багшид автоматаар очлоо.</div><button class="btn" id="ok">Нүүр хуудас</button></div>';
+          document.getElementById('ok').onclick = showHome;
+        });
+      };
+    });
+  }
   function showHome() {
     var xp = home.xp || 0;
     var L = [[0, 'Шавь'], [50, 'Зураач'], [120, 'Зураг төсөлч'], [220, 'Инженер'], [350, 'Архитектор']];
@@ -176,6 +232,7 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
       '<span style="font-size:13px;font-weight:600;color:' + (lazy ? '#8A4B0B' : '#1C6B40') + '">' + (lazy ? 'Нойрмог байна · ' + home.pending_old + ' ажлаа нөхөөрэй' : 'Сэргэг байна') + '</span>' +
       '<div class="bar"><div style="width:' + pct + '%"></div></div><span class="muted">' + xp + ' оноо' + (next ? ' · дараагийн түвшин ' + next[0] : '') + '</span></div></div>' +
       '<div class="muted">Энэ сарын хичээлийн тэмдэглэл: ' + (beh.length ? esc(beh.join(', ')) + ' удаа' : 'тэмдэглэл алга, сайн байна') + '</div></div>';
+    html += '<div id="exBox" style="display:flex;flex-direction:column;gap:12px"></div>';
     html += '<h1 style="font-size:18px">Сэдвүүд</h1><div class="muted">Хоцорсон хичээлээ эндээс нөхнө. Видео үргэлж нээлттэй.</div>';
     if (!home.topics.length) html += '<div class="card muted">Багш одоогоор сэдэв нээгээгүй байна.</div>';
     home.topics.forEach(function (t, k) {
@@ -186,7 +243,7 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
     });
     html += feedbackCard(null) + '<button class="link" id="out">Гарах</button>';
     app.innerHTML = html;
-    bindFeedback();
+    bindFeedback(); loadExams();
     app.querySelectorAll('.topic').forEach(function (b) { b.onclick = function () { curTopic = home.topics[+b.dataset.k]; showTopic(); }; });
     document.getElementById('out').onclick = logout;
     window.scrollTo(0, 0);
