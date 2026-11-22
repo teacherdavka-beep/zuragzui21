@@ -141,7 +141,7 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
     if (n && t.sub_status === 'review') return '<span class="pill p-blue">✓ ' + n + ' зураг илгээсэн</span>';
     if (t.sub_status === 'auto' || t.sub_status === 'ok') return '<span class="pill p-green">+ Батлагдсан</span>';
     if (t.sub_status === 'review') return '<span class="pill p-blue">Илгээсэн</span>';
-    if (t.sub_status === 'redo') return '<span class="pill p-amber">Дахин хийх</span>';
+    if (t.sub_status === 'redo') return '<span class="pill p-amber">↺ Багш буцаасан · дахин илгээ</span>';
     return '<span class="pill p-red">Илгээгээгүй</span>';
   }
   function avatarSvg(lv, lazy) {
@@ -212,7 +212,7 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
         '<div class="muted">Ойлгоогүй хэсгээ дахин үзээрэй.</div></div>' +
       '<div class="card"><div class="row"><h2>Зурсан зургаа илгээх</h2>' + statusPill(t) + '</div><div class="muted">Үргэлж нээлттэй · хоцорсон бол нөхөж илгээнэ</div>' +
       mySubsHtml(t) +
-      '<button class="btn" id="send">' + (myPhotos(t).length ? '+ Зураг нэмж илгээх' : (t.tasks_open ? 'Зураг илгээх' : 'Нөхөж илгээх')) + '</button></div>';
+      (canSend(t) ? '<button class="btn" id="send">' + (isRedo(t) ? 'Дахин зурж илгээх' : (t.tasks_open ? 'Зураг илгээх' : 'Нөхөж илгээх')) + '</button>' : '') + '</div>';
     html += '<div class="card' + (t.tasks_open ? '' : ' locked') + '"><div class="row"><h2>Дасгал ажил, даалгавар</h2>' + (t.tasks_open ? '' : lockIcon) + '</div>' +
       (t.tasks_open ? '<div class="muted">Багш нээсэн' + (t.due_at ? ' · хугацаа ' + fmtDate(t.due_at) : '') + '</div>' +
         (t.exercise_url ? ((/\.(png|jpe?g|webp|gif)(\?|$)/i).test(t.exercise_url) ? '<a href="' + esc(t.exercise_url) + '" target="_blank" rel="noopener"><img alt="Дасгалын хуудас" src="' + esc(t.exercise_url) + '" style="width:100%;border-radius:10px;border:1px solid #C5CADB"></a><div class="muted">Зураг дээр дарж томруулна</div>' : '<a class="btn sec" style="display:flex;align-items:center;justify-content:center;text-decoration:none" target="_blank" rel="noopener" href="' + esc(t.exercise_url) + '">Дасгалын хуудас харах</a>') : '<div class="muted">Дасгалын хуудсыг багш ангид тараана.</div>')
@@ -225,7 +225,7 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
     html += feedbackCard(t.id);
     app.innerHTML = html;
     document.getElementById('back').onclick = function () { loadHome(); };
-    document.getElementById('send').onclick = showSubmit;
+    var sbtn = document.getElementById('send'); if (sbtn) sbtn.onclick = showSubmit;
     bindDel();
     var tb = document.getElementById('test'); if (tb) tb.onclick = showTest;
     bindFeedback();
@@ -233,7 +233,7 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
   }
 
   // ---------- SENT LIST / DELETE ----------
-  var SLBL = { auto: ['+ Журналд орсон', 'p-green'], ok: ['+ Багш баталсан', 'p-green'], review: ['Багш шалгаж байна', 'p-blue'], redo: ['Дахин зурах', 'p-amber'], fake: ['Хүлээн аваагүй', 'p-red'] };
+  var SLBL = { auto: ['+ Журналд орсон', 'p-green'], ok: ['+ Багш баталсан', 'p-green'], review: ['Багш шалгаж байна', 'p-blue'], redo: ['Багш буцаасан', 'p-amber'], fake: ['Хүлээн аваагүй', 'p-red'] };
   var photoUrls = {};
   function myPhotos(t) {
     var out = [];
@@ -241,19 +241,24 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
     return out;
   }
   function localPv(path) { try { return localStorage.getItem('pp_' + path); } catch (e) { return null; } }
+  function isRedo(t) { var s0 = (t.my_subs || [])[0]; return !!(s0 && s0.status === 'redo'); }
+  function canSend(t) { return !myPhotos(t).length || isRedo(t); }
   function mySubsHtml(t) {
     var ph = myPhotos(t), subs = t.my_subs || [];
     if (!ph.length) return '<div style="background:#FDECEA;color:#A12A1E;border-radius:10px;padding:12px;font-weight:700">Одоогоор илгээгээгүй байна</div>';
     var st = subs[0].status, lb = SLBL[st] || [st, 'p-blue'];
-    return '<div style="background:#E3F4EA;color:#1C6B40;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">' +
-      '<b style="font-size:16px">✓ Илгээгдсэн · ' + ph.length + ' зураг</b><span style="font-size:13px">Сүүлд: ' + fmtDate(subs[0].at) + ' · <span class="pill ' + lb[1] + '">' + lb[0] + '</span></span></div>' +
-      '<div class="muted">Буруу зургаа ✕ дарж устгана. Хажуу тийш гүйлгэж бүгдийг харна.</div>' +
+    return '<div style="background:' + (st === 'redo' ? '#FFF3E5' : '#E3F4EA') + ';color:#1C6B40;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px">' +
+      (st === 'redo'
+        ? '<b style="font-size:16px;color:#8A4B0B">↺ Багш зургийг чинь буцаасан</b><span style="font-size:13px;color:#8A4B0B">Буруу сэдэвт илгээсэн эсвэл засах шаардлагатай байна. Зөв зургаа доорх товчоор дахин илгээнэ үү. Шинэ зураг хуучныг орлоно.</span></div>'
+        : '<b style="font-size:17px">✓ Багшид амжилттай илгээгдсэн</b><span style="font-size:14px">' + ph.length + ' зураг · ' + fmtDate(subs[0].at) + ' · <span class="pill ' + lb[1] + '">' + lb[0] + (subs[0].credit != null && subs[0].credit < 100 && (st === 'ok' || st === 'auto') ? ' · ' + Math.round(subs[0].credit / 10) + '/10 оноо (хоцорсон)' : '') + '</span></span><span style="font-size:13px">Дахин илгээх шаардлагагүй. Багш шалгаад журналд оруулна.</span></div>') +
+      '<div class="muted">Зургаа засах бол доорх товчоор өмнөхөө устгаад шинээр илгээнэ.</div>' +
       '<div class="strip">' + ph.map(function (x, i) {
         var src = photoUrls[x.path] || localPv(x.path) || '';
         return '<div class="ph">' + (src ? '<img alt="Илгээсэн зураг ' + (i + 1) + '" data-pp="' + esc(x.path) + '" src="' + src + '">' : '<img alt="Илгээсэн зураг ' + (i + 1) + '" data-pp="' + esc(x.path) + '" style="opacity:0">') +
           '<span class="no">' + (i + 1) + '</span>' +
-          (x.status === 'fake' ? '' : '<button class="x" data-ds="' + x.sub + '" data-dp="' + esc(x.path) + '" aria-label="' + (i + 1) + '-р зургийг устгах">✕</button>') + '</div>';
-      }).join('') + '</div>';
+          '</div>';
+      }).join('') + '</div>' +
+      (subs[0].status === 'fake' ? '' : '<button class="btn sec" id="delAll" data-sub="' + subs[0].id + '" style="color:#B42318;border-color:#E8B4B0">Өмнөхөө устгаад дахин илгээх</button>');
   }
   function loadPhotoUrls() {
     var need = Array.prototype.some.call(app.querySelectorAll('img[data-pp]'), function (im) { return !photoUrls[im.dataset.pp]; });
@@ -293,21 +298,20 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
         document.body.appendChild(z);
       };
     });
-    app.querySelectorAll('[data-ds]').forEach(function (b) {
-      b.onclick = function () {
-        if (!b.classList.contains('sure')) { app.querySelectorAll('.x.sure').forEach(function (o) { o.classList.remove('sure'); o.textContent = '✕'; }); b.classList.add('sure'); b.textContent = 'Устгах уу?'; return; }
-        b.disabled = true; b.textContent = '…';
-        var tid = curTopic.id, path = b.dataset.dp;
-        sb.rpc('student_delete_photo', { p_token: token, p_sub: b.dataset.ds, p_path: path }).then(function (r) {
-          if (r.error) throw r.error;
-          try { localStorage.removeItem('pp_' + path); } catch (e) {}
-          loadHome(function () {
-            curTopic = home.topics.filter(function (x) { return x.id === tid; })[0] || curTopic;
-            showTopic(); toast('Зураг устгагдлаа');
-          });
-        }).catch(function (e) { console.error(e); b.disabled = false; b.classList.remove('sure'); b.textContent = '✕'; toast('Устгаж чадсангүй'); });
-      };
-    });
+    var del = document.getElementById('delAll');
+    if (del) del.onclick = function () {
+      if (!del.dataset.sure) { del.dataset.sure = '1'; del.textContent = 'Илгээсэн бүх зураг устна. Үнэхээр устгах уу?'; del.style.background = '#FCE8E6'; return; }
+      del.disabled = true; del.textContent = 'Устгаж байна…';
+      var tid = curTopic.id, paths = myPhotos(curTopic).map(function (x) { return x.path; });
+      sb.rpc('student_delete_submission', { p_token: token, p_sub: del.dataset.sub }).then(function (r) {
+        if (r.error) throw r.error;
+        try { paths.forEach(function (pth) { localStorage.removeItem('pp_' + pth); }); } catch (e) {}
+        loadHome(function () {
+          curTopic = home.topics.filter(function (x) { return x.id === tid; })[0] || curTopic;
+          showTopic(); toast('Устгагдлаа · одоо засварласан зургаа илгээнэ үү');
+        });
+      }).catch(function (e) { console.error(e); del.disabled = false; delete del.dataset.sure; del.style.background = ''; del.textContent = 'Өмнөхөө устгаад дахин илгээх'; toast('Устгаж чадсангүй'); });
+    };
   }
 
   // ---------- FEEDBACK ----------
@@ -350,27 +354,37 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
         URL.revokeObjectURL(url);
         var pv = document.createElement('canvas'), pk = Math.min(1, 360 / Math.max(c.width, c.height)); pv.width = Math.round(c.width * pk); pv.height = Math.round(c.height * pk);
         pv.getContext('2d').drawImage(c, 0, 0, pv.width, pv.height);
-        c.toBlob(function (blob) { res({ blob: blob, hash: hex, preview: pv.toDataURL('image/jpeg', 0.6) }); }, 'image/jpeg', 0.72);
+        var cw = Math.round(c.width * 0.42), ch = Math.round(c.height * 0.3), cr = document.createElement('canvas'), ck = Math.min(1, 480 / cw);
+        cr.width = Math.round(cw * ck); cr.height = Math.round(ch * ck);
+        cr.getContext('2d').drawImage(c, 0, c.height - ch, cw, ch, 0, 0, cr.width, cr.height);
+        c.toBlob(function (blob) { res({ blob: blob, hash: hex, preview: pv.toDataURL('image/jpeg', 0.6), corner: cr.toDataURL('image/jpeg', 0.8), codeOk: null }); }, 'image/jpeg', 0.72);
       };
       img.onerror = rej; img.src = url;
     });
   }
   function showSubmit() {
-    var t = curTopic, photos = [], claim = null, sentPaths = [];
+    if (!canSend(curTopic)) { toast('Энэ сэдэвт аль хэдийн илгээсэн байна'); return; }
+    var t = curTopic, photos = [], claim = null, sentPaths = [], MAX = t.max_photos || 1, myCode = home ? home.code : '';
     app.innerHTML = '<button class="link" id="back">← Буцах</button><h1>Зураг илгээх</h1><div class="muted">' + esc(t.title) + '</div>' +
+      '<div style="background:#EEF1FA;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px"><b style="font-size:16px">Энэ сэдэвт ' + MAX + ' хуудас зураг илгээнэ</b>' +
+      '<span style="font-size:14px">Дэвтрийнхээ <b>зүүн доод буланд</b> өөрийн кодоо <b style="font-size:18px;letter-spacing:.04em">' + esc(myCode) + '</b> гэж <b>үзгээр</b> тод бичсэн байх ёстой. Кодгүй зураг илгээгдэхгүй.</span></div>' +
       '<input id="cam" type="file" accept="image/*" capture="environment" hidden><input id="gal" type="file" accept="image/*" multiple hidden>' +
       '<div class="choice"><button class="btn dark" id="take" style="height:62px;font-size:16px">📷 Зураг авах</button><button class="btn sec" id="pick" style="height:62px;font-size:16px">🖼 Галерейгаас</button></div>' +
-      '<div id="ph"></div><div class="muted">Хуудсаа гэрэлтэй газар, дээрээс нь шулуун авна. Хүрээ, багшийн улаан "+" бүтэн орсон байх ёстой. Хэдэн ч зураг нэмж болно.</div>' +
-      '<div class="card"><label>Багш ангид "+" тавьсан уу?</label><div class="choice"><button id="yes">Тийм, + авсан</button><button id="no">Үзүүлээгүй</button></div>' +
+      '<div id="ph"></div><div class="muted">Хуудсаа гэрэлтэй газар, дээрээс нь шулуун авна. Зүүн доод булан (кодтой хэсэг) бүтэн орсон байх ёстой.</div>' +
+
+      '<div class="card"><label>Энэ зургаа багшид үзүүлж үнэлгээ авсан уу?</label><div class="choice"><button id="yes">Багшид үзүүлж үнэлгээ авсан</button><button id="no">Огт үзүүлээгүй</button></div>' +
       '<div class="muted">Худал бичвэл илэрнэ: багш санамсаргүй шалгадаг.</div></div>' +
       '<div class="err" id="err"></div><button class="btn" id="go">Илгээх</button>';
     var cam = document.getElementById('cam');
     document.getElementById('back').onclick = showTopic;
-    var gal = document.getElementById('gal'), MAX = 20;
-    document.getElementById('take').onclick = function () { if (photos.length >= MAX) { toast('Нэг удаад ' + MAX + ' хүртэл'); return; } cam.click(); };
-    document.getElementById('pick').onclick = function () { if (photos.length >= MAX) { toast('Нэг удаад ' + MAX + ' хүртэл'); return; } gal.click(); };
+    var gal = document.getElementById('gal');
+    if (MAX === 1) gal.removeAttribute('multiple');
+    var full = function () { toast('Энэ сэдэвт ' + MAX + ' зураг илгээнэ. Солих бол ✕ дарж хасна уу.'); };
+    document.getElementById('take').onclick = function () { if (photos.length >= MAX) { full(); return; } cam.click(); };
+    document.getElementById('pick').onclick = function () { if (photos.length >= MAX) { full(); return; } gal.click(); };
     function addFiles(list) {
-      var fs = Array.prototype.slice.call(list || [], 0, MAX - photos.length);
+      var all = Array.prototype.slice.call(list || []), fs = all.slice(0, MAX - photos.length);
+      if (all.length > fs.length) full();
       fs.reduce(function (pr, f) { return pr.then(function () { return shrink(f).then(function (p) { photos.push(p); drawPh(); }); }); }, Promise.resolve())
         .catch(function () { toast('Зураг уншиж чадсангүй'); });
     }
@@ -378,8 +392,17 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
     gal.onchange = function () { addFiles(gal.files); gal.value = ''; };
     function drawPh() {
       var el = document.getElementById('ph');
-      el.innerHTML = photos.length ? '<div class="muted" style="margin-bottom:6px"><b>' + photos.length + ' зураг</b> бэлэн · ✕ дарж хасна</div><div class="strip">' +
+      el.innerHTML = photos.length ? '<div class="muted" style="margin-bottom:6px"><b>' + photos.length + ' / ' + MAX + ' зураг</b> бэлэн · ✕ дарж хасна</div><div class="strip">' +
         photos.map(function (p, i) { return '<div class="ph"><img alt="" src="' + p.preview + '"><span class="no">' + (i + 1) + '</span><button class="x" data-rm="' + i + '" aria-label="Хасах">✕</button></div>'; }).join('') + '</div>' : '';
+      var pend = photos.map(function (p, i) { return p.codeOk ? '' : '<div class="card" style="border:2px solid #2747B8;gap:10px"><b style="font-size:16px">' + (i + 1) + '-р зураг: зүүн доод буланд таны код <span style="color:#2747B8">' + esc(myCode) + '</span> тод харагдаж байна уу?</b>' +
+        '<img alt="Зургийн зүүн доод булан" src="' + p.corner + '" style="width:100%;border-radius:10px;border:1px solid #C5CADB;background:#fff">' +
+        '<div class="choice"><button data-cy="' + i + '">Тийм, харагдаж байна</button><button data-cn="' + i + '">Үгүй, код алга</button></div></div>'; }).join('');
+      if (pend) el.insertAdjacentHTML('beforeend', pend);
+      el.querySelectorAll('[data-cy]').forEach(function (b) { b.onclick = function () { photos[+b.dataset.cy].codeOk = true; drawPh(); }; });
+      el.querySelectorAll('[data-cn]').forEach(function (b) { b.onclick = function () {
+        photos.splice(+b.dataset.cn, 1); drawPh();
+        document.getElementById('err').textContent = 'Код алга. Дэвтрийнхээ зүүн доод буланд ' + myCode + ' гэж үзгээр тод бичээд, дахин зураг авна уу.';
+      }; });
       el.querySelectorAll('[data-rm]').forEach(function (b) { b.onclick = function () { photos.splice(+b.dataset.rm, 1); drawPh(); }; });
       var stp = el.querySelector('.strip'); if (stp) { stripArrows(stp); stp.scrollLeft = stp.scrollWidth; }
     }
@@ -389,7 +412,8 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
     document.getElementById('go').onclick = function () {
       var err = document.getElementById('err'), b = this;
       if (!photos.length) { err.textContent = 'Эхлээд зургаа авна уу.'; return; }
-      if (claim === null) { err.textContent = '"+" авсан эсэхээ сонгоно уу.'; return; }
+      if (photos.some(function (p) { return !p.codeOk; })) { err.textContent = 'Зураг бүрийн зүүн доод буланд ' + myCode + ' код харагдаж байгааг шалгаад "Тийм" дарна уу.'; return; }
+      if (claim === null) { err.textContent = 'Багшид үзүүлсэн эсэхээ сонгоно уу.'; return; }
       b.disabled = true; b.textContent = 'Илгээж байна…';
       Promise.resolve().then(function () {
         var uploads = photos.map(function (p, i) {
@@ -408,25 +432,69 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
           curTopic = home.topics.filter(function (x) { return x.id === t.id; })[0] || t;
           app.innerHTML = '<div class="card" style="align-items:center;text-align:center;padding:28px 18px">' +
             '<svg width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Амжилттай"><circle cx="32" cy="32" r="30" fill="#E3F4EA"/><path d="M20 33 L28 41 L45 24" fill="none" stroke="#1C6B40" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-            '<h1>' + sentPaths.length + ' зураг илгээгдлээ ✓</h1><div class="muted">' + (r.data && r.data.added ? 'Өмнө илгээсэн зураг дээр чинь нэмэгдлээ. ' : '') + (auto ? (r.data && r.data.added ? 'Журналд орсон хэвээр.' : '+20 оноо! Журналд автоматаар орлоо.') : 'Багш шалгаад журналд оруулна.') + '</div>' +
+            '<h1>Багшид амжилттай илгээгдлээ ✓</h1><div style="font-size:16px;font-weight:600">' + sentPaths.length + ' зураг</div><div class="muted">' + (auto ? '+20 оноо! Журналд автоматаар орлоо.' : 'Багш шалгаад журналд оруулна.') + ' Санаа зоволтгүй, дахин илгээх шаардлагагүй.</div>' +
             '<button class="btn" id="ok">Сэдэв рүү буцах</button></div>';
           document.getElementById('ok').onclick = showTopic;
         });
       }).catch(function (e) {
         b.disabled = false; b.textContent = 'Илгээх';
-        err.textContent = 'Илгээж чадсангүй. Интернэтээ шалгаад дахин оролдоно уу.';
+        err.textContent = /already sent/.test((e && e.message) || '') ? 'Энэ сэдэвт аль хэдийн илгээсэн байна. Дахин илгээх шаардлагагүй.' : /too many photos/.test((e && e.message) || '') ? 'Энэ сэдэвт ' + MAX + ' зураг л илгээнэ.' : 'Илгээж чадсангүй. Интернэтээ шалгаад дахин оролдоно уу.';
         console.error(e);
       });
     };
   }
 
   // ---------- TEST ----------
+  function showFileTest(t, d) {
+    var L = (d.labels === 'cyr' ? 'АБВГДЕ' : 'abcdef').slice(0, d.opts || 4).split(''), n = d.n, ans = {};
+    var files = (d.files || []).map(function (u, i) {
+      return /\.pdf(\?|$)/i.test(u) ? '<a class="btn sec" style="display:flex;align-items:center;justify-content:center;text-decoration:none" target="_blank" rel="noopener" href="' + esc(u) + '">Тестийн хуудас ' + (i + 1) + ' нээх (PDF) ↗</a>'
+        : '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img alt="Тестийн хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;border-radius:10px;border:1px solid #C5CADB;background:#fff"></a>';
+    }).join('');
+    var html = '<button class="link" id="back">← Буцах</button><h1>Тест · ' + esc(t.title) + '</h1>' +
+      '<div class="card">' + (files || '<div class="muted">Тестийн хуудсыг багш ангид тараана.</div>') + '<div class="muted">Зураг дээр дарж томруулна.</div></div>' +
+      '<div class="card"><h2>Хариултын хуудас</h2><div class="muted">Асуулт бүрийн зөв хариултын үсгийг сонгоно.</div>' +
+      Array.apply(null, { length: n }).map(function (_, i) {
+        return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #EEF1FA"><b style="width:34px;font-size:16px">' + (i + 1) + '.</b>' +
+          L.map(function (l, j) { return '<button class="opt" data-q="' + i + '" data-o="' + j + '" style="flex:1;min-width:0;height:44px;padding:0;text-align:center;font-weight:700;font-size:17px">' + l + '</button>'; }).join('') + '</div>';
+      }).join('') + '</div>' +
+      '<div class="muted" id="cnt">0 / ' + n + ' хариулсан</div><div class="err" id="err"></div><button class="btn" id="fin">Илгээх</button>';
+    app.innerHTML = html;
+    document.getElementById('back').onclick = showTopic;
+    app.querySelectorAll('.opt').forEach(function (b) {
+      b.onclick = function () {
+        ans[b.dataset.q] = +b.dataset.o;
+        app.querySelectorAll('.opt[data-q="' + b.dataset.q + '"]').forEach(function (x) { x.classList.toggle('on', x === b); });
+        document.getElementById('cnt').textContent = Object.keys(ans).length + ' / ' + n + ' хариулсан';
+      };
+    });
+    document.getElementById('fin').onclick = function () {
+      var err = document.getElementById('err'), b = this;
+      if (Object.keys(ans).length < n) {
+        var miss = []; for (var i = 0; i < n; i++) if (ans[i] == null) miss.push(i + 1);
+        err.textContent = 'Хариулаагүй асуулт: ' + miss.join(', '); return;
+      }
+      b.disabled = true; b.textContent = 'Илгээж байна…';
+      sb.rpc('student_finish_test', { p_token: token, p_lesson: t.id, p_answers: ans }).then(function (r) {
+        var d2 = r.data || {};
+        if (d2.error) { toast(d2.error === 'done' ? 'Та тест өгсөн байна' : 'Тест хаагдсан байна'); }
+        loadHome(function () {
+          curTopic = home.topics.filter(function (x) { return x.id === t.id; })[0] || t;
+          app.innerHTML = '<div class="card" style="align-items:center;text-align:center;padding:28px 18px"><h1>Таны дүн: ' + (d2.score != null ? d2.score + '/' + d2.total : '—') + '</h1>' +
+            '<div class="muted">Дүн багшийн журналд автоматаар бүртгэгдлээ.</div><button class="btn" id="ok">Сэдэв рүү буцах</button></div>';
+          document.getElementById('ok').onclick = showTopic;
+        });
+      });
+    };
+    window.scrollTo(0, 0);
+  }
   function showTest() {
     var t = curTopic;
     app.innerHTML = '<div class="muted">Тест ачаалж байна…</div>';
     sb.rpc('student_test', { p_token: token, p_lesson: t.id }).then(function (r) {
       var d = r.data || {};
       if (d.error) { toast(d.error === 'done' ? 'Та тест өгсөн байна' : 'Тест хаагдсан байна'); loadHome(function () { showTopic(); }); return; }
+      if (d.mode === 'file') { showFileTest(t, d); return; }
       var qs = d.questions || [], ans = {};
       var html = '<button class="link" id="back">← Буцах</button><h1>Тест · ' + esc(t.title) + '</h1>';
       qs.forEach(function (q, i) {

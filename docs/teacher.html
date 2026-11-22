@@ -36,6 +36,8 @@ textarea{height:auto;min-height:120px;padding:10px 12px;resize:vertical;width:10
 .chip.on{background:#1E2A5A;border-color:#1E2A5A;color:#fff}
 .pill{font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px}
 .p-red{background:#FDECEA;color:#A12A1E}.p-green{background:#E3F4EA;color:#1C6B40}.p-blue{background:#EEF1FA;color:#2747B8}.p-amber{background:#FFF3E5;color:#8A4B0B}
+.lbadge{position:absolute;left:6px;top:6px;background:#B42318;color:#fff;font-size:12px;font-weight:700;border-radius:6px;padding:2px 7px;pointer-events:none;z-index:1;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.photos .pw{position:relative;flex:0 0 auto;scroll-snap-align:start}
 .photos{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;min-height:150px}
 .photos img{flex:0 0 auto;width:118px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #C5CADB;cursor:zoom-in;scroll-snap-align:start;background:#E9ECF6}
 .zx{position:fixed;top:14px;right:14px;height:48px;padding:0 18px;border-radius:99px;border:0;background:#fff;color:#1A1F36;font-size:16px;font-weight:700;cursor:pointer;z-index:32;box-shadow:0 4px 14px rgba(0,0,0,.3)}
@@ -383,8 +385,31 @@ th{font-size:12px;color:#5A6178}
   // ---------- BOARD (padlet-like) ----------
   var boardLesson = null, openMiss = {};
   var boardKeep = null;
-  function openClassGrid(cls, ck, latest, lessonTitle) {
-    var changed = false, filt = 'all';
+  function scoreRow(id, cur) {
+    return '<div class="row" style="gap:6px;align-items:center;flex-wrap:nowrap" data-scrow><label class="muted" style="font-size:13px" for="sc_' + id + '">Оноо</label>' +
+      '<input id="sc_' + id + '" type="number" inputmode="numeric" min="1" max="10" placeholder="1–10" value="' + (cur == null ? '' : Math.round(cur / 10)) + '" style="width:70px;height:40px" enterkeyhint="done">' +
+      '<span class="muted">/ 10</span><button class="btn green" style="height:40px;padding:0 12px" data-sc="' + id + '" aria-label="Оноо өгөх">✓</button></div>';
+  }
+  function scoreVal(b) {
+    var i = b.closest('[data-scrow]').querySelector('input'), v = Math.round(+i.value);
+    if (i.value === '' || isNaN(v) || v < 1 || v > 10) { toast('1-ээс 10 хүртэл оноо оруулна уу'); i.focus(); return null; }
+    return v * 10;
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.target.closest && e.target.closest('[data-scrow]')) { e.preventDefault(); e.target.closest('[data-scrow]').querySelector('[data-sc]').click(); }
+  });
+  function creditTxt(c) { return c != null && c < 100 ? ' · ' + Math.round(c / 10) + '/10 оноо' : ''; }
+  var scoreAfter = null;
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-sc]'); if (!b || b.disabled) return;
+    if (b.closest('[data-gc]')) return; // class grid handles its own
+    var v = scoreVal(b); if (v == null) return;
+    b.disabled = true; setStatus(b.dataset.sc, 'ok', scoreAfter, v);
+  });
+  function lateDays(at, due) { if (!at || !due) return 0; var d = new Date(at) - new Date(due); return d > 0 ? Math.ceil(d / 864e5) : 0; }
+  function lateTag(at, due) { var n = lateDays(at, due); return n ? '<span class="pill p-red" title="Багшийн заасан хугацаа: ' + fmt(due) + '">' + n + ' хоног хоцорсон</span>' : ''; }
+  function openClassGrid(cls, ck, latest, lessonTitle, due) {
+    var changed = false, filt = 'all', codeMode = false;
     var z = document.createElement('div');
     z.style.cssText = 'position:fixed;inset:0;background:#F5F6FA;z-index:40;overflow:auto;font-family:inherit';
     var sent = ck.filter(function (k) { return latest[k.id]; });
@@ -399,37 +424,48 @@ th{font-size:12px;color:#5A6178}
         '<div><div style="font-size:20px;font-weight:700">' + esc(cls.name) + ' анги · бүх зураг</div><div style="font-size:13px;color:#C9D1F0">' + esc(lessonTitle) + ' · ' + sent.length + ' / ' + ck.length + ' сурагч илгээсэн</div></div>' +
         '<button class="btn" id="gx" style="background:#fff;color:#1A1F36">✕ Хаах</button></div>' +
         '<div style="padding:16px 24px;display:flex;flex-direction:column;gap:14px">' +
-        '<div class="row">' + [['all', 'Бүгд (' + sent.length + ')'], ['review', 'Шалгах (' + nRev + ')'], ['ok', 'Журналд орсон (' + (sent.length - nRev) + ')']].map(function (f) { return '<button class="chip' + (filt === f[0] ? ' on' : '') + '" data-gf="' + f[0] + '">' + f[1] + '</button>'; }).join('') + '</div>' +
+        '<div class="row">' + [['all', 'Бүгд (' + sent.length + ')'], ['review', 'Шалгах (' + nRev + ')'], ['ok', 'Журналд орсон (' + (sent.length - nRev) + ')']].map(function (f) { return '<button class="chip' + (filt === f[0] ? ' on' : '') + '" data-gf="' + f[0] + '">' + f[1] + '</button>'; }).join('') +
+          '<button class="chip' + (codeMode ? ' on' : '') + '" id="gcode" style="margin-left:auto">' + (codeMode ? '✓ ' : '') + 'Код шалгах (зүүн доод булан)</button></div>' +
+          (codeMode ? '<div class="muted">Зураг бүрийн зүүн доод булан томоор харагдана. Хөх кодтой тулгаж, таарахгүй бол "Буцаах" эсвэл "Хуулбар" дарна.</div>' : '') +
         (list.length ? '' : '<div class="card muted">Энд харуулах ажил алга.</div>') +
         '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px">' +
         list.map(function (k) {
           var s = latest[k.id], pp = s.photo_paths || [], lb = LB[s.status] || [s.status, 'p-blue'];
           return '<div class="card" data-gc="' + s.id + '" style="padding:10px;gap:8px">' +
             '<button data-gv="' + k.id + '" aria-label="' + esc(k.name) + '-ийн зураг томруулах" style="position:relative;height:200px;border:0;padding:0;border-radius:8px;overflow:hidden;background:#E9ECF6;cursor:zoom-in">' +
-            '<img alt="" data-gp="' + esc(pp[0] || '') + '" style="width:100%;height:100%;object-fit:cover;display:block">' +
+            (lateDays(s.created_at, due) ? '<span class="lbadge">' + lateDays(s.created_at, due) + ' хоног хоцорсон</span>' : '') +
+            (codeMode ? '<span style="position:absolute;right:6px;top:6px;background:#2747B8;color:#fff;font-size:15px;font-weight:800;border-radius:6px;padding:2px 8px;z-index:1">' + esc(k.code) + '</span>' : '') +
+            '<img alt="" data-gp="' + esc(pp[0] || '') + '" style="' + (codeMode ? 'position:absolute;left:0;bottom:0;width:240%;max-width:none;height:auto;display:block;' : 'width:100%;height:100%;object-fit:cover;display:block;') + '">' +
             (pp.length > 1 ? '<span style="position:absolute;right:6px;bottom:6px;background:rgba(26,31,54,.85);color:#fff;font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px">' + pp.length + ' зураг</span>' : '') + '</button>' +
-            '<div class="row between" style="flex-wrap:nowrap"><b style="font-size:14px">' + esc(k.name) + '</b><span class="pill ' + lb[1] + '" data-gs>' + lb[0] + '</span></div>' +
-            (s.status === 'review' ? '<div class="row" style="flex-wrap:nowrap" data-gb><button class="btn green" style="flex:1;height:40px;padding:0 8px" data-gok="' + s.id + '">+ Батлах</button><button class="btn amber" style="flex:1;height:40px;padding:0 8px" data-gredo="' + s.id + '">Дахин хийх</button></div>' : '') +
+            '<div class="row between" style="flex-wrap:nowrap"><b style="font-size:14px">' + esc(k.name) + ' <span style="color:#2747B8;font-size:12px">' + esc(k.code) + '</span></b><span class="pill ' + lb[1] + '" data-gs>' + lb[0] + '</span></div>' + lateTag(s.created_at, due) +
+            (lateDays(s.created_at, due) && s.status !== 'fake' ? '<div data-gb2>' + scoreRow(s.id, s.credit) + '</div>' : '') +
+            (s.status === 'ok' || s.status === 'auto' ? '<button class="btn ghost" style="height:36px;font-size:13px" data-gret="' + s.id + '">↺ Буцаах (буруу зураг)</button>' : '') +
+            (s.status === 'review' ? '<div class="row" style="flex-wrap:nowrap" data-gb>' + (lateDays(s.created_at, due) ? '' : '<button class="btn green" style="flex:1;height:40px;padding:0 8px" data-gok="' + s.id + '">+ Батлах</button>') + '<button class="btn amber" style="flex:1;height:40px;padding:0 8px" data-gredo="' + s.id + '">Дахин хийх</button></div>' : '') +
             '</div>';
         }).join('') + '</div>' +
         (ck.length > sent.length ? '<div class="card" style="font-size:14px;line-height:1.6"><b>Илгээгээгүй (' + (ck.length - sent.length) + '):</b> ' + ck.filter(function (k) { return !latest[k.id]; }).map(function (k) { return esc(k.name); }).join(', ') + '</div>' : '') +
         '</div>';
       z.querySelector('#gx').onclick = close;
       z.querySelectorAll('[data-gf]').forEach(function (b) { b.onclick = function () { filt = b.dataset.gf; draw(); }; });
+      z.querySelector('#gcode').onclick = function () { codeMode = !codeMode; draw(); };
       z.querySelectorAll('img[data-gp]').forEach(function (im) { if (urls[im.dataset.gp]) im.src = urls[im.dataset.gp]; });
       z.querySelectorAll('[data-gv]').forEach(function (b) {
-        b.onclick = function () { var pp = latest[b.dataset.gv].photo_paths || []; var l = pp.map(function (p) { return urls[p]; }).filter(Boolean); if (l.length) gallery(l, 0); };
+        b.onclick = function () { var pp = latest[b.dataset.gv].photo_paths || []; var l = pp.map(function (p) { return urls[p]; }).filter(Boolean); var ld0 = lateDays(latest[b.dataset.gv].created_at, due); if (l.length) gallery(l, 0, ld0 ? ld0 + ' хоног хоцорсон' : ''); };
       });
-      var act = function (id, st, card) {
-        sb.from('submissions').update({ status: st, reviewed_at: new Date().toISOString() }).eq('id', id).then(function (r) {
+      var act = function (id, st, card, credit) {
+        var upd = { status: st, reviewed_at: new Date().toISOString() }; if (st === 'ok') upd.credit = credit == null ? null : credit;
+        sb.from('submissions').update(upd).eq('id', id).then(function (r) {
           if (fail(r)) return; changed = true;
-          sent.forEach(function (k) { if (latest[k.id].id === id) latest[k.id].status = st; });
-          var lb = LB[st]; var pill = card.querySelector('[data-gs]'); pill.className = 'pill ' + lb[1]; pill.textContent = lb[0];
+          sent.forEach(function (k) { if (latest[k.id].id === id) { latest[k.id].status = st; latest[k.id].credit = upd.credit; } });
+          var lb = LB[st]; var pill = card.querySelector('[data-gs]'); pill.className = 'pill ' + lb[1]; pill.textContent = lb[0] + creditTxt(upd.credit);
+          card.querySelectorAll('[data-sc]').forEach(function (x) { x.disabled = false; });
           var bb = card.querySelector('[data-gb]'); if (bb) bb.remove();
           toast(st === 'ok' ? 'Журналд орлоо' : 'Дахин хийх гэж буцаав');
         });
       };
       z.querySelectorAll('[data-gok]').forEach(function (b) { b.onclick = function () { b.disabled = true; act(b.dataset.gok, 'ok', b.closest('[data-gc]')); }; });
+      z.querySelectorAll('[data-gret]').forEach(function (b) { b.onclick = function () { if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Буцаах уу? Сурагч дахин илгээнэ'; return; } b.disabled = true; act(b.dataset.gret, 'redo', b.closest('[data-gc]')); b.remove(); }; });
+      z.querySelectorAll('[data-sc]').forEach(function (b) { b.onclick = function () { var v = scoreVal(b); if (v == null) return; b.disabled = true; act(b.dataset.sc, 'ok', b.closest('[data-gc]'), v); }; });
       z.querySelectorAll('[data-gredo]').forEach(function (b) { b.onclick = function () { b.disabled = true; act(b.dataset.gredo, 'redo', b.closest('[data-gc]')); }; });
     }
     document.body.appendChild(z); document.addEventListener('keydown', esc1);
@@ -451,7 +487,7 @@ th{font-size:12px;color:#5A6178}
       acc.forEach(function (a) { if (!lessonsMap[a.lesson_id]) { lessonsMap[a.lesson_id] = a.lessons; order.push(a.lesson_id); } });
       if (!boardLesson || !lessonsMap[boardLesson]) boardLesson = order[0] || null;
       order.sort(function (x, y) { return lessonKey(lessonsMap[x]) - lessonKey(lessonsMap[y]); });
-      var subsQ = boardLesson ? sb.from('submissions').select('id,status,reason,photo_paths,created_at,student_id').eq('lesson_id', boardLesson).order('created_at', { ascending: false }) : Promise.resolve({ data: [] });
+      var subsQ = boardLesson ? sb.from('submissions').select('id,status,reason,photo_paths,created_at,student_id,credit').eq('lesson_id', boardLesson).order('created_at', { ascending: false }) : Promise.resolve({ data: [] });
       Promise.all([subsQ, sb.from('submissions').select('id', { count: 'exact', head: true }).eq('status', 'review')]).then(function (r1) {
         var subs = r1[0].data || [], pendingAll = r1[1].count || 0;
         var latest = {}; subs.forEach(function (s) { if (!latest[s.student_id]) latest[s.student_id] = s; });
@@ -461,7 +497,9 @@ th{font-size:12px;color:#5A6178}
         html += '<div data-boardx style="overflow-x:auto;padding-bottom:12px"><div style="display:flex;gap:14px;align-items:flex-start;width:max-content">';
         classes.forEach(function (c) {
           var ck = kids.filter(function (k) { return k.class_id === c.id; });
-          var opened = acc.some(function (a) { return a.class_id === c.id && a.lesson_id === boardLesson; });
+          var accC = acc.filter(function (a) { return a.class_id === c.id && a.lesson_id === boardLesson; })[0];
+          var opened = !!accC, due = accC && accC.due_at;
+          var nLate = Object.keys(latest).filter(function (sid) { return ck.some(function (k) { return k.id === sid; }) && lateDays(latest[sid].created_at, due); }).length;
           var sent = ck.filter(function (k) { return latest[k.id]; });
           var missing = ck.filter(function (k) { return !latest[k.id]; });
           var review = sent.filter(function (k) { return latest[k.id].status === 'review'; });
@@ -470,7 +508,7 @@ th{font-size:12px;color:#5A6178}
             '<div style="background:#1E2A5A;color:#fff;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;position:relative">' +
             '<div class="row between" style="flex-wrap:nowrap"><button data-oc="' + c.id + '" style="background:transparent;border:0;color:#fff;font-size:18px;font-weight:700;padding:0;min-height:40px;cursor:pointer;text-align:left">' + esc(c.name) + ' анги ›</button>' +
             '<button aria-label="' + esc(c.name) + ' ангийн цэс" data-menu="' + c.id + '" style="background:transparent;border:0;color:#fff;font-size:22px;min-width:44px;min-height:40px;cursor:pointer">⋮</button></div>' +
-            '<div style="font-size:13px;color:#C9D1F0">' + (opened ? sent.length + ' / ' + ck.length + ' илгээсэн' : (boardLesson ? 'Энэ сэдэв нээгдээгүй' : ck.length + ' сурагч')) + '</div>' +
+            '<div style="font-size:13px;color:#C9D1F0">' + (opened ? sent.length + ' / ' + ck.length + ' илгээсэн' + (due ? ' · хугацаа ' + fmt(due) : '') + (nLate ? ' · <b style="color:#FFB4A9">' + nLate + ' хоцорсон</b>' : '') : (boardLesson ? 'Энэ сэдэв нээгдээгүй' : ck.length + ' сурагч')) + '</div>' +
             (opened ? '<div style="height:6px;border-radius:99px;background:#2E3D78"><div style="height:6px;border-radius:99px;background:#7FB2FF;width:' + (ck.length ? Math.round(sent.length / ck.length * 100) : 0) + '%"></div></div>' : '') +
             '<div data-menubox="' + c.id + '" hidden style="position:absolute;right:8px;top:48px;background:#fff;color:#1A1F36;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;z-index:5;width:220px">' +
             '<button class="btn ghost" style="width:100%;border:0;text-align:left" data-cv2="att" data-cid="' + c.id + '">Ирц бүртгэх</button>' +
@@ -486,25 +524,28 @@ th{font-size:12px;color:#5A6178}
             if (openMiss[c.id]) html += '<div class="card" style="padding:10px;font-size:13px;line-height:1.6">' + (missing.map(function (k) { return esc(k.name); }).join(', ') || 'Бүгд илгээсэн') + '</div>';
             review.forEach(function (k) {
               var s = latest[k.id];
-              var R = { noplus: ['Багшид үзүүлээгүй · нөхсөн', 'p-blue', '+ Батлах', 'Дахин хийх'], dup: ['Ижил зураг илэрсэн', 'p-red', 'Зөв', 'Хуулбар'], spot: ['Санамсаргүй шалгалт', 'p-amber', 'Зөв байна', 'Худал'], flagged: ['Өмнө худал бичсэн', 'p-red', 'Зөв байна', 'Худал'] }[s.reason] || ['Шалгах', 'p-blue', '+ Батлах', 'Дахин хийх'];
-              html += '<div class="card" data-id="' + s.id + '"><span class="pill ' + R[1] + '" style="align-self:flex-start">' + R[0] + '</span><b>' + esc(k.name) + '</b><div class="muted">' + fmt(s.created_at) + ' · <b>' + (s.photo_paths || []).length + ' зураг</b>' + ((s.photo_paths || []).length > 2 ? ' · хажуу тийш гүйлгэнэ →' : '') + '</div>' +
-                '<div class="photos" data-p="' + esc(JSON.stringify(s.photo_paths)) + '"></div>' +
-                '<div class="row"><button class="btn green" data-ok="' + s.id + '">' + R[2] + '</button><button class="btn amber" data-bad="' + s.id + '" data-r="' + s.reason + '" data-st="' + k.id + '">' + R[3] + '</button></div></div>';
+              var R = { noplus: ['Багшид үзүүлээгүй · нөхсөн', 'p-blue', '+ Батлах', 'Дахин хийх'], dup: ['Ижил зураг илэрсэн', 'p-red', 'Зөв', 'Хуулбар'], spot: ['Санамсаргүй шалгалт', 'p-amber', 'Зөв байна', 'Худал'], late: ['Хугацаанаас хоцорч ирсэн · оноо өгнө үү', 'p-red', '', 'Дахин хийх'], flagged: ['Өмнө худал бичсэн', 'p-red', 'Зөв байна', 'Худал'] }[s.reason] || ['Шалгах', 'p-blue', '+ Батлах', 'Дахин хийх'];
+              html += '<div class="card" data-id="' + s.id + '"><span class="pill ' + R[1] + '" style="align-self:flex-start">' + R[0] + '</span><b>' + esc(k.name) + ' <span style="font-weight:700;color:#2747B8;background:#EEF1FA;border-radius:6px;padding:1px 6px;font-size:13px">' + esc(k.code) + '</span></b>' + lateTag(s.created_at, due) + '<div class="muted">' + fmt(s.created_at) + ' · <b>' + (s.photo_paths || []).length + ' зураг</b>' + ((s.photo_paths || []).length > 2 ? ' · хажуу тийш гүйлгэнэ →' : '') + '</div>' +
+                '<div class="photos" data-late="' + lateDays(s.created_at, due) + '" data-p="' + esc(JSON.stringify(s.photo_paths)) + '"></div>' +
+                (lateDays(s.created_at, due) ? scoreRow(s.id, s.credit) : '') +
+                '<div class="row">' + (lateDays(s.created_at, due) ? '' : '<button class="btn green" data-ok="' + s.id + '">' + R[2] + '</button>') + '<button class="btn amber" data-bad="' + s.id + '" data-r="' + s.reason + '" data-st="' + k.id + '">' + R[3] + '</button></div></div>';
             });
             done.forEach(function (k) {
               var s = latest[k.id];
               var lab = s.status === 'redo' ? ['Дахин хийх', 'p-amber'] : (s.status === 'fake' ? ['Худал', 'p-red'] : ['+ Журналд', 'p-green']);
               var pp = s.photo_paths || [];
-              html += '<div class="card" style="padding:10px 12px;gap:6px"><div class="row between"><b style="font-size:14px">' + esc(k.name) + '</b><span class="pill ' + lab[1] + '">' + lab[0] + '</span></div>' +
+              html += '<div class="card" data-id="' + s.id + '" style="padding:10px 12px;gap:6px"><div class="row between"><b style="font-size:14px">' + esc(k.name) + ' <span style="color:#2747B8;font-size:12px">' + esc(k.code) + '</span></b><span class="pill ' + lab[1] + '">' + lab[0] + creditTxt(s.credit) + '</span></div>' + lateTag(s.created_at, due) +
+                (lateDays(s.created_at, due) && s.status !== 'fake' ? scoreRow(s.id, s.credit) : '') +
+                (s.status !== 'redo' && s.status !== 'fake' ? '<button class="btn ghost" style="height:36px;font-size:13px;align-self:flex-start" data-ret="' + s.id + '">↺ Буцаах (буруу зураг)</button>' : '') +
                 '<div class="muted" style="font-size:12px">' + pp.length + ' зураг' + (pp.length > 2 ? ' · хажуу тийш гүйлгэнэ →' : '') + '</div>' +
-                '<div class="photos" data-p="' + esc(JSON.stringify(pp)) + '"></div></div>';
+                '<div class="photos" data-late="' + lateDays(s.created_at, due) + '" data-p="' + esc(JSON.stringify(pp)) + '"></div></div>';
             });
           }
           html += '</div>';
         });
         var letters = ['а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и'];
         html += '<div class="card" style="width:260px;border:1.5px dashed #A9B1CC"><b>+ Шинэ анги</b>' +
-          '<div class="row"><label class="muted" for="cg">Анги</label><select id="cg"><option value="10">10</option><option value="11">11</option><option value="12" selected>12</option></select>' +
+          '<div class="row"><label class="muted" for="cg">Анги</label><select id="cg">' + [6, 7, 8, 9, 10, 11, 12].map(function (g) { return '<option value="' + g + '"' + (g === 12 ? ' selected' : '') + '>' + g + '</option>'; }).join('') + '</select>' +
           '<label class="muted" for="cb">Бүлэг</label><select id="cb">' + letters.map(function (l) { return '<option>' + l + '</option>'; }).join('') + '</select></div>' +
           '<button class="btn" id="addC">Нэмэх</button><span class="muted" id="cprev"></span></div>';
         html += '</div></div>';
@@ -519,7 +560,14 @@ th{font-size:12px;color:#5A6178}
         app.querySelectorAll('[data-oc]').forEach(function (b) { b.onclick = function () { openClassView(b.dataset.oc, 'att'); }; });
         app.querySelectorAll('[data-bl]').forEach(function (b) { b.onclick = function () { boardLesson = b.dataset.bl; showReview(); }; });
         app.querySelectorAll('[data-grid]').forEach(function (b) {
-          b.onclick = function () { var c = classes.filter(function (x) { return x.id === b.dataset.grid; })[0]; openClassGrid(c, kids.filter(function (k) { return k.class_id === c.id; }), latest, 'Хичээл ' + lessonsMap[boardLesson].num + ' · ' + lessonsMap[boardLesson].title); };
+          b.onclick = function () { var c = classes.filter(function (x) { return x.id === b.dataset.grid; })[0]; var ac = acc.filter(function (a) { return a.class_id === c.id && a.lesson_id === boardLesson; })[0]; openClassGrid(c, kids.filter(function (k) { return k.class_id === c.id; }), latest, 'Хичээл ' + lessonsMap[boardLesson].num + ' · ' + lessonsMap[boardLesson].title, ac && ac.due_at); };
+        });
+        scoreAfter = null;
+        app.querySelectorAll('[data-ret]').forEach(function (b) {
+          b.onclick = function () {
+            if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Буцаах уу? Сурагч дахин илгээнэ'; b.style.background = '#FFF3E5'; return; }
+            b.disabled = true; setStatus(b.dataset.ret, 'redo');
+          };
         });
         if (boardKeep) { var bk = boardKeep; boardKeep = null; var bx = app.querySelector('[data-boardx]'); if (bx) bx.scrollLeft = bk.x; window.scrollTo(0, bk.y); }
         app.querySelectorAll('[data-miss]').forEach(function (b) { b.onclick = function () { openMiss[b.dataset.miss] = !openMiss[b.dataset.miss]; showReview(); }; });
@@ -538,8 +586,9 @@ th{font-size:12px;color:#5A6178}
         app.querySelectorAll('.photos').forEach(function (el) {
           sb.storage.from('submissions').createSignedUrls(JSON.parse(el.dataset.p), 3600).then(function (u) {
             var list = (u.data || []).filter(function (x) { return x.signedUrl; }).map(function (x) { return x.signedUrl; });
-            el.innerHTML = list.map(function (x, i) { return '<img alt="Сурагчийн зураг ' + (i + 1) + '" data-i="' + i + '" src="' + esc(x) + '" loading="lazy">'; }).join('');
-            el.querySelectorAll('img').forEach(function (im) { im.onclick = function () { gallery(list, +im.dataset.i); }; });
+            var lt = +el.dataset.late || 0, lab = lt ? lt + ' хоног хоцорсон' : '';
+            el.innerHTML = list.map(function (x, i) { return '<span class="pw">' + (lab ? '<span class="lbadge">' + lab + '</span>' : '') + '<img alt="Сурагчийн зураг ' + (i + 1) + '" data-i="' + i + '" src="' + esc(x) + '" loading="lazy"></span>'; }).join('');
+            el.querySelectorAll('img').forEach(function (im) { im.onclick = function () { gallery(list, +im.dataset.i, lab); }; });
             stripArrows(el);
           });
         });
@@ -584,10 +633,11 @@ th{font-size:12px;color:#5A6178}
     el.addEventListener('scroll', upd); setTimeout(upd, 50); setTimeout(upd, 800);
     el.querySelectorAll('img').forEach(function (im) { im.addEventListener('load', upd); });
   }
-  function gallery(list, i) {
+  function gallery(list, i, label) {
     var z = document.createElement('div'); z.className = 'zoom'; z.style.flexDirection = 'column'; z.style.gap = '10px';
     var draw = function () {
-      z.innerHTML = '<img alt="" src="' + esc(list[i]) + '" style="max-height:84vh;max-width:92vw">' +
+      z.innerHTML = (label ? '<div style="position:fixed;left:14px;top:14px;background:#B42318;color:#fff;font-size:16px;font-weight:700;border-radius:8px;padding:8px 14px;z-index:32">' + esc(label) + '</div>' : '') +
+        '<img alt="" src="' + esc(list[i]) + '" style="max-height:84vh;max-width:92vw">' +
         '<div style="color:#fff;font-size:15px;font-weight:600">' + (i + 1) + ' / ' + list.length + '</div>' +
         (list.length > 1 ? '<button class="zbtn" data-g="-1" style="left:12px" aria-label="Өмнөх">‹</button><button class="zbtn" data-g="1" style="right:12px" aria-label="Дараах">›</button>' : '') +
         '<button class="zx" aria-label="Хаах">✕ Хаах</button>';
@@ -600,15 +650,16 @@ th{font-size:12px;color:#5A6178}
     document.addEventListener('keydown', key);
     draw(); document.body.appendChild(z);
   }
-  function setStatus(id, st, after) {
-    sb.from('submissions').update({ status: st, reviewed_at: new Date().toISOString() }).eq('id', id).then(function (r) {
+  function setStatus(id, st, after, credit) {
+    var upd = { status: st, reviewed_at: new Date().toISOString() }; if (st === 'ok') upd.credit = credit == null ? null : credit;
+    sb.from('submissions').update(upd).eq('id', id).then(function (r) {
       if (fail(r)) return;
       var el = app.querySelector('.card[data-id="' + id + '"]');
       if (el) {
         var nm = (el.querySelector('b') || {}).textContent || '';
         var d = document.createElement('div');
         d.style.cssText = 'border-radius:10px;padding:10px 12px;font-size:14px;font-weight:600;' + (st === 'ok' ? 'background:#E3F4EA;color:#1C6B40' : 'background:#FFF3E5;color:#8A4B0B');
-        d.textContent = (st === 'ok' ? '✓ ' : '↺ ') + nm + (st === 'ok' ? ' · журналд орлоо' : (st === 'fake' ? ' · хуулбар гэж тэмдэглэв' : ' · дахин хийлгэхээр буцаав'));
+        d.textContent = (st === 'ok' ? '✓ ' : '↺ ') + nm + (st === 'ok' ? ' · журналд орлоо' + creditTxt(credit) : (st === 'fake' ? ' · хуулбар гэж тэмдэглэв' : ' · дахин хийлгэхээр буцаав'));
         el.replaceWith(d);
         var pill = app.querySelector('.pill.p-amber'); if (pill) pill.textContent = pill.textContent.replace(/(\d+)$/, function (m) { return Math.max(0, +m - 1); });
       }
@@ -744,8 +795,8 @@ th{font-size:12px;color:#5A6178}
     if (!jKeep) { app.innerHTML = cTabs() + '<div class="muted">Ачаалж байна…</div>'; bindCTabs(); }
     Promise.all([
       sb.from('students').select('id,name,code').eq('class_id', curClass).eq('active', true).order('code'),
-      sb.from('lesson_access').select('lesson_id,lessons(title,num,test,kind,units(sort))').eq('class_id', curClass),
-      sb.from('test_results').select('student_id,lesson_id,score,total'),
+      sb.from('lesson_access').select('lesson_id,due_at,lessons(title,num,test,test_key,test_labels,kind,units(sort))').eq('class_id', curClass),
+      sb.from('test_results').select('student_id,lesson_id,score,total,answers'),
       sb.from('behavior_logs').select('student_id,kind').gte('created_at', new Date(Date.now() - 864e5 * 30).toISOString()),
       sb.from('attendance').select('student_id,status'),
       sb.from('teachers').select('weights').eq('id', me.id).maybeSingle()
@@ -754,18 +805,22 @@ th{font-size:12px;color:#5A6178}
       var kids = r[0].data || [], opened = r[1].data || [], tests = r[2].data || [], logs = r[3].data || [], att = r[4].data || [];
       opened.sort(function (a, b) { return lessonKey(a.lessons) - lessonKey(b.lessons); });
       var lessonIds = opened.map(function (o) { return o.lesson_id; });
-      var subsQ = lessonIds.length ? sb.from('submissions').select('id,student_id,lesson_id,status,photo_paths,created_at').in('lesson_id', lessonIds).order('created_at', { ascending: false }) : Promise.resolve({ data: [] });
+      var subsQ = lessonIds.length ? sb.from('submissions').select('id,student_id,lesson_id,status,photo_paths,created_at,credit').in('lesson_id', lessonIds).order('created_at', { ascending: false }) : Promise.resolve({ data: [] });
       subsQ.then(function (r2) {
+        var dueOf = {}; opened.forEach(function (o) { dueOf[o.lesson_id] = o.due_at; });
         var cell = {}; // student|lesson -> latest submission
         (r2.data || []).forEach(function (x) { var k = x.student_id + '|' + x.lesson_id; if (!cell[k]) cell[k] = x; });
         function st(x) { if (!x) return 'none'; return x.status === 'auto' ? 'ok' : x.status; }
         var rows = kids.map(function (k) {
-          var plus = lessonIds.filter(function (l) { return st(cell[k.id + '|' + l]) === 'ok'; }).length;
+          var plus = lessonIds.reduce(function (a, l) { var c = cell[k.id + '|' + l]; return a + (st(c) === 'ok' ? (c.credit == null ? 100 : c.credit) / 100 : 0); }, 0);
+          plus = Math.round(plus * 10) / 10;
           var ts = tests.filter(function (t) { return t.student_id === k.id; });
           var avg = ts.length ? Math.round(ts.reduce(function (a, t) { return a + t.score / t.total; }, 0) / ts.length * 100) : null;
           var b = logs.filter(function (l) { return l.student_id === k.id; }).length;
           var cnt = function (s2) { return att.filter(function (x) { return x.student_id === k.id && x.status === s2; }).length; };
-          return { k: k, sk: cnt('sick'), ab: cnt('absent'), lt: cnt('late'), plus: plus, total: lessonIds.length, avg: avg, b: b, weak: lessonIds.length && plus / lessonIds.length < 0.5 };
+          var onT = 0, lateN = 0, noneN = 0;
+          lessonIds.forEach(function (l) { var c = cell[k.id + '|' + l]; if (!c) noneN++; else if (lateDays(c.created_at, dueOf[l])) lateN++; else onT++; });
+          return { k: k, onT: onT, lateN: lateN, noneN: noneN, sk: cnt('sick'), ab: cnt('absent'), lt: cnt('late'), plus: plus, total: lessonIds.length, avg: avg, b: b, weak: lessonIds.length && plus / lessonIds.length < 0.5 };
         });
         var waiting = 0; Object.keys(cell).forEach(function (k) { if (cell[k].status === 'review') waiting++; });
         var taskHtml = 
@@ -776,19 +831,22 @@ th{font-size:12px;color:#5A6178}
           '<div class="row" style="gap:6px">' + ['ok', 'review', 'redo', 'fake', 'none'].map(function (k) { var j = JST[k]; return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px"><span style="width:22px;height:22px;border-radius:6px;border:1px solid #C5CADB;background:' + j[1] + ';color:' + j[2] + ';font-weight:700;display:inline-flex;align-items:center;justify-content:center">' + (j[0] || '·') + '</span>' + j[3] + '</span>'; }).join('') + '</div>' +
           '<div class="tablebox"><table><thead><tr><th style="position:sticky;left:0;background:#F4F6FB;z-index:1">Нэр</th>' +
           opened.map(function (o) { return '<th title="' + esc(o.lessons.title) + '" style="text-align:center;min-width:46px">Х' + o.lessons.num + (o.lessons.kind === 'bd' ? '<div style="font-size:10px;color:#6B2FA3">БД</div>' : '') + '</th>'; }).join('') +
-          '<th style="text-align:center">Нийт +</th></tr></thead><tbody>' +
+          '<th style="text-align:center">Нийт +</th><th style="text-align:center;color:#1C6B40">Хугацаандаа</th><th style="text-align:center;color:#B42318">Хоцорсон</th><th style="text-align:center;color:#5A6178">Илгээгээгүй</th></tr></thead><tbody>' +
           rows.map(function (x) {
             return '<tr style="background:' + (x.weak ? '#FFF8EF' : '#fff') + '"><td style="position:sticky;left:0;background:inherit;white-space:nowrap"><b>' + esc(x.k.name) + '</b> <span class="muted" style="font-size:11px">' + esc(x.k.code) + '</span></td>' +
               lessonIds.map(function (l) {
-                var c = cell[x.k.id + '|' + l], j = JST[st(c)];
-                return '<td style="text-align:center;padding:4px">' + (c ? '<button data-jc="' + c.id + '" aria-label="' + esc(x.k.name) + ' ' + j[3] + '" style="width:34px;height:34px;border-radius:8px;border:1px solid ' + j[2] + '33;background:' + j[1] + ';color:' + j[2] + ';font-weight:700;font-size:16px;cursor:pointer;position:relative">' + j[0] + ((c.photo_paths || []).length > 1 ? '<sup style="position:absolute;right:-6px;top:-6px;background:#1E2A5A;color:#fff;border-radius:99px;font-size:10px;padding:1px 5px">' + c.photo_paths.length + '</sup>' : '') + '</button>' : '<span style="color:#C5CADB">·</span>') + '</td>';
+                var c = cell[x.k.id + '|' + l], j = JST[st(c)], ld = c ? lateDays(c.created_at, dueOf[l]) : 0;
+                return '<td style="text-align:center;padding:4px">' + (c ? '<button data-jc="' + c.id + '" title="' + (ld ? ld + ' хоног хоцорсон' : '') + '" aria-label="' + esc(x.k.name) + ' ' + j[3] + (ld ? ', ' + ld + ' хоног хоцорсон' : '') + '" style="width:34px;height:34px;border-radius:8px;border:1px solid ' + j[2] + '33;background:' + j[1] + ';color:' + j[2] + ';font-weight:700;font-size:16px;cursor:pointer;position:relative">' + (st(c) === 'ok' && c.credit != null ? Math.round(c.credit / 10) : j[0]) + ((c.photo_paths || []).length > 1 ? '<sup style="position:absolute;right:-6px;top:-6px;background:#1E2A5A;color:#fff;border-radius:99px;font-size:10px;padding:1px 5px">' + c.photo_paths.length + '</sup>' : '') + '</button>' + (ld ? '<div style="font-size:11px;font-weight:700;color:#B42318;line-height:1.3;white-space:nowrap">' + ld + ' хоног</div>' : '') : '<span style="color:#C5CADB">·</span>') + '</td>';
               }).join('') +
-              '<td style="text-align:center"><b>' + x.plus + '</b> / ' + x.total + '</td></tr>';
+              '<td style="text-align:center"><b>' + x.plus + '</b> / ' + x.total + '</td>' +
+              '<td style="text-align:center;font-weight:700;color:#1C6B40">' + (x.onT || '—') + '</td>' +
+              '<td style="text-align:center;font-weight:700;color:#B42318">' + (x.lateN || '—') + '</td>' +
+              '<td style="text-align:center;font-weight:700;color:#5A6178">' + (x.noneN || '—') + '</td></tr>';
           }).join('') +
           '</tbody></table></div>' +
-          '<div class="muted">Х1, Х2… = Хичээл 1, 2 (дээр нь хулганаа аваачвал сэдвийн нэр гарна). Улбар мөр: нээгдсэн хичээлийн талаас бага нь +.</div>';
+          '<div class="muted">Х1, Х2… = Хичээл 1, 2 (дээр нь хулганаа аваачвал сэдвийн нэр гарна). Улбар мөр: нээгдсэн хичээлийн талаас бага нь +. Ногоон тоо (жишээ нь 7) = хоцорсон ажилд багшийн өгсөн оноо (10-аас). Доорх улаан "3 хоног" = заасан хугацаанаас хэдэн хоног хоцорсон.</div>';
         // ---- test matrix
-        var testLessons = opened.filter(function (o) { return (o.lessons.test || []).length || tests.some(function (t) { return t.lesson_id === o.lesson_id; }); });
+        var testLessons = opened.filter(function (o) { return (o.lessons.test || []).length || (o.lessons.test_key || []).length || tests.some(function (t) { return t.lesson_id === o.lesson_id; }); });
         var tcell = {}; tests.forEach(function (t) { tcell[t.student_id + '|' + t.lesson_id] = t; });
         function pc(v) { return v == null ? '<span style="color:#C5CADB">—</span>' : '<span style="display:inline-block;min-width:44px;padding:4px 8px;border-radius:8px;font-weight:700;background:' + (v >= 80 ? '#E3F4EA;color:#1C6B40' : v >= 50 ? '#EEF1FA;color:#2747B8' : '#FFF3E5;color:#8A4B0B') + '">' + v + '%</span>'; }
         function grade(v) { if (v == null) return null; var G = [[90, 'A', 'VI'], [80, 'B', 'V'], [70, 'C', 'IV'], [60, 'D', 'III'], [50, 'E', 'II'], [0, 'F', 'I']]; for (var i = 0; i < G.length; i++) if (v >= G[i][0]) return { l: G[i][1], t: G[i][2] }; }
@@ -814,12 +872,13 @@ th{font-size:12px;color:#5A6178}
                 '<td style="text-align:center">' + (x.exG ? '<span style="display:inline-block;min-width:34px;padding:4px 8px;border-radius:8px;font-weight:800;color:#fff;background:' + GC[x.exG.l] + '">' + x.exG.l + '</span>' : '<span style="color:#C5CADB">—</span>') + '</td></tr>';
             }).join('') + '</tbody></table></div>';
         rows.forEach(function (x) { x.avg = x.exP; });
+        if (testLessons.length) testHtml += '<div class="row" style="gap:6px"><span class="muted">Сурагч бүрийн хариулт (асуулт бүрээр) Excel:</span>' + testLessons.map(function (o, i) { return '<button class="btn sec" style="height:38px" data-tx="' + o.lesson_id + '" data-ti="' + (i + 1) + '">Ш' + (i + 1) + ' хариултууд</button>'; }).join('') + '</div>';
         // ---- combined: Ирц · Явц · Бие даалт · Шалгалт
         var clsL = opened.filter(function (o) { return o.lessons.kind !== 'bd'; }).map(function (o) { return o.lesson_id; });
         var bdL = opened.filter(function (o) { return o.lessons.kind === 'bd'; }).map(function (o) { return o.lesson_id; });
         var PARTS = [['att', 'Ирц'], ['yavts', 'Явц'], ['bd', 'Бие даалт'], ['exam', 'Шалгалт']];
         rows.forEach(function (x) {
-          var plusIn = function (ids) { return ids.filter(function (l) { return st(cell[x.k.id + '|' + l]) === 'ok'; }).length; };
+          var plusIn = function (ids) { return Math.round(ids.reduce(function (a, l) { var c = cell[x.k.id + '|' + l]; return a + (st(c) === 'ok' ? (c.credit == null ? 100 : c.credit) / 100 : 0); }, 0) * 10) / 10; };
           x.taskP = x.total ? Math.round(x.plus / x.total * 100) : null;
           x.yP = clsL.length ? Math.round(plusIn(clsL) / clsL.length * 100) : null; x.yN = plusIn(clsL);
           x.bdP = bdL.length ? Math.round(plusIn(bdL) / bdL.length * 100) : null; x.bdN = plusIn(bdL);
@@ -871,10 +930,11 @@ th{font-size:12px;color:#5A6178}
           b.onclick = function () {
             var x = subById[b.dataset.jc], j = JST[st(x)];
             var z = document.createElement('div'); z.className = 'zoom'; z.style.flexDirection = 'column'; z.style.gap = '12px';
-            z.innerHTML = '<div style="color:#fff;text-align:center"><b>' + esc(kidById[x.student_id].name) + '</b> · Хичээл ' + lesById[x.lesson_id].num + ' · ' + esc(lesById[x.lesson_id].title) + '<br><span style="font-size:13px">' + j[3] + ' · ' + fmt(x.created_at) + ' · ' + (x.photo_paths || []).length + ' зураг</span></div>' +
+            z.innerHTML = '<div style="color:#fff;text-align:center"><b>' + esc(kidById[x.student_id].name) + '</b> · Хичээл ' + lesById[x.lesson_id].num + ' · ' + esc(lesById[x.lesson_id].title) + '<br><span style="font-size:13px">' + j[3] + ' · ' + fmt(x.created_at) + ' · ' + (x.photo_paths || []).length + ' зураг</span>' + (lateDays(x.created_at, dueOf[x.lesson_id]) ? '<div style="margin-top:6px"><span style="background:#B42318;color:#fff;font-weight:700;border-radius:8px;padding:4px 12px">' + lateDays(x.created_at, dueOf[x.lesson_id]) + ' хоног хоцорсон</span></div>' : '') + '</div>' +
               '<div id="jimgs" style="display:flex;gap:8px;overflow-x:auto;max-width:96vw;color:#fff">Зураг ачаалж байна…</div>' +
               '<div class="row" style="justify-content:center">' +
-              (st(x) !== 'ok' ? '<button class="btn green" id="jok">+ Батлах</button>' : '') +
+              (lateDays(x.created_at, dueOf[x.lesson_id]) ? '<div style="background:#fff;border-radius:12px;padding:6px 10px">' + scoreRow(x.id, x.credit) + '</div>' : '') +
+              (st(x) !== 'ok' && !lateDays(x.created_at, dueOf[x.lesson_id]) ? '<button class="btn green" id="jok">+ Батлах</button>' : '') +
               (st(x) !== 'redo' ? '<button class="btn amber" id="jredo">Дахин хийлгэх</button>' : '') +
               '<button class="btn ghost" id="jx" style="background:#fff">Хаах</button></div>';
             z.insertAdjacentHTML('beforeend', '<button class="zx" id="jx2" aria-label="Хаах">✕ Хаах</button>');
@@ -882,6 +942,7 @@ th{font-size:12px;color:#5A6178}
             z.onclick = function (e) { if (e.target === z) z.remove(); };
             z.querySelector('#jx').onclick = function () { z.remove(); };
             z.querySelector('#jx2').onclick = function () { z.remove(); };
+            z.querySelectorAll('[data-sc]').forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); var v = scoreVal(b); if (v == null) return; z.remove(); setStatus(x.id, 'ok', journalKeep, v); }; });
             var ok = z.querySelector('#jok'); if (ok) ok.onclick = function () { z.remove(); setStatus(x.id, 'ok', journalKeep); };
             var rd = z.querySelector('#jredo'); if (rd) rd.onclick = function () { z.remove(); setStatus(x.id, 'redo', journalKeep); };
             sb.storage.from('submissions').createSignedUrls(x.photo_paths || [], 3600).then(function (u) {
@@ -890,15 +951,35 @@ th{font-size:12px;color:#5A6178}
               z.querySelector('#jimgs').innerHTML = L2.length ? L2.map(function (y, i) { return '<img alt="Сурагчийн зураг ' + (i + 1) + '" data-gi="' + i + '" src="' + esc(y) + '" style="flex:0 0 auto;height:62vh;max-width:' + (L2.length > 1 ? '70vw' : '92vw') + ';border-radius:8px;cursor:zoom-in;scroll-snap-align:start">'; }).join('') : 'Зураг олдсонгүй';
               z.querySelector('#jimgs').style.scrollSnapType = 'x mandatory';
               stripArrows(z.querySelector('#jimgs'));
-              z.querySelectorAll('[data-gi]').forEach(function (im) { im.onclick = function (e) { e.stopPropagation(); gallery(L2, +im.dataset.gi); }; });
+              var jl = lateDays(x.created_at, dueOf[x.lesson_id]); z.querySelectorAll('[data-gi]').forEach(function (im) { im.onclick = function (e) { e.stopPropagation(); gallery(L2, +im.dataset.gi, jl ? jl + ' хоног хоцорсон' : ''); }; });
             });
           };
         });
+        app.querySelectorAll('[data-tx]').forEach(function (b) {
+          b.onclick = function () {
+            var o = opened.filter(function (z) { return z.lesson_id === b.dataset.tx; })[0], Lz = o.lessons;
+            var LB = Lz.test_labels === 'cyr' ? 'АБВГДЕ' : 'abcdef';
+            var key = Lz.test_key || [], fileMode = key.length > 0;
+            var n = fileMode ? key.length : (Lz.test || []).length;
+            var ok = function (i) { return fileMode ? key[i] : (Lz.test[i] || {}).ok; };
+            var head = ['Нэр', 'Код'];
+            for (var i = 0; i < n; i++) head.push((i + 1) + ' (зөв: ' + (ok(i) != null ? LB[ok(i)] : '?') + ')');
+            head = head.concat(['Оноо', 'Нийт', 'Хувь', 'Түвшин', 'Үсгэн дүн']);
+            var lines = [head].concat(rows.map(function (x) {
+              var t = tcell[x.k.id + '|' + o.lesson_id], a = (t && t.answers) || {}, r = [x.k.name, x.k.code];
+              for (var i = 0; i < n; i++) { var v = a[i]; r.push(t ? (v == null ? '—' : LB[v] + (v === ok(i) ? ' ✓' : ' ✗')) : ''); }
+              var pct = t ? Math.round(t.score / t.total * 100) : null, g = grade(pct);
+              return r.concat(t ? [t.score, t.total, pct, g ? g.t : '', g ? g.l : ''] : ['', '', '', '', 'Өгөөгүй']);
+            }));
+            var csv = '\ufeff' + lines.map(function (l) { return l.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+            var a2 = document.createElement('a'); a2.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a2.download = cls.name + '-Ш' + b.dataset.ti + '-хариулт.csv'; a2.click();
+          };
+        });
         q('#csv').onclick = function () {
-          var head = ['Нэр', 'Код'].concat(opened.map(function (o) { return 'Х' + o.lessons.num + ' ' + o.lessons.title; })).concat(['Нийт +', 'Нийт хичээл']).concat(testLessons.map(function (o, i) { return 'Ш' + (i + 1) + ' ' + o.lessons.title; })).concat(['Шалгалт түвшин', 'Үсгэн дүн']).concat(['Ирц %', 'Явц %', 'Бие даалт %', 'Шалгалт %', 'Нэгдсэн %']);
+          var head = ['Нэр', 'Код'].concat(opened.map(function (o) { return 'Х' + o.lessons.num + ' ' + o.lessons.title; })).concat(['Нийт +', 'Нийт хичээл', 'Хугацаандаа', 'Хоцорсон', 'Илгээгээгүй']).concat(testLessons.map(function (o, i) { return 'Ш' + (i + 1) + ' ' + o.lessons.title; })).concat(['Шалгалт түвшин', 'Үсгэн дүн']).concat(['Ирц %', 'Явц %', 'Бие даалт %', 'Шалгалт %', 'Нэгдсэн %']);
           var lines = [head].concat(rows.map(function (x) {
-            return [x.k.name, x.k.code].concat(lessonIds.map(function (l) { var t = st(cell[x.k.id + '|' + l]); return t === 'ok' ? '+' : (t === 'none' ? '' : JST[t][3]); }))
-              .concat([x.plus, x.total]).concat(testLessons.map(function (o) { var t = tcell[x.k.id + '|' + o.lesson_id]; return t ? t.score + '/' + t.total : ''; })).concat([x.exG ? x.exG.t : '', x.exG ? x.exG.l : ''])
+            return [x.k.name, x.k.code].concat(lessonIds.map(function (l) { var cc = cell[x.k.id + '|' + l], t = st(cc), ld = cc ? lateDays(cc.created_at, dueOf[l]) : 0; return (t === 'ok' ? (cc.credit != null ? Math.round(cc.credit / 10) + '/10' : '+') : (t === 'none' ? '' : JST[t][3])) + (ld ? ' (' + ld + ' хоног хоцорсон)' : ''); }))
+              .concat([x.plus, x.total, x.onT, x.lateN, x.noneN]).concat(testLessons.map(function (o) { var t = tcell[x.k.id + '|' + o.lesson_id]; return t ? t.score + '/' + t.total : ''; })).concat([x.exG ? x.exG.t : '', x.exG ? x.exG.l : ''])
               .concat([x.attP, x.yP, x.bdP, x.avg, x.allP].map(function (v) { return v == null ? '' : v; }));
           }));
           var csv = '﻿' + lines.map(function (l) { return l.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
@@ -909,7 +990,7 @@ th{font-size:12px;color:#5A6178}
   }
 
   // ---------- LIBRARY ----------
-  var libGrade = 12, openLesson = null;
+  var libGrade = 12, openLesson = null, libGradeSet = false;
   function parseTest(txt) {
     var blocks = txt.split(/\n\s*\n/).map(function (b) { return b.trim(); }).filter(Boolean), out = [];
     blocks.forEach(function (b) {
@@ -920,6 +1001,15 @@ th{font-size:12px;color:#5A6178}
     });
     return out;
   }
+  var KEYMAP = { a: 0, b: 1, c: 2, d: 3, e: 4, f: 5, 'а': 0, 'б': 1, 'в': 2, 'г': 3, 'д': 4, 'е': 5 };
+  function parseKey(txt) {
+    var t = (txt || '').toLowerCase(), out = [], m, re = /(\d+)\s*[-.):]?\s*([a-fа-е])/g;
+    if (/\d/.test(t)) { while ((m = re.exec(t))) out[+m[1] - 1] = KEYMAP[m[2]]; }
+    else t.replace(/[^a-fа-е]/g, '').split('').forEach(function (ch) { out.push(KEYMAP[ch]); });
+    for (var i = 0; i < out.length; i++) if (out[i] == null) return { err: (i + 1) + '-р асуултын хариулт алга' };
+    return { key: out };
+  }
+  function keyToText(k, labels) { var L = labels === 'cyr' ? 'АБВГДЕ' : 'abcdef'; return (k || []).map(function (x, i) { return (i + 1) + L[x]; }).join(' '); }
   function testToText(t) { return (t || []).map(function (x) { return x.q + '\n' + x.opts.map(function (o, i) { return (i === x.ok ? '*' : '') + o; }).join('\n'); }).join('\n\n'); }
   var KINDS = { year_plan: 'Жилийн төлөвлөлт', unit_plan: 'Нэгжийн төлөвлөлт', lesson_plan: 'Ээлжит хичээлийн төлөвлөлт', ppt: 'Танилцуулга (PPT)', exercise: 'Дасгалын хуудас', other: 'Бусад файл' };
   function fileList(fs) {
@@ -1116,6 +1206,7 @@ th{font-size:12px;color:#5A6178}
   }
   var GRID = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px">';
   function showLibrary() {
+    if (!libGradeSet && classes.length) { libGradeSet = true; var gs = classes.map(function (c) { return c.grade; }); if (gs.indexOf(libGrade) < 0) libGrade = Math.min.apply(null, gs); }
     Promise.all([
       sb.from('units').select('*').eq('grade', libGrade).order('sort'),
       sb.from('lessons').select('*, units!inner(grade)').eq('units.grade', libGrade).order('num'),
@@ -1132,7 +1223,7 @@ th{font-size:12px;color:#5A6178}
       if (libUnit === 'year') crumbs += ' › <b>Жилийн төлөвлөлт</b>';
       if (U) crumbs += ' › ' + (L ? '<button class="link-c" data-nav="unit">' + esc(U.name) + '</button>' : '<b>' + esc(U.name) + '</b>');
       if (L) crumbs += ' › <b>' + L.num + '. ' + esc(L.title) + '</b>';
-      var html = '<div class="row between"><div class="row">' + [10, 11, 12].map(function (g) { return '<button class="chip' + (g === libGrade ? ' on' : '') + '" data-g="' + g + '">' + g + '-р анги</button>'; }).join('') + '</div></div>' +
+      var html = '<div class="row between"><div class="row">' + [6, 7, 8, 9, 10, 11, 12].map(function (g) { return '<button class="chip' + (g === libGrade ? ' on' : '') + '" data-g="' + g + '">' + g + '-р анги</button>'; }).join('') + '</div></div>' +
         '<div style="font-size:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 0">' + (libUnit ? '<button class="btn ghost" style="height:36px" data-nav="up">← Буцах</button>' : '') + crumbs + '</div>';
       if (!libUnit) {
         // ROOT: year plan as text outline + unit folders
@@ -1144,7 +1235,7 @@ th{font-size:12px;color:#5A6178}
           var ls = lessons.filter(function (l) { return l.unit_id === u.id; });
           html += '<div style="border-left:4px solid #F5C542;padding:4px 0 4px 12px;margin-top:6px"><button class="link-c" style="font-size:15px;padding:2px 0" data-unit="' + u.id + '">' + (ui + 1) + '-р нэгж. ' + esc(u.name) + '</button> <span class="muted">(' + ls.length + ' цаг)</span>' +
             (ls.length ? '<ol style="margin:4px 0 0;padding-left:22px;line-height:1.9;font-size:14px">' + ls.map(function (l) {
-              var ok = l.video_url && l.exercise_url && (l.test || []).length;
+              var ok = l.video_url && l.exercise_url && ((l.test || []).length || (l.test_key || []).length);
               var sent = acc.some(function (a) { return a.lesson_id === l.id; });
               return '<li><button class="link-c" style="font-size:14px;font-weight:500;padding:0;color:#1A1F36" data-l="' + l.id + '" data-lu="' + u.id + '">' + esc(l.title) + '</button> ' +
                 '<span class="pill ' + (ok ? 'p-green' : 'p-amber') + '" style="font-size:11px">' + (ok ? 'Бэлэн' : 'Дутуу') + '</span>' + (sent ? ' <span class="pill p-blue" style="font-size:11px">Ангид нээлттэй</span>' : '') + '</li>';
@@ -1165,7 +1256,7 @@ th{font-size:12px;color:#5A6178}
         var ls = lessons.filter(function (l) { return l.unit_id === U.id; });
         html += '<h3>Ээлжит хичээлүүд</h3>' + GRID;
         ls.forEach(function (l) {
-          var ok = l.video_url && l.exercise_url && (l.test || []).length;
+          var ok = l.video_url && l.exercise_url && ((l.test || []).length || (l.test_key || []).length);
           var sent = acc.filter(function (a) { return a.lesson_id === l.id; }).map(function (a) { var c = classes.filter(function (k) { return k.id === a.class_id; })[0]; return c ? c.name : ''; }).join(', ');
           html += tile('data-l="' + l.id + '"', '<div style="position:relative">' + FOLDER + '<span style="position:absolute;left:0;right:0;top:16px;text-align:center;font-weight:700;font-size:15px;color:#7A5A00">' + l.num + '</span></div>', (l.kind === 'bd' ? '<span style="color:#6B2FA3">Бие даалт · </span>' : '') + esc(l.title),
             '<span class="pill ' + (ok ? 'p-green' : 'p-amber') + '" style="font-size:11px">' + (ok ? 'Бэлэн' : 'Дутуу') + '</span>' + (sent ? ' ' + esc(sent) : ''));
@@ -1179,7 +1270,7 @@ th{font-size:12px;color:#5A6178}
         html += '<div class="row"><button class="btn green" data-panel="send">Ангид илгээх' + (a2.length ? ' (' + a2.length + ' ангид нээлттэй)' : '') + '</button><button class="btn ghost" data-panel="edit">Гарчиг, видео засах</button></div>';
         html += '<div class="card"><div class="row between"><h3>Видео, линкүүд</h3><button class="btn ghost" data-panel="edit">Засах</button></div>' + vidPreview(L.video_url) +
           ((L.extra_links || []).length ? '<div class="muted" style="margin-top:4px">Нэмэлт линкүүд</div>' + linksPreview(L.extra_links) : '') + '</div>';
-        html += GRID + tile('data-panel="test"', '<div style="width:44px;height:54px;border-radius:6px;background:#2747B8;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center">?</div>', 'Тест', (L.test || []).length + ' асуулт · засах') +
+        html += GRID + tile('data-panel="test"', '<div style="width:44px;height:54px;border-radius:6px;background:#2747B8;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center">?</div>', 'Тест', ((L.test_key || []).length ? 'Файлаар · ' + L.test_key.length + ' асуулт' : (L.test || []).length + ' асуулт') + ' · засах') +
           fileTiles(files.filter(function (f) { return f.lesson_id === L.id; })) +
           addFileTile('x_' + L.id, ['exercise']) + addFileTile('l_' + L.id, ['lesson_plan', 'ppt', 'other']) + '</div>' +
           '<div class="muted">Дасгалын хуудсыг сурагчид харна. Төлөвлөлт, PPT зөвхөн танд харагдана.</div>';
@@ -1187,14 +1278,38 @@ th{font-size:12px;color:#5A6178}
           html += '<div class="card" style="border:2px solid #2747B8"><div class="row between"><h3>Гарчиг, видео</h3><button class="btn ghost" data-panel="">Хаах</button></div>' +
             '<label class="muted">Гарчиг</label><input type="text" id="lt" value="' + esc(L.title) + '">' +
             '<label class="muted">Төрөл (үнэлгээнд хаана орох)</label><select id="lk"><option value="class"' + (L.kind !== 'bd' ? ' selected' : '') + '>Ангийн даалгавар → Явц</option><option value="bd"' + (L.kind === 'bd' ? ' selected' : '') + '>Бие даалтын ажил → Бие даалт</option></select>' +
+            '<label class="muted">Сурагч илгээх зургийн тоо</label><select id="lmax">' + [1, 2, 3].map(function (n) { return '<option value="' + n + '"' + ((L.max_photos || 1) === n ? ' selected' : '') + '>' + n + ' хуудас</option>'; }).join('') + '</select>' +
             '<label class="muted">Видео линк (YouTube эсвэл Google Drive, "Anyone with the link") · хуудсан дотор тоглогдоно</label><input type="url" id="lv" value="' + esc(L.video_url || '') + '"><div id="lvp" style="display:flex;flex-direction:column;gap:8px">' + vidPreview(L.video_url) + '</div>' +
             '<label class="muted">Нэмэлт линк (Medle г.м.) · мөр бүрт нэг: Нэр | линк</label><textarea id="lx2" style="min-height:90px" placeholder="Medle хичээл | https://medle.mn/lesson/...">' + esc((L.extra_links || []).map(function (x) { return x.title + ' | ' + x.url; }).join('\n')) + '</textarea><div id="lxp" style="display:flex;flex-direction:column;gap:8px">' + linksPreview(L.extra_links) + '</div>' +
             '<button class="btn" id="saveE">Хадгалах</button></div>';
         }
         if (libPanel === 'test') {
           html += '<div class="card" style="border:2px solid #2747B8"><div class="row between"><h3>Тест</h3><button class="btn ghost" data-panel="">Хаах</button></div>' +
-            '<div class="muted">Асуулт бүрийг хоосон мөрөөр тусгаарла. Эхний мөр асуулт, дараагийн мөрүүд хариулт, зөвийн өмнө * тавина.</div>' +
-            '<textarea id="lq" style="min-height:260px">' + esc(testToText(L.test)) + '</textarea><button class="btn" id="saveT">Хадгалах</button></div>';
+            '<h3 style="margin-top:4px">1. Файлаар тест (зураг эсвэл PDF)</h3>' +
+            '<div class="muted">Бэлэн тестийнхээ зургийг эсвэл PDF-ийг оруулна. Сурагч утсаараа хараад зөвхөн хариултаа (1a 2b…) сонгож илгээнэ, шууд дүгнэгдэнэ.</div>' +
+            '<div class="row">' + (L.test_files || []).map(function (u, i) { return '<div style="position:relative;width:110px;height:140px;border:1px solid #C5CADB;border-radius:8px;overflow:hidden;background:#F4F6FB;display:flex;align-items:center;justify-content:center">' +
+              (/\.pdf(\?|$)/i.test(u) ? '<b style="color:#B42318">PDF</b>' : '<img alt="Тестийн хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;height:100%;object-fit:cover">') +
+              '<button class="btn ghost" data-tfdel="' + i + '" aria-label="Хасах" style="position:absolute;right:4px;top:4px;height:30px;min-width:30px;padding:0 8px;background:#fff">✕</button></div>'; }).join('') +
+            '<label class="btn sec" style="display:flex;align-items:center;justify-content:center;width:110px;height:140px;cursor:pointer;text-align:center">📷 Утсаар зураг авах<input type="file" id="tfcam" accept="image/*" capture="environment" hidden></label>' +
+            '<label class="btn sec" style="display:flex;align-items:center;justify-content:center;width:110px;height:140px;cursor:pointer;text-align:center">+ Файл / зураг нэмэх<input type="file" id="tfup" accept="image/*,application/pdf" multiple hidden></label></div>' +
+            '<label style="display:flex;gap:8px;align-items:center;font-size:14px;font-weight:600"><input type="checkbox" id="tscan" checked style="width:20px;height:20px"> Скан шиг тодруулах (цаасыг цагаан, бичгийг тод болгоно, сүүдрийг арилгана)</label>' +
+            '<div class="muted" style="font-size:12px">Цаасан тестээ гэрэлтэй газар, дээрээс нь шулуун авна. Хуудас бүрийг тусад нь авна.</div>' +
+            ((L.test_files || []).length ? '<div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);gap:16px;align-items:start">' +
+              '<div style="max-height:75vh;overflow:auto;border:1px solid #E1E4EE;border-radius:12px;background:#fff;padding:8px;display:flex;flex-direction:column;gap:8px">' +
+              (L.test_files || []).map(function (u, i) { return /\.pdf(\?|$)/i.test(u) ? '<iframe title="Тестийн хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;height:70vh;border:0"></iframe>' : '<img alt="Тестийн хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;display:block">'; }).join('') + '</div>' +
+              '<div style="position:sticky;top:8px;display:flex;flex-direction:column;gap:10px">' : '<div style="display:flex;flex-direction:column;gap:10px">') +
+            '<b>Зөв хариултаа сонгоно</b>' +
+            '<div class="row"><label class="muted" for="tn">Асуулт</label><input type="number" id="tn" min="1" max="60" value="' + ((L.test_key || []).length || 10) + '" style="width:76px;height:40px">' +
+            '<label class="muted" for="topts">Сонголт</label><select id="topts">' + [3, 4, 5].map(function (n) { return '<option value="' + n + '"' + ((L.test_opts || 4) === n ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select>' +
+            '<select id="tlab" aria-label="Үсэг"><option value="latin"' + (L.test_labels !== 'cyr' ? ' selected' : '') + '>a b c d</option><option value="cyr"' + (L.test_labels === 'cyr' ? ' selected' : '') + '>А Б В Г</option></select></div>' +
+            '<div id="kgrid" style="display:flex;flex-direction:column;gap:4px;max-height:60vh;overflow:auto"></div>' +
+            '<div class="muted" id="tkp"></div>' +
+            '<div class="row"><button class="btn green" id="saveK">Хариултыг хадгалах</button>' + ((L.test_key || []).length ? '<button class="btn ghost" id="clrK">Арилгах</button>' : '') + '</div>' +
+            '<div class="muted" style="font-size:12px">Дараа нь "Ангид илгээх" хэсгээс тестийг нээнэ.</div></div>' +
+            ((L.test_files || []).length ? '</div>' : '') +
+            '<h3 style="margin-top:10px">2. Эсвэл асуултаа бичиж оруулах</h3>' +
+            '<div class="muted">Асуулт бүрийг хоосон мөрөөр тусгаарла. Эхний мөр асуулт, дараагийн мөрүүд хариулт, зөвийн өмнө * тавина. Файлаар тест хадгалсан бол түүнийг ашиглана.</div>' +
+            '<textarea id="lq" style="min-height:200px">' + esc(testToText(L.test)) + '</textarea><button class="btn" id="saveT">Хадгалах</button></div>';
         }
         if (libPanel === 'send') {
           html += '<div class="card" style="border:2px solid #1C7C4A"><div class="row between"><h3>Ангид илгээх</h3><button class="btn ghost" data-panel="">Хаах</button></div>' +
@@ -1207,7 +1322,7 @@ th{font-size:12px;color:#5A6178}
       }
       app.innerHTML = '<style>.link-c{background:none;border:0;color:#2747B8;font-weight:600;font-size:16px;padding:6px 2px;cursor:pointer}</style>' + html;
       bindFiles(files);
-      app.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { libGrade = +b.dataset.g; libUnit = null; openLesson = null; libPanel = null; showLibrary(); }; });
+      app.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { libGradeSet = true; libGrade = +b.dataset.g; libUnit = null; openLesson = null; libPanel = null; showLibrary(); }; });
       app.querySelectorAll('[data-nav]').forEach(function (b) {
         b.onclick = function () {
           var n = b.dataset.nav;
@@ -1239,8 +1354,70 @@ th{font-size:12px;color:#5A6178}
         if (q('#lx2')) q('#lx2').oninput = function () { q('#lxp').innerHTML = linksPreview(parseLinks()); };
         var se = q('#saveE'); if (se) se.onclick = function () {
           var links = q('#lx2').value.split('\n').map(function (s) { s = s.trim(); if (!s) return null; var i = s.lastIndexOf('|'); var title = i > 0 ? s.slice(0, i).trim() : 'Нэмэлт материал'; var url = (i > 0 ? s.slice(i + 1) : s).trim(); return /^https?:\/\//.test(url) ? { title: title || 'Нэмэлт материал', url: url } : null; }).filter(Boolean);
-          sb.from('lessons').update({ title: q('#lt').value.trim() || L.title, kind: q('#lk').value, video_url: q('#lv').value.trim() || null, extra_links: links }).eq('id', L.id).then(function (x) { if (!fail(x)) { toast('Хадгалагдлаа'); libPanel = null; showLibrary(); } });
+          sb.from('lessons').update({ title: q('#lt').value.trim() || L.title, kind: q('#lk').value, max_photos: +q('#lmax').value, video_url: q('#lv').value.trim() || null, extra_links: links }).eq('id', L.id).then(function (x) { if (!fail(x)) { toast('Хадгалагдлаа'); libPanel = null; showLibrary(); } });
         };
+        var kgrid = q('#kgrid');
+        if (kgrid) {
+          var key = (L.test_key || []).slice();
+          var drawK = function () {
+            var n = Math.max(1, Math.min(60, +q('#tn').value || 1)), mx = +q('#topts').value, LB = (q('#tlab').value === 'cyr' ? 'АБВГДЕ' : 'abcdef').slice(0, mx).split('');
+            key.length = n;
+            kgrid.innerHTML = Array.apply(null, { length: n }).map(function (_, i) {
+              return '<div style="display:flex;align-items:center;gap:6px"><b style="width:30px">' + (i + 1) + '.</b>' + LB.map(function (l, j) {
+                var on = key[i] === j;
+                return '<button type="button" data-kq="' + i + '" data-ko="' + j + '" aria-pressed="' + on + '" style="flex:1;height:38px;border-radius:8px;font-weight:700;font-size:15px;cursor:pointer;border:1.5px solid ' + (on ? '#1C7C4A' : '#C5CADB') + ';background:' + (on ? '#1C7C4A' : '#fff') + ';color:' + (on ? '#fff' : '#1A1F36') + '">' + l + '</button>';
+              }).join('') + '</div>';
+            }).join('');
+            var done = 0; for (var i = 0; i < n; i++) if (key[i] != null && key[i] < mx) done++;
+            q('#tkp').innerHTML = '<b>' + done + ' / ' + n + '</b> асуултын хариулт сонгосон';
+            kgrid.querySelectorAll('[data-kq]').forEach(function (b) { b.onclick = function () { key[+b.dataset.kq] = +b.dataset.ko; drawK(); }; });
+          };
+          q('#tn').oninput = drawK; q('#topts').onchange = drawK; q('#tlab').onchange = drawK; drawK();
+          q('#saveK').onclick = function () {
+            var n = +q('#tn').value, mx = +q('#topts').value, miss = [];
+            for (var i = 0; i < n; i++) if (key[i] == null || key[i] >= mx) miss.push(i + 1);
+            if (miss.length) { toast('Хариулт сонгоогүй: ' + miss.join(', ')); return; }
+            sb.from('lessons').update({ test_key: key.slice(0, n), test_opts: mx, test_labels: q('#tlab').value }).eq('id', L.id).then(function (x) { if (!fail(x)) { toast('Тест хадгалагдлаа · ' + n + ' асуулт'); showLibrary(); } });
+          };
+          var clr = q('#clrK'); if (clr) clr.onclick = function () { sb.from('lessons').update({ test_key: [], test_files: [] }).eq('id', L.id).then(function (x) { if (!fail(x)) { toast('Арилгалаа'); showLibrary(); } }); };
+          var scanify = function (c) {
+            // remove shadows: divide by a blurred background, then raise contrast (paper -> white, ink -> dark)
+            var w = c.width, h = c.height, ctx = c.getContext('2d'), src = ctx.getImageData(0, 0, w, h), d = src.data;
+            var sw = Math.max(8, Math.round(w / 28)), sh = Math.max(8, Math.round(h / 28));
+            var sm = document.createElement('canvas'); sm.width = sw; sm.height = sh; var sx = sm.getContext('2d'); sx.filter = 'blur(2px)'; sx.drawImage(c, 0, 0, sw, sh);
+            var bg = document.createElement('canvas'); bg.width = w; bg.height = h; var bx = bg.getContext('2d'); bx.imageSmoothingEnabled = true; bx.drawImage(sm, 0, 0, w, h);
+            var b = bx.getImageData(0, 0, w, h).data;
+            for (var i = 0; i < d.length; i += 4) {
+              var L = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2], B = 0.299 * b[i] + 0.587 * b[i + 1] + 0.114 * b[i + 2] + 1;
+              var v = Math.min(1, L / B); v = v > 0.9 ? 1 : Math.pow(Math.max(0, (v - 0.35) / 0.55), 1.6);
+              var o = Math.round(v * 255); d[i] = d[i + 1] = d[i + 2] = o;
+            }
+            ctx.putImageData(src, 0, 0);
+          };
+          var shrinkImg = function (f) {
+            if (!/^image\//.test(f.type) || /gif|svg/.test(f.type)) return Promise.resolve(f);
+            return new Promise(function (res) {
+              var u = URL.createObjectURL(f), im = new Image();
+              im.onload = function () { var k = Math.min(1, 1800 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
+                c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); if (q('#tscan') && q('#tscan').checked) scanify(c); c.toBlob(function (bl) { res(bl ? new File([bl], 'page.jpg', { type: 'image/jpeg' }) : f); }, 'image/jpeg', 0.85); };
+              im.onerror = function () { res(f); }; im.src = u;
+            });
+          };
+          var upT = function () {
+            var fl = Array.prototype.slice.call(this.files || []); this.value = ''; if (!fl.length) return; toast('Хуулж байна…');
+            Promise.all(fl.map(function (f0) { return shrinkImg(f0).then(function (f) {
+              var ext = (f.name.match(/\.[A-Za-z0-9]{1,6}$/) || [''])[0].toLowerCase(), path = me.id + '/test/' + L.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 7) + ext;
+              return sb.storage.from('public-materials').upload(path, f, { contentType: f.type || 'application/octet-stream' }).then(function (r) { if (r.error) throw r.error; return sb.storage.from('public-materials').getPublicUrl(path).data.publicUrl; });
+            }); })).then(function (urls) {
+              return sb.from('lessons').update({ test_files: (L.test_files || []).concat(urls) }).eq('id', L.id);
+            }).then(function () { toast('Тестийн хуудас нэмэгдлээ'); showLibrary(); }).catch(function (e) { console.error(e); toast('Хуулж чадсангүй'); });
+          };
+          q('#tfup').onchange = upT; q('#tfcam').onchange = upT;
+          app.querySelectorAll('[data-tfdel]').forEach(function (b) { b.onclick = function () {
+            var arr = (L.test_files || []).slice(); arr.splice(+b.dataset.tfdel, 1);
+            sb.from('lessons').update({ test_files: arr }).eq('id', L.id).then(function (x) { if (!fail(x)) showLibrary(); });
+          }; });
+        }
         var stt = q('#saveT'); if (stt) stt.onclick = function () {
           var test = parseTest(q('#lq').value);
           sb.from('lessons').update({ test: test }).eq('id', L.id).then(function (x) { if (!fail(x)) { toast('Тест хадгалагдлаа · ' + test.length + ' асуулт'); libPanel = null; showLibrary(); } });
