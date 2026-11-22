@@ -229,6 +229,14 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
   .nbad{display:block;position:absolute;top:6px;right:22px;margin:0}
   body[data-theme=grape] header{background-image:none!important}
 }
+.fedit{position:absolute;top:8px;right:8px;border:0;border-radius:99px;background:rgba(255,255,255,.92);color:#1A1F36;font-weight:700;font-size:12.5px;padding:6px 11px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.fedit:hover{background:#fff}
+.fedit{width:36px;height:36px;padding:0!important;font-size:16px!important;display:grid;place-items:center}
+.inl{display:flex;gap:8px;align-items:center;background:#1E2A5A;border-radius:12px;padding:6px}
+.inl input{flex:1;min-width:0;height:40px;border:2px solid #F5B83D;border-radius:9px;background:#111;color:#fff;font-weight:700;font-size:16px;padding:0 10px}
+.inl button{border:0;background:transparent;color:#C9D1F0;font-weight:700;font-size:15px;padding:0 8px;height:40px}
+.inl button:hover{color:#fff}
+.inl.dark{background:transparent;padding:0;flex:1;min-width:0}.inl.dark button{color:#fff}
 </style>
 
 </head>
@@ -351,7 +359,7 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
         }
         try { localStorage.removeItem('pendingT'); } catch (e) {}
         me = s.user; var _em = me.email || ''; document.getElementById('who').textContent = /^p\d{8}@edusolve\.mn$/.test(_em) ? _em.slice(1, 9) : _em;
-        sb.from('teachers').select('name,subject,school,theme,home_layout').eq('id', me.id).maybeSingle().then(function (tr) {
+        sb.from('teachers').select('name,subject,school,theme,home_layout,folder_names').eq('id', me.id).maybeSingle().then(function (tr) {
           if (tr.data) T = tr.data; applyTheme(T.theme);
           document.getElementById('tTitle').textContent = (T.subject || 'EduSolveMN') + ' · ' + (T.name || '') + ' багшийн самбар';
           document.title = 'EduSolveMN · ' + (T.name || 'Багшийн хэсэг');
@@ -510,8 +518,8 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
         var nowLine = sd === today && nm >= T0 && nm <= hmin(end) ? '<div class="nowl" style="left:' + ((nm - T0) / SP * 100).toFixed(2) + '%"></div>' : '';
         var dpill = DAYS.map(function (d, i) { var dt = new Date(monday); dt.setDate(dt.getDate() + i); return '<button class="' + (i + 1 === sd ? 'on' : '') + '" data-hd="' + (i + 1) + '">' + d + '<b>' + dt.getDate() + '</b></button>'; }).join('');
         var grades = {}; classes.forEach(function (c) { (grades[c.grade] = grades[c.grade] || []).push(c.name); });
-        var gl = Object.keys(grades).sort(function (a, b) { return b - a; }).map(function (g, i) { var n = grades[g]; return '<button class="gli' + (g < 10 ? ' alt' : '') + '" data-gg="' + g + '"><span class="ico">' + ICF + '</span><span><b>' + g + '-р анги</b><small>' + esc(n.slice(0, 4).join(' · ') + (n.length > 4 ? ' …' : '')) + '</small></span><em>' + n.length + ' анги ›</em></button>'; }).join('') +
-          groups.map(function (g) { return '<button class="gli alt" data-ggp="' + g.id + '"><span class="ico">' + ICF + '</span><span><b>' + esc(g.name) + '</b><small>' + (GKIND[g.kind] || 'Бүлэг') + ' · ' + (g.group_members || []).length + ' сурагч</small></span><em>›</em></button>'; }).join('');
+        var gl = Object.keys(grades).sort(function (a, b) { return b - a; }).map(function (g, i) { var n = grades[g]; return '<button class="gli' + (g < 10 ? ' alt' : '') + '" data-gg="' + g + '"><span class="ico">' + ICF + '</span><span><b>' + g + '-р анги <span style="font-weight:500;color:#7A8AAE;font-size:13px">· ' + esc(fname(g)) + '</span></b><small>' + esc(n.slice(0, 4).join(' · ') + (n.length > 4 ? ' …' : '')) + '</small></span><em>' + n.length + ' анги ›</em></button>'; }).join('') +
+          groups.map(function (g) { return '<button class="gli alt" data-ggp="' + g.id + '"><span class="ico">' + ICF + '</span><span><b>' + esc(g.name) + '</b><small>Бүлэг · ' + (g.group_members || []).length + ' сурагч</small></span><em>›</em></button>'; }).join('');
         var wkEx = (R[6].data || []).filter(function (e) { var t = new Date(e.starts_at); return t >= monday && t < new Date(monday.getTime() + 7 * 864e5); }).length;
         var mine = sch.filter(function (s) { return s.day === sd; }).length;
         var mlist = '', mlsh = 0;
@@ -850,6 +858,7 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
   }
   var boardScope = null;
   var BGRAD = { 6: ['#0F766E', '#14B8A6'], 7: ['#1D4ED8', '#60A5FA'], 8: ['#7C3AED', '#C084FC'], 9: ['#B45309', '#F59E0B'], 10: ['#1E2A5A', '#3B5BDB'], 11: ['#0B4F6C', '#20A4C4'], 12: ['#14213D', '#2747B8'] };
+  function fname(g) { var f = (T && T.folder_names) || {}; return f[g] || (T && T.subject) || C.subject || 'Хичээл'; }
   function boardCover(c1, c2, label) {
     return '<div style="position:relative;height:150px;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,' + c1 + ',' + c2 + ')">' +
       '<div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:22px 22px"></div>' +
@@ -863,7 +872,7 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
       var grades = classes.map(function (c) { return +c.grade; }).filter(function (g, i, a) { return a.indexOf(g) === i; }).sort(function (a, b) { return b - a; });
       var subj = (T && T.subject) || C.subject || 'Хичээл';
       var card = function (attr, cover, title, sub, pend) {
-        return '<button ' + attr + ' style="text-align:left;background:transparent;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;gap:8px;font-family:inherit;color:#1A1F36">' + cover +
+        return '<button ' + attr + ' style="width:100%;text-align:left;background:transparent;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;gap:8px;font-family:inherit;color:#1A1F36">' + cover +
           '<span style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><b style="font-size:17px;line-height:1.3">' + title + '</b>' + (pend ? '<span class="pill p-amber" style="flex:0 0 auto">' + pend + ' шалгах</span>' : '') + '</span>' +
           '<span class="muted" style="font-size:13px;margin-top:-4px">' + sub + '</span></button>';
       };
@@ -871,11 +880,11 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
       grades.forEach(function (g) {
         var cs = classes.filter(function (c) { return +c.grade === g; }), ids = cs.map(function (c) { return c.id; });
         var n = kids.filter(function (k) { return ids.indexOf(k.class_id) >= 0; }).length, p = rev.filter(function (x) { return ids.indexOf(clsOf[x.student_id]) >= 0; }).length, col = BGRAD[g] || ['#1E2A5A', '#3B5BDB'];
-        html += card('data-bsg="' + g + '"', boardCover(col[0], col[1], g + '-р анги'), esc(subj) + ' · ' + g + '-р анги', cs.map(function (c) { return esc(c.name); }).join(', ') + ' · ' + n + ' сурагч', p);
+        html += '<div style="position:relative">' + card('data-bsg="' + g + '"', boardCover(col[0], col[1], g + '-р анги'), esc(fname(g)) + ' · ' + g + '-р анги', cs.map(function (c) { return esc(c.name); }).join(', ') + ' · ' + n + ' сурагч', p) + '<button class="fedit" data-fe="' + g + '" aria-label="' + g + '-р ангийн хавтасны нэр солих" title="Нэр солих">✎</button></div>';
       });
       groups.forEach(function (gr) {
         var mem = (gr.group_members || []).map(function (m) { return m.student_id; }), p = rev.filter(function (x) { return mem.indexOf(x.student_id) >= 0; }).length;
-        html += card('data-bsgr="' + gr.id + '"', boardCover('#3B1A5A', '#8B5CF6', esc(GKIND[gr.kind] || 'Бүлэг')), esc(gr.name), (GKIND[gr.kind] || 'Бүлэг') + ' · ' + mem.length + ' сурагч', p);
+        html += '<div style="position:relative">' + card('data-bsgr="' + gr.id + '"', boardCover('#3B1A5A', '#8B5CF6', 'Бүлэг'), esc(gr.name), 'Олон ангиас · ' + mem.length + ' сурагч', p) + '<button class="fedit" data-fge="' + gr.id + '" aria-label="' + esc(gr.name) + ' нэр солих" title="Нэр солих">✎</button></div>';
       });
       html += '<div style="display:flex;flex-direction:column;gap:8px"><div style="height:150px;border-radius:14px;border:2px dashed #A9B1CC;background:#F4F6FB;display:flex;align-items:center;justify-content:center;font-size:44px;color:#8A93B0;font-weight:300">+</div>' + newBoardCard(12).replace('width:270px;', 'width:auto;') + '</div>';
       html += '</div>';
@@ -883,28 +892,44 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
       bindNewBoard();
       app.querySelectorAll('[data-bsg]').forEach(function (b) { b.onclick = function () { boardScope = { type: 'grade', grade: +b.dataset.bsg }; boardLesson = null; showReview(); }; });
       app.querySelectorAll('[data-bsgr]').forEach(function (b) { b.onclick = function () { boardScope = { type: 'group', id: b.dataset.bsgr }; boardLesson = null; showReview(); }; });
+      function inlineEdit(btn, cur, save) {
+        var wrap = btn.parentNode, card = wrap.querySelector('button[data-bsg],button[data-bsgr]'), b = card.querySelector('b');
+        var box = document.createElement('div'); box.className = 'inl';
+        box.innerHTML = '<input type="text" maxlength="40" aria-label="Нэр" value="' + esc(cur) + '"><button type="button">Болсон</button>';
+        b.parentNode.replaceWith(box); btn.style.display = 'none'; card.disabled = true; card.style.cursor = 'default';
+        card.parentNode.insertBefore(box, card.nextSibling);
+        var inp = box.querySelector('input'); inp.focus(); inp.select();
+        var done = function () { var v = inp.value.trim(); if (!v || v === cur) { showBoardHome(); return; } save(v); };
+        box.querySelector('button').onclick = done;
+        inp.onkeydown = function (e) { if (e.key === 'Enter') done(); if (e.key === 'Escape') showBoardHome(); };
+      }
+      app.querySelectorAll('[data-fe]').forEach(function (b) { b.onclick = function () { var g = +b.dataset.fe; inlineEdit(b, fname(g), function (v) {
+        var f = Object.assign({}, T.folder_names || {}); f[g] = v;
+        sb.from('teachers').update({ folder_names: f }).eq('id', me.id).then(function (x) { if (!fail(x)) { T.folder_names = f; toast('Нэр солигдлоо'); } showBoardHome(); });
+      }); }; });
+      app.querySelectorAll('[data-fge]').forEach(function (b) { b.onclick = function () { var gr = groups.filter(function (x) { return x.id === b.dataset.fge; })[0]; inlineEdit(b, gr.name, function (v) {
+        sb.from('groups').update({ name: v }).eq('id', gr.id).then(function (x) { if (!fail(x)) toast('Нэр солигдлоо'); loadClasses().then(showBoardHome); });
+      }); }; });
     });
   }
   function newBoardCard(preG) {
-        var letters = ['а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и'];
-        return '<div class="card" style="width:270px;border:1.5px dashed #A9B1CC"><div class="row" style="gap:6px"><button class="chip on" id="nkC" type="button">+ Анги</button><button class="chip" id="nkG" type="button">+ Сонгон, давтлага</button></div>' +
-          '<div id="nkGbox" hidden style="display:flex;flex-direction:column;gap:8px"><label class="muted" for="gname">Бүлгийн нэр</label><input type="text" id="gname" placeholder="Жишээ: ЭЕШ давтлага, Зураг зүйн дугуйлан">' +
-          '<select id="gkind" aria-label="Төрөл"><option value="songon">Сонгон</option><option value="davtlaga">Давтлага</option><option value="dugui">Дугуйлан</option></select>' +
-          '<button class="btn" id="addG">Бүлэг үүсгэх</button><span class="muted" style="font-size:12px">Дараа нь ангиудаасаа хүүхдүүдээ сонгоно</span></div>' +
+        var letters = ['а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'к', 'л'];
+        return '<div class="card" style="width:270px;border:1.5px dashed #A9B1CC"><b>+ Анги нэмэх</b>' +
           '<div id="nkCbox" style="display:flex;flex-direction:column;gap:8px">' +
           '<div class="row"><label class="muted" for="cg">Анги</label><select id="cg">' + [6, 7, 8, 9, 10, 11, 12].map(function (g) { return '<option value="' + g + '"' + (g === (preG || 12) ? ' selected' : '') + '>' + g + '</option>'; }).join('') + '</select>' +
           '<label class="muted" for="cb">Бүлэг</label><select id="cb">' + letters.map(function (l) { return '<option>' + l + '</option>'; }).join('') + '</select></div>' +
-          '<button class="btn" id="addC">Нэмэх</button><span class="muted" id="cprev"></span></div></div>';
+          '<button class="btn" id="addC">Нэмэх</button><span class="muted" id="cprev"></span></div>' +
+          '<button class="lnk" id="nkG" type="button" style="text-align:left;font-size:13px">+ Олон ангиас бүлэг (давтлага г.м.)</button>' +
+          '<div id="nkGbox" style="display:none;flex-direction:column;gap:8px"><input type="text" id="gname" maxlength="40" placeholder="Бүлгийн нэр · жишээ: ЭЕШ давтлага" aria-label="Бүлгийн нэр"><button class="btn sec" id="addG">Бүлэг үүсгэх</button></div></div>';
   }
   function bindNewBoard() {
-        if (!q('#nkC')) return;
-        var prev = function () { q('#cprev').textContent = '→ ' + q('#cg').value + q('#cb').value + ' анги'; };
+        if (!q('#addC')) return;
+        var prev = function () { q('#cprev').textContent = '→ ' + q('#cg').value + q('#cb').value + ' анги · "' + fname(+q('#cg').value) + '" хавтсанд орно'; };
         q('#cg').onchange = prev; q('#cb').onchange = prev; prev();
-        q('#nkC').onclick = function () { q('#nkC').classList.add('on'); q('#nkG').classList.remove('on'); q('#nkCbox').hidden = false; q('#nkGbox').hidden = true; };
-        q('#nkG').onclick = function () { q('#nkG').classList.add('on'); q('#nkC').classList.remove('on'); q('#nkCbox').hidden = true; q('#nkGbox').hidden = false; q('#gname').focus(); };
+        q('#nkG').onclick = function () { var bx = q('#nkGbox'), o = bx.style.display === 'none'; bx.style.display = o ? 'flex' : 'none'; if (o) q('#gname').focus(); };
         q('#addG').onclick = function () {
           var n = q('#gname').value.trim(); if (!n) { toast('Бүлгийн нэрээ бичнэ үү'); return; }
-          sb.from('groups').insert({ teacher_id: me.id, name: n, kind: q('#gkind').value }).select().then(function (r) { if (fail(r)) return; toast(n + ' үүслээ · хүүхдүүдээ сонгоно уу'); loadClasses().then(function () { openGroupView(r.data[0].id, 'members'); }); });
+          sb.from('groups').insert({ teacher_id: me.id, name: n, kind: 'davtlaga' }).select().then(function (r) { if (fail(r)) return; toast(n + ' үүслээ · хүүхдүүдээ сонгоно уу'); loadClasses().then(function () { openGroupView(r.data[0].id, 'members'); }); });
         };
         q('#addC').onclick = function () {
           var n = q('#cg').value + q('#cb').value;
@@ -926,7 +951,7 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
     if (boardScope.type === 'group' && !groups.some(function (g) { return g.id === boardScope.id; })) { boardScope = null; showBoardHome(); return; }
     var scopeClasses = boardScope.type === 'grade' ? classes.filter(function (c) { return +c.grade === boardScope.grade; }) : [];
     var scopeGroups = boardScope.type === 'group' ? groups.filter(function (g) { return g.id === boardScope.id; }) : [];
-    var scopeTitle = boardScope.type === 'grade' ? esc((T && T.subject) || C.subject || '') + ' · ' + boardScope.grade + '-р анги' : esc(scopeGroups[0].name);
+    var scopeTitle = boardScope.type === 'grade' ? esc(fname(boardScope.grade)) + ' · ' + boardScope.grade + '-р анги' : esc(scopeGroups[0].name);
     if (!boardKeep) app.innerHTML = '<div class="muted">Ачаалж байна…</div>';
     Promise.all([
       sb.from('lesson_access').select('lesson_id,class_id,opened_at,due_at,lessons(title,num,units(sort))').order('opened_at', { ascending: false }),
@@ -968,7 +993,8 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
             '<div style="border-top:1px solid #E1E4EE;margin:4px 0"></div>' +
 '<button class="btn ghost" style="width:100%;border:0;text-align:left" data-cq="' + c.id + '">Ангийн QR харах</button>' +
             '<button class="btn ghost" style="width:100%;border:0;text-align:left" data-cl="' + c.id + '">Ангийн линк хуулах</button>' +
-            '<button class="btn ghost" style="width:100%;border:0;text-align:left" data-cr="' + c.id + '">Код, нэрс</button></div></div>';
+            '<button class="btn ghost" style="width:100%;border:0;text-align:left" data-cr="' + c.id + '">Код, нэрс</button>' +
+            '<button class="btn ghost" style="width:100%;border:0;text-align:left" data-crn="' + c.id + '">✎ Нэр солих</button></div></div>';
           if (opened) {
             html += folderHtml('data-grid', c.id, sent.map(function (k) { return (latest[k.id].photo_paths || [])[0]; }), sent.length, done.length);
             if (done.length) html += '<button data-dn="' + c.id + '" style="background:transparent;border:0;color:#1C6B40;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;padding:2px 4px">Журналд орсон ' + done.length + ' · жагсаалтаар ' + (openDone[c.id] ? '▲' : '▼') + '</button>';
@@ -1050,6 +1076,15 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
         app.onclick = function (e) { if (!e.target.closest('[data-menubox]')) app.querySelectorAll('[data-menubox]').forEach(function (x) { x.hidden = true; }); };
         function clsById(id) { return classes.filter(function (c) { return c.id === id; })[0]; }
         app.querySelectorAll('[data-cq]').forEach(function (b) { b.onclick = function () { showClassQR(clsById(b.dataset.cq)); }; });
+        app.querySelectorAll('[data-crn]').forEach(function (b) { b.onclick = function (e) {
+          e.stopPropagation(); var c = clsById(b.dataset.crn), hb = app.querySelector('[data-oc="' + c.id + '"]'); app.querySelectorAll('[data-menubox]').forEach(function (x) { x.hidden = true; });
+          var box = document.createElement('div'); box.className = 'inl dark'; box.innerHTML = '<input type="text" maxlength="12" aria-label="Ангийн нэр" value="' + esc(c.name) + '"><button type="button">Болсон</button>';
+          hb.replaceWith(box); var inp = box.querySelector('input'); inp.focus(); inp.select();
+          var done = function () { var v = inp.value.trim(); if (!v || v === c.name) { showReview(); return; }
+            if (classes.some(function (x) { return x.name === v && x.id !== c.id; })) { toast(v + ' анги аль хэдийн байна'); return; }
+            sb.from('classes').update({ name: v }).eq('id', c.id).then(function (x) { if (!fail(x)) toast('Нэр солигдлоо: ' + v); loadClasses().then(showReview); }); };
+          box.querySelector('button').onclick = done; inp.onkeydown = function (e) { if (e.key === 'Enter') done(); if (e.key === 'Escape') showReview(); };
+        }; });
         app.querySelectorAll('[data-cl]').forEach(function (b) {
           b.onclick = function () { var l = STUDENT_URL + '?c=' + encodeURIComponent(clsById(b.dataset.cl).key || clsById(b.dataset.cl).name); (navigator.clipboard ? navigator.clipboard.writeText(l) : Promise.reject()).then(function () { toast('Линк хуулагдлаа · группт буулгана'); }, function () { toast(l); }); };
         });
@@ -2240,10 +2275,9 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
     }
     if (gView === 'settings') {
       app.innerHTML = head + '<div class="card" style="gap:10px;max-width:520px"><label class="muted" for="gRen">Нэр</label><input type="text" id="gRen" value="' + esc(g.name) + '">' +
-        '<label class="muted" for="gKind">Төрөл</label><select id="gKind">' + Object.keys(GKIND).map(function (k) { return '<option value="' + k + '"' + (g.kind === k ? ' selected' : '') + '>' + GKIND[k] + '</option>'; }).join('') + '</select>' +
         '<button class="btn" id="gRs">Хадгалах</button><hr style="border:0;border-top:1px solid #E1E4EE;width:100%"><button class="btn ghost" id="gDel" style="color:#B42318">Бүлгийг устгах</button><div class="muted" style="font-size:12px">Сурагчид ангиасаа хасагдахгүй. Зөвхөн энэ бүлэг, түүний ирц устна.</div></div>';
       bindHead();
-      q('#gRs').onclick = function () { sb.from('groups').update({ name: q('#gRen').value.trim() || g.name, kind: q('#gKind').value }).eq('id', g.id).then(function (x) { if (!fail(x)) { toast('Хадгалагдлаа'); loadClasses().then(showGroup); } }); };
+      q('#gRs').onclick = function () { sb.from('groups').update({ name: q('#gRen').value.trim() || g.name }).eq('id', g.id).then(function (x) { if (!fail(x)) { toast('Хадгалагдлаа'); loadClasses().then(showGroup); } }); };
       q('#gDel').onclick = function () { var b = this; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Үнэхээр устгах уу? Дахин дарна уу'; return; } sb.from('groups').delete().eq('id', g.id).then(function (x) { if (!fail(x)) { toast('Устгагдлаа'); loadClasses().then(function () { go('review'); }); } }); };
       return;
     }
