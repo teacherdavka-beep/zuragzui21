@@ -62,6 +62,15 @@ th{font-size:12px;color:#5A6178}
   .pc{border:1px dashed #888;padding:12px;display:flex;gap:10px;align-items:center;break-inside:avoid;height:46mm}
   .pc b{font-size:15px}.pc div{font-size:13px}
 }
+.fold{position:relative;height:170px;border:0;background:transparent;padding:0;cursor:pointer;font-family:inherit;display:block;width:100%}
+.fold-back{position:absolute;left:0;right:0;top:14px;bottom:0;background:#9DB8F2;border-radius:6px 14px 14px 14px}
+.fold-back:before{content:"";position:absolute;left:0;top:-12px;width:96px;height:16px;background:#9DB8F2;border-radius:10px 10px 0 0}
+.fold-front{position:absolute;left:0;right:0;bottom:0;height:86px;background:rgba(190,210,255,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.7);border-radius:12px 12px 14px 14px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:0 16px;color:#1E2A5A;text-align:left;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+.fold-front b{font-size:17px}.fold-front small{font-size:12.5px;color:#34437A;margin-top:2px}
+.fold:hover img{transform:translateX(-50%) translateY(-8px)!important}
+.fold:hover img:nth-of-type(1){transform:translateX(calc(-50% - 40px)) translateY(-6px) rotate(-18deg)!important}
+.fold:hover img:nth-of-type(3){transform:translateX(calc(-50% + 40px)) translateY(-6px) rotate(18deg)!important}
+.fold:focus-visible{outline:3px solid #2747B8;outline-offset:3px;border-radius:14px}
 </style>
 </head>
 <body>
@@ -195,7 +204,9 @@ th{font-size:12px;color:#5A6178}
       });
     });
   }
-  function loadClasses() { return sb.from('classes').select('*').order('name').then(function (r) { classes = r.data || []; }); }
+  var groups = [];
+  function loadClasses() { return Promise.all([sb.from('classes').select('*').order('name'), sb.from('groups').select('*, group_members(student_id)').order('created_at')]).then(function (r) { classes = r[0].data || []; groups = r[1].data || []; }); }
+  var GKIND = { davtlaga: 'Давтлага', dugui: 'Дугуйлан', songon: 'Сонгон' };
   function cleanupPhotos() {
     var cut = new Date(Date.now() - 30 * 864e5).toISOString();
     sb.from('submissions').select('id,photo_paths').in('status', ['ok', 'auto']).lt('created_at', cut).neq('photo_paths', '{}').limit(500).then(function (r) {
@@ -215,12 +226,11 @@ th{font-size:12px;color:#5A6178}
   }
   function drawTabs() {
     var T = [['review', 'Журнал'], ['library', 'Материалын сан'], ['exams', 'Шалгалт'], ['feedback', 'Санал хүсэлт' + (fbUnseen ? ' (' + fbUnseen + ')' : '')]];
-    T.push(isOwner ? ['team', 'Багш нар'] : ['myfb', 'Санал өгөх']);
     tabsEl.hidden = false;
-    tabsEl.innerHTML = T.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (t[0] === tab ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') +
+    tabsEl.innerHTML = T.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (t[0] === tab || (t[0] === 'feedback' && (tab === 'team' || tab === 'myfb')) ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') +
       '<button data-t="out">Гарах</button>';
     tabsEl.querySelectorAll('button').forEach(function (b) {
-      b.onclick = function () { if (b.dataset.t === 'out') { sb.auth.signOut().then(function () { showAuth(); }); return; } go(b.dataset.t); };
+      b.onclick = function () { if (b.dataset.t === 'out') { sb.auth.signOut().then(function () { showAuth(); }); return; } if (b.dataset.t === 'review') { boardScope = null; boardLesson = null; } go(b.dataset.t); };
     });
   }
   var cView = 'att';
@@ -235,8 +245,18 @@ th{font-size:12px;color:#5A6178}
     app.querySelectorAll('[data-c]').forEach(function (b) { b.onclick = function () { curClass = b.dataset.c; sel = null; showC(); }; });
   }
   function showC() { if (cView === 'att') showAttendance(); else if (cView === 'lesson') showLesson(); else if (cView === 'table') showJournal(); else showClasses(); }
-  function openClassView(id, view) { curClass = id; cView = view || 'att'; tab = 'review'; drawTabs(); showC(); }
-  function go(t) { tab = t; drawTabs(); ({ review: showReview, library: showLibrary, exams: showExams, feedback: showFeedback, team: showTeam, myfb: showMyFeedback })[t](); countFb(); }
+  function openClassView(id, view) { curClass = id; cView = view || 'att'; tab = 'review'; drawTabs(); fbSubnav(); showC(); }
+  function fbSubnav() {
+    var sn = document.getElementById('fbsub');
+    if (!sn) { sn = document.createElement('div'); sn.id = 'fbsub'; app.parentNode.insertBefore(sn, app); }
+    var show = tab === 'feedback' || tab === 'team' || tab === 'myfb';
+    sn.hidden = !show; if (!show) return;
+    var S = [['feedback', 'Сурагчдаас'], isOwner ? ['team', 'Багш нар'] : ['myfb', 'Багш нар · санал өгөх']];
+    sn.className = 'row'; sn.style.cssText = 'gap:6px;max-width:1200px;margin:16px auto -4px;padding:0 24px;box-sizing:border-box;width:100%';
+    sn.innerHTML = S.map(function (x) { return '<button class="chip' + (tab === x[0] ? ' on' : '') + '" style="min-height:42px;font-weight:700;padding:0 16px" data-fs2="' + x[0] + '">' + x[1] + '</button>'; }).join('');
+    sn.querySelectorAll('[data-fs2]').forEach(function (b) { b.onclick = function () { go(b.dataset.fs2); }; });
+  }
+  function go(t) { tab = t; drawTabs(); fbSubnav(); ({ review: showReview, library: showLibrary, exams: showExams, feedback: showFeedback, team: showTeam, myfb: showMyFeedback })[t](); countFb(); }
   function showMyFeedback() {
     var rating = 0;
     app.innerHTML = '<div class="card" style="max-width:640px"><h2>Платформын талаарх санал</h2><div class="muted">Таны санал платформыг сайжруулахад шууд ашиглагдана. Долоо хоногт нэг удаа бөглөхөд хангалттай.</div>' +
@@ -476,26 +496,106 @@ th{font-size:12px;color:#5A6178}
       z.querySelectorAll('img[data-gp]').forEach(function (im) { if (urls[im.dataset.gp]) im.src = urls[im.dataset.gp]; });
     });
   }
+  var boardScope = null;
+  var BGRAD = { 6: ['#0F766E', '#14B8A6'], 7: ['#1D4ED8', '#60A5FA'], 8: ['#7C3AED', '#C084FC'], 9: ['#B45309', '#F59E0B'], 10: ['#1E2A5A', '#3B5BDB'], 11: ['#0B4F6C', '#20A4C4'], 12: ['#14213D', '#2747B8'] };
+  function boardCover(c1, c2, label) {
+    return '<div style="position:relative;height:150px;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,' + c1 + ',' + c2 + ')">' +
+      '<div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:22px 22px"></div>' +
+      '<svg width="150" height="150" viewBox="0 0 150 150" aria-hidden="true" style="position:absolute;right:-10px;bottom:-14px;opacity:.28"><path d="M75 15 L130 45 L130 105 L75 135 L20 105 L20 45 Z M75 15 L75 75 M20 45 L75 75 L130 45" fill="none" stroke="#fff" stroke-width="3"/></svg>' +
+      '<div style="position:absolute;left:16px;bottom:12px;color:#fff;font-size:34px;font-weight:800;letter-spacing:-.02em">' + label + '</div></div>';
+  }
+  function showBoardHome() {
+    app.innerHTML = '<div class="muted">Ачаалж байна…</div>';
+    Promise.all([sb.from('students').select('id,class_id').eq('active', true), sb.from('submissions').select('student_id').eq('status', 'review')]).then(function (r) {
+      var kids = r[0].data || [], rev = r[1].data || [], clsOf = {}; kids.forEach(function (k) { clsOf[k.id] = k.class_id; });
+      var grades = classes.map(function (c) { return +c.grade; }).filter(function (g, i, a) { return a.indexOf(g) === i; }).sort(function (a, b) { return b - a; });
+      var subj = (T && T.subject) || C.subject || 'Хичээл';
+      var card = function (attr, cover, title, sub, pend) {
+        return '<button ' + attr + ' style="text-align:left;background:transparent;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;gap:8px;font-family:inherit;color:#1A1F36">' + cover +
+          '<span style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><b style="font-size:17px;line-height:1.3">' + title + '</b>' + (pend ? '<span class="pill p-amber" style="flex:0 0 auto">' + pend + ' шалгах</span>' : '') + '</span>' +
+          '<span class="muted" style="font-size:13px;margin-top:-4px">' + sub + '</span></button>';
+      };
+      var html = '<div class="row between"><h2>Миний самбарууд</h2></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:22px 18px;align-items:start">';
+      grades.forEach(function (g) {
+        var cs = classes.filter(function (c) { return +c.grade === g; }), ids = cs.map(function (c) { return c.id; });
+        var n = kids.filter(function (k) { return ids.indexOf(k.class_id) >= 0; }).length, p = rev.filter(function (x) { return ids.indexOf(clsOf[x.student_id]) >= 0; }).length, col = BGRAD[g] || ['#1E2A5A', '#3B5BDB'];
+        html += card('data-bsg="' + g + '"', boardCover(col[0], col[1], g + '-р анги'), esc(subj) + ' · ' + g + '-р анги', cs.map(function (c) { return esc(c.name); }).join(', ') + ' · ' + n + ' сурагч', p);
+      });
+      groups.forEach(function (gr) {
+        var mem = (gr.group_members || []).map(function (m) { return m.student_id; }), p = rev.filter(function (x) { return mem.indexOf(x.student_id) >= 0; }).length;
+        html += card('data-bsgr="' + gr.id + '"', boardCover('#3B1A5A', '#8B5CF6', esc(GKIND[gr.kind] || 'Бүлэг')), esc(gr.name), (GKIND[gr.kind] || 'Бүлэг') + ' · ' + mem.length + ' сурагч', p);
+      });
+      html += '<div style="display:flex;flex-direction:column;gap:8px"><div style="height:150px;border-radius:14px;border:2px dashed #A9B1CC;background:#F4F6FB;display:flex;align-items:center;justify-content:center;font-size:44px;color:#8A93B0;font-weight:300">+</div>' + newBoardCard(12).replace('width:270px;', 'width:auto;') + '</div>';
+      html += '</div>';
+      app.innerHTML = html;
+      bindNewBoard();
+      app.querySelectorAll('[data-bsg]').forEach(function (b) { b.onclick = function () { boardScope = { type: 'grade', grade: +b.dataset.bsg }; boardLesson = null; showReview(); }; });
+      app.querySelectorAll('[data-bsgr]').forEach(function (b) { b.onclick = function () { boardScope = { type: 'group', id: b.dataset.bsgr }; boardLesson = null; showReview(); }; });
+    });
+  }
+  function newBoardCard(preG) {
+        var letters = ['а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и'];
+        return '<div class="card" style="width:270px;border:1.5px dashed #A9B1CC"><div class="row" style="gap:6px"><button class="chip on" id="nkC" type="button">+ Анги</button><button class="chip" id="nkG" type="button">+ Сонгон, давтлага</button></div>' +
+          '<div id="nkGbox" hidden style="display:flex;flex-direction:column;gap:8px"><label class="muted" for="gname">Бүлгийн нэр</label><input type="text" id="gname" placeholder="Жишээ: ЭЕШ давтлага, Зураг зүйн дугуйлан">' +
+          '<select id="gkind" aria-label="Төрөл"><option value="songon">Сонгон</option><option value="davtlaga">Давтлага</option><option value="dugui">Дугуйлан</option></select>' +
+          '<button class="btn" id="addG">Бүлэг үүсгэх</button><span class="muted" style="font-size:12px">Дараа нь ангиудаасаа хүүхдүүдээ сонгоно</span></div>' +
+          '<div id="nkCbox" style="display:flex;flex-direction:column;gap:8px">' +
+          '<div class="row"><label class="muted" for="cg">Анги</label><select id="cg">' + [6, 7, 8, 9, 10, 11, 12].map(function (g) { return '<option value="' + g + '"' + (g === (preG || 12) ? ' selected' : '') + '>' + g + '</option>'; }).join('') + '</select>' +
+          '<label class="muted" for="cb">Бүлэг</label><select id="cb">' + letters.map(function (l) { return '<option>' + l + '</option>'; }).join('') + '</select></div>' +
+          '<button class="btn" id="addC">Нэмэх</button><span class="muted" id="cprev"></span></div></div>';
+  }
+  function bindNewBoard() {
+        if (!q('#nkC')) return;
+        var prev = function () { q('#cprev').textContent = '→ ' + q('#cg').value + q('#cb').value + ' анги'; };
+        q('#cg').onchange = prev; q('#cb').onchange = prev; prev();
+        q('#nkC').onclick = function () { q('#nkC').classList.add('on'); q('#nkG').classList.remove('on'); q('#nkCbox').hidden = false; q('#nkGbox').hidden = true; };
+        q('#nkG').onclick = function () { q('#nkG').classList.add('on'); q('#nkC').classList.remove('on'); q('#nkCbox').hidden = true; q('#nkGbox').hidden = false; q('#gname').focus(); };
+        q('#addG').onclick = function () {
+          var n = q('#gname').value.trim(); if (!n) { toast('Бүлгийн нэрээ бичнэ үү'); return; }
+          sb.from('groups').insert({ teacher_id: me.id, name: n, kind: q('#gkind').value }).select().then(function (r) { if (fail(r)) return; toast(n + ' үүслээ · хүүхдүүдээ сонгоно уу'); loadClasses().then(function () { openGroupView(r.data[0].id, 'members'); }); });
+        };
+        q('#addC').onclick = function () {
+          var n = q('#cg').value + q('#cb').value;
+          if (classes.some(function (c) { return c.name === n; })) { toast(n + ' анги аль хэдийн байна'); return; }
+          sb.from('classes').insert({ teacher_id: me.id, name: n, grade: +q('#cg').value }).select().then(function (r) { if (fail(r)) return; toast(n + ' анги нэмэгдлээ · нэрсээ оруулна уу'); loadClasses().then(function () { openClassView(r.data[0].id, 'roster'); }); });
+        };
+  }
+  var openDone = {};
+  function folderHtml(attr, id, paths, n, nDone) {
+    var ps = paths.filter(Boolean).slice(0, 3);
+    var rot = [[-14, -26, 6], [0, 0, -4], [14, 26, 6]];
+    var imgs = ps.map(function (p, i) { var r = ps.length === 1 ? [0, 0, -2] : ps.length === 2 ? [[-9, -16, 2], [9, 16, 2]][i] : rot[i]; return '<img alt="" style="position:absolute;left:50%;top:' + (12 + r[2]) + 'px;width:92px;height:104px;object-fit:cover;border-radius:8px;border:3px solid #fff;box-shadow:0 4px 12px rgba(20,30,80,.25);opacity:0;transition:transform .25s,opacity .3s;transform:translateX(calc(-50% + ' + r[1] + 'px)) rotate(' + r[0] + 'deg)">'; }).join('');
+    return '<button class="fold" ' + attr + '="' + id + '" data-fold="' + esc(JSON.stringify(ps)) + '" aria-label="Илгээсэн бүх зургийг харах">' +
+      '<span class="fold-back"></span>' + imgs +
+      '<span class="fold-front"><b>' + (n ? n + ' бүтээл' : 'Хоосон хавтас') + '</b><small>' + (n ? (nDone ? nDone + ' журналд орсон · ' : '') + 'Дарж бүгдийг харах' : 'Одоогоор илгээгээгүй') + '</small></span></button>';
+  }
   function showReview() {
+    if (!boardScope) { showBoardHome(); return; }
+    if (boardScope.type === 'group' && !groups.some(function (g) { return g.id === boardScope.id; })) { boardScope = null; showBoardHome(); return; }
+    var scopeClasses = boardScope.type === 'grade' ? classes.filter(function (c) { return +c.grade === boardScope.grade; }) : [];
+    var scopeGroups = boardScope.type === 'group' ? groups.filter(function (g) { return g.id === boardScope.id; }) : [];
+    var scopeTitle = boardScope.type === 'grade' ? esc((T && T.subject) || C.subject || '') + ' · ' + boardScope.grade + '-р анги' : esc(scopeGroups[0].name);
     if (!boardKeep) app.innerHTML = '<div class="muted">Ачаалж байна…</div>';
     Promise.all([
       sb.from('lesson_access').select('lesson_id,class_id,opened_at,due_at,lessons(title,num,units(sort))').order('opened_at', { ascending: false }),
-      sb.from('students').select('id,name,code,class_id').eq('active', true).order('code')
+      sb.from('students').select('id,name,code,class_id').eq('active', true).order('code'),
+      sb.from('group_access').select('lesson_id,group_id,opened_at,due_at,lessons(title,num,units(sort))').order('opened_at', { ascending: false })
     ]).then(function (r0) {
-      var acc = r0[0].data || [], kids = r0[1].data || [];
+      var acc = r0[0].data || [], kids = r0[1].data || [], gacc = r0[2].data || [];
       var lessonsMap = {}, order = [];
-      acc.forEach(function (a) { if (!lessonsMap[a.lesson_id]) { lessonsMap[a.lesson_id] = a.lessons; order.push(a.lesson_id); } });
+      var scIds = scopeClasses.map(function (c) { return c.id; }), sgIds = scopeGroups.map(function (g) { return g.id; });
+      acc.filter(function (a) { return scIds.indexOf(a.class_id) >= 0; }).concat(gacc.filter(function (a) { return sgIds.indexOf(a.group_id) >= 0; })).forEach(function (a) { if (!lessonsMap[a.lesson_id]) { lessonsMap[a.lesson_id] = a.lessons; order.push(a.lesson_id); } });
       if (!boardLesson || !lessonsMap[boardLesson]) boardLesson = order[0] || null;
       order.sort(function (x, y) { return lessonKey(lessonsMap[x]) - lessonKey(lessonsMap[y]); });
       var subsQ = boardLesson ? sb.from('submissions').select('id,status,reason,photo_paths,created_at,student_id,credit').eq('lesson_id', boardLesson).order('created_at', { ascending: false }) : Promise.resolve({ data: [] });
       Promise.all([subsQ, sb.from('submissions').select('id', { count: 'exact', head: true }).eq('status', 'review')]).then(function (r1) {
         var subs = r1[0].data || [], pendingAll = r1[1].count || 0;
         var latest = {}; subs.forEach(function (s) { if (!latest[s.student_id]) latest[s.student_id] = s; });
-        var html = '<div class="row between"><h2>Даалгаврын самбар</h2><span class="pill p-amber">Танд шалгах (бүх сэдэв): ' + pendingAll + '</span></div>';
+        var html = '<div class="row"><button class="btn ghost" id="bsBack">← Бүх самбар</button><h2 style="margin:0">' + scopeTitle + '</h2></div><div class="row between"><h2>Даалгаврын самбар</h2><span class="pill p-amber">Танд шалгах (бүх сэдэв): ' + pendingAll + '</span></div>';
         html += order.length ? '<div class="row">' + order.map(function (id) { var l = lessonsMap[id]; return '<button class="chip' + (id === boardLesson ? ' on' : '') + '" data-bl="' + id + '">Хичээл ' + l.num + ' · ' + esc(l.title) + '</button>'; }).join('') + '</div>'
           : '<div class="muted">Одоогоор ямар ч ангид сэдэв нээгээгүй байна. Материалын сангаас "Ангид илгээх" дарна. Ангиуд доор харагдаж байгаа, QR-ээ авч болно.</div>';
         html += '<div data-boardx style="overflow-x:auto;padding-bottom:12px"><div style="display:flex;gap:14px;align-items:flex-start;width:max-content">';
-        classes.forEach(function (c) {
+        scopeClasses.forEach(function (c) {
           var ck = kids.filter(function (k) { return k.class_id === c.id; });
           var accC = acc.filter(function (a) { return a.class_id === c.id && a.lesson_id === boardLesson; })[0];
           var opened = !!accC, due = accC && accC.due_at;
@@ -518,8 +618,8 @@ th{font-size:12px;color:#5A6178}
             '<button class="btn ghost" style="width:100%;border:0;text-align:left" data-cl="' + c.id + '">Ангийн линк хуулах</button>' +
             '<button class="btn ghost" style="width:100%;border:0;text-align:left" data-cr="' + c.id + '">Код, нэрс</button></div></div>';
           if (opened) {
-            html += '<div style="background:#E3F4EA;border-radius:10px;padding:8px 12px" class="row between"><span style="font-size:13px;font-weight:600;color:#1C6B40">Журналд орсон</span><b style="color:#1C6B40">' + done.length + '</b></div>';
-            html += '<button class="btn sec" data-grid="' + c.id + '">▦ Бүх зургийг нэг дор харах (' + sent.length + ')</button>';
+            html += folderHtml('data-grid', c.id, sent.map(function (k) { return (latest[k.id].photo_paths || [])[0]; }), sent.length, done.length);
+            if (done.length) html += '<button data-dn="' + c.id + '" style="background:transparent;border:0;color:#1C6B40;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;padding:2px 4px">Журналд орсон ' + done.length + ' · жагсаалтаар ' + (openDone[c.id] ? '▲' : '▼') + '</button>';
             html += '<button class="btn amber" style="text-align:left" data-miss="' + c.id + '">' + missing.length + ' сурагч илгээгээгүй ' + (openMiss[c.id] ? '▲' : '▼') + '</button>';
             if (openMiss[c.id]) html += '<div class="card" style="padding:10px;font-size:13px;line-height:1.6">' + (missing.map(function (k) { return esc(k.name); }).join(', ') || 'Бүгд илгээсэн') + '</div>';
             review.forEach(function (k) {
@@ -530,7 +630,7 @@ th{font-size:12px;color:#5A6178}
                 (lateDays(s.created_at, due) ? scoreRow(s.id, s.credit) : '') +
                 '<div class="row">' + (lateDays(s.created_at, due) ? '' : '<button class="btn green" data-ok="' + s.id + '">' + R[2] + '</button>') + '<button class="btn amber" data-bad="' + s.id + '" data-r="' + s.reason + '" data-st="' + k.id + '">' + R[3] + '</button></div></div>';
             });
-            done.forEach(function (k) {
+            (openDone[c.id] ? done : []).forEach(function (k) {
               var s = latest[k.id];
               var lab = s.status === 'redo' ? ['Дахин хийх', 'p-amber'] : (s.status === 'fake' ? ['Худал', 'p-red'] : ['+ Журналд', 'p-green']);
               var pp = s.photo_paths || [];
@@ -543,20 +643,34 @@ th{font-size:12px;color:#5A6178}
           }
           html += '</div>';
         });
-        var letters = ['а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и'];
-        html += '<div class="card" style="width:260px;border:1.5px dashed #A9B1CC"><b>+ Шинэ анги</b>' +
-          '<div class="row"><label class="muted" for="cg">Анги</label><select id="cg">' + [6, 7, 8, 9, 10, 11, 12].map(function (g) { return '<option value="' + g + '"' + (g === 12 ? ' selected' : '') + '>' + g + '</option>'; }).join('') + '</select>' +
-          '<label class="muted" for="cb">Бүлэг</label><select id="cb">' + letters.map(function (l) { return '<option>' + l + '</option>'; }).join('') + '</select></div>' +
-          '<button class="btn" id="addC">Нэмэх</button><span class="muted" id="cprev"></span></div>';
+        scopeGroups.forEach(function (g) {
+          var mem = (g.group_members || []).map(function (m) { return m.student_id; });
+          var gk = kids.filter(function (k) { return mem.indexOf(k.id) >= 0; });
+          var ga = gacc.filter(function (a) { return a.group_id === g.id && a.lesson_id === boardLesson; })[0];
+          var gs = gk.filter(function (k) { return latest[k.id]; }), gm = gk.filter(function (k) { return !latest[k.id]; });
+          html += '<div style="width:300px;display:flex;flex-direction:column;gap:10px">' +
+            '<div style="background:#5B2A86;color:#fff;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px">' +
+            '<div class="row between" style="flex-wrap:nowrap"><button data-og="' + g.id + '" style="background:transparent;border:0;color:#fff;font-size:18px;font-weight:700;padding:0;min-height:40px;cursor:pointer;text-align:left">' + esc(g.name) + ' ›</button><span style="font-size:12px;background:rgba(255,255,255,.18);border-radius:99px;padding:2px 10px">' + (GKIND[g.kind] || 'Бүлэг') + '</span></div>' +
+            '<div style="font-size:13px;color:#E4D6F5">' + (ga ? gs.length + ' / ' + gk.length + ' илгээсэн' : gk.length + ' сурагч · ' + (boardLesson ? 'энэ сэдэв нээгдээгүй' : '')) + '</div>' +
+            '<div class="row" style="gap:6px"><button class="btn ghost" style="height:34px;background:#fff" data-ogv="' + g.id + '" data-v="att">Ирц</button><button class="btn ghost" style="height:34px;background:#fff" data-ogv="' + g.id + '" data-v="members">Гишүүд</button></div></div>';
+          if (ga) {
+            html += folderHtml('data-ggrid', g.id, gs.map(function (k) { return (latest[k.id].photo_paths || [])[0]; }), gs.length, gs.filter(function (k) { return latest[k.id].status !== 'review'; }).length);
+            html += '<button class="btn amber" style="text-align:left" data-miss="g' + g.id + '">' + gm.length + ' сурагч илгээгээгүй ' + (openMiss['g' + g.id] ? '▲' : '▼') + '</button>';
+            if (openMiss['g' + g.id]) html += '<div class="card" style="padding:10px;font-size:13px;line-height:1.6">' + (gm.map(function (k) { return esc(k.name) + ' (' + esc(k.code) + ')'; }).join(', ') || 'Бүгд илгээсэн') + '</div>';
+          }
+          html += '</div>';
+        });
+        if (boardScope.type === 'grade') html += newBoardCard(boardScope.grade);
         html += '</div></div>';
         app.innerHTML = html;
-        var prev = function () { q('#cprev').textContent = '→ ' + q('#cg').value + q('#cb').value + ' анги'; };
-        q('#cg').onchange = prev; q('#cb').onchange = prev; prev();
-        q('#addC').onclick = function () {
-          var n = q('#cg').value + q('#cb').value;
-          if (classes.some(function (c) { return c.name === n; })) { toast(n + ' анги аль хэдийн байна'); return; }
-          sb.from('classes').insert({ teacher_id: me.id, name: n, grade: +q('#cg').value }).select().then(function (r) { if (fail(r)) return; toast(n + ' анги нэмэгдлээ · нэрсээ оруулна уу'); loadClasses().then(function () { openClassView(r.data[0].id, 'roster'); }); });
-        };
+        bindNewBoard();
+        q('#bsBack').onclick = function () { boardScope = null; boardLesson = null; showBoardHome(); };
+        app.querySelectorAll('[data-og]').forEach(function (b) { b.onclick = function () { openGroupView(b.dataset.og, 'att'); }; });
+        app.querySelectorAll('[data-ogv]').forEach(function (b) { b.onclick = function () { openGroupView(b.dataset.ogv, b.dataset.v); }; });
+        app.querySelectorAll('[data-ggrid]').forEach(function (b) {
+          b.onclick = function () { var g = groups.filter(function (x) { return x.id === b.dataset.ggrid; })[0]; var mem = (g.group_members || []).map(function (m) { return m.student_id; }); var ga = gacc.filter(function (a) { return a.group_id === g.id && a.lesson_id === boardLesson; })[0];
+            openClassGrid({ id: g.id, name: g.name }, kids.filter(function (k) { return mem.indexOf(k.id) >= 0; }), latest, 'Хичээл ' + lessonsMap[boardLesson].num + ' · ' + lessonsMap[boardLesson].title, ga && ga.due_at); };
+        });
         app.querySelectorAll('[data-oc]').forEach(function (b) { b.onclick = function () { openClassView(b.dataset.oc, 'att'); }; });
         app.querySelectorAll('[data-bl]').forEach(function (b) { b.onclick = function () { boardLesson = b.dataset.bl; showReview(); }; });
         app.querySelectorAll('[data-grid]').forEach(function (b) {
@@ -569,7 +683,14 @@ th{font-size:12px;color:#5A6178}
             b.disabled = true; setStatus(b.dataset.ret, 'redo');
           };
         });
+        app.querySelectorAll('[data-fold]').forEach(function (el) {
+          var ps = JSON.parse(el.dataset.fold); if (!ps.length) return;
+          sb.storage.from('submissions').createSignedUrls(ps, 3600).then(function (u) {
+            var im = el.querySelectorAll('img'); (u.data || []).forEach(function (x, i) { if (im[i] && x.signedUrl) { im[i].src = x.signedUrl; im[i].style.opacity = 1; } });
+          });
+        });
         if (boardKeep) { var bk = boardKeep; boardKeep = null; var bx = app.querySelector('[data-boardx]'); if (bx) bx.scrollLeft = bk.x; window.scrollTo(0, bk.y); }
+        app.querySelectorAll('[data-dn]').forEach(function (b) { b.onclick = function () { var bx = app.querySelector('[data-boardx]'); boardKeep = { y: window.scrollY, x: bx ? bx.scrollLeft : 0 }; openDone[b.dataset.dn] = !openDone[b.dataset.dn]; showReview(); }; });
         app.querySelectorAll('[data-miss]').forEach(function (b) { b.onclick = function () { openMiss[b.dataset.miss] = !openMiss[b.dataset.miss]; showReview(); }; });
         app.querySelectorAll('[data-menu]').forEach(function (b) {
           b.onclick = function (e) { e.stopPropagation(); var m = app.querySelector('[data-menubox="' + b.dataset.menu + '"]'); var was = m.hidden; app.querySelectorAll('[data-menubox]').forEach(function (x) { x.hidden = true; }); m.hidden = !was; };
@@ -1385,12 +1506,13 @@ th{font-size:12px;color:#5A6178}
         '<b style="font-size:14px">1. Шалгалтын төрөл</b><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">' + Object.keys(EXT).map(function (k) { var on = exType === k, e = EXT[k]; return '<button data-ety="' + k + '" style="text-align:left;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:2px;cursor:pointer;background:' + (on ? e[1] : '#fff') + ';color:' + (on ? '#fff' : '#1A1F36') + ';border:2px solid ' + (on ? e[1] : '#E1E4EE') + '"><b style="font-size:15px">' + e[0] + '</b><span style="font-size:12px;opacity:.85">' + e[3] + '</span></button>'; }).join('') + '</div>' +
         '<label for="etT"><b style="font-size:14px">2. Тест (сангаас)</b></label>' + (tests.length ? '<select id="etT">' + tests.map(function (t) { var n = t.mode === 'build' ? (t.questions || []).length : (t.key || []).length; return '<option value="' + t.id + '"' + (t.id === exPreTest ? ' selected' : '') + '>' + t.grade + '-р анги · ' + esc(t.name) + ' (' + MODEN[t.mode][0] + (t.mode === 'forms' ? '' : ', ' + n + ' асуулт') + ')</option>'; }).join('') + '</select>' : '<div class="muted">Тест алга. Эхлээд "Тестийн сан" дээр тест нэмнэ үү.</div>') +
         '<b style="font-size:14px">3. Аль ангид</b><div class="row" id="etC"><button class="btn green" id="etAll" type="button" style="height:38px">Тухайн ангийн бүгд</button>' + classes.map(function (c) { return '<button class="chip" data-etc="' + c.id + '" data-g="' + c.grade + '">' + esc(c.name) + '</button>'; }).join('') + '</div>' +
+        (groups.length ? '<div class="row">' + groups.map(function (g) { return '<button class="chip" data-etg="' + g.id + '" style="border-color:#5B2A86">' + esc(g.name) + '</button>'; }).join('') + '</div>' : '') +
         '<b style="font-size:14px">4. Хугацаа</b><div class="row"><label class="muted" for="etS">Эхлэх</label><input type="datetime-local" id="etS" value="' + loc + '" style="height:42px"><label class="muted" for="etD">Үргэлжлэх (минут)</label><input type="number" id="etD" value="40" min="5" max="600" style="width:90px;height:42px"></div>' +
         '<div class="err" id="etErr"></div><button class="btn green" id="etGo" style="height:52px;font-size:16px">' + EXT[exType][0] + ' эхлүүлэх</button><div class="muted" style="font-size:12px">Хугацаа дуусмагц автоматаар хаагдана. Сурагч нэг л удаа өгнө. Google Forms тестийн хариуг Дүн хэсэгт оруулна.</div></div>' +
         '<div style="display:flex;flex-direction:column;gap:10px"><b style="font-size:16px">Шалгалтууд</b>' + (exams.length ? '' : '<div class="card muted">Одоогоор шалгалт аваагүй.</div>') +
         exams.map(function (e) {
           var s = new Date(e.starts_at).getTime(), en = new Date(e.ends_at).getTime(), st = now < s ? ['Товлосон · ' + fmt(e.starts_at), '#2747B8'] : now < en ? ['Явагдаж байна · ' + Math.ceil((en - now) / 60000) + ' мин үлдсэн', '#1C7C4A'] : ['Дууссан', '#5A6178'];
-          var c = classes.filter(function (k) { return k.id === e.class_id; })[0], tot = kids.filter(function (k) { return k.class_id === e.class_id; }).length, got = res.filter(function (x) { return x.exam_id === e.id; }).length, X = EXT[e.type];
+          var gg = e.group_id && groups.filter(function (k) { return k.id === e.group_id; })[0], c = gg || classes.filter(function (k) { return k.id === e.class_id; })[0], tot = gg ? (gg.group_members || []).length : kids.filter(function (k) { return k.class_id === e.class_id; }).length, got = res.filter(function (x) { return x.exam_id === e.id; }).length, X = EXT[e.type];
           return '<div class="card" style="gap:6px"><div class="row between"><span style="font-size:12px;font-weight:700;border-radius:99px;padding:3px 10px;background:' + X[2] + ';color:' + X[1] + '">' + X[0] + '</span><span style="font-size:12px;font-weight:700;color:' + st[1] + '">' + st[0] + '</span></div>' +
             '<b>' + esc(e.tests ? e.tests.name : '') + ' · ' + esc(c ? c.name : '') + '</b><div class="muted" style="font-size:13px">' + got + ' / ' + tot + ' өгсөн</div>' +
             '<div style="height:6px;border-radius:99px;background:#EEF1FA"><div style="height:6px;border-radius:99px;background:#2747B8;width:' + (tot ? Math.round(got / tot * 100) : 0) + '%"></div></div>' +
@@ -1398,18 +1520,20 @@ th{font-size:12px;color:#5A6178}
         }).join('') + '</div></div>';
       app.innerHTML = html; exBindHead();
       app.querySelectorAll('[data-ety]').forEach(function (b) { b.onclick = function () { exType = b.dataset.ety; exTake(); }; });
-      app.querySelectorAll('[data-etc]').forEach(function (b) { b.onclick = function () { b.classList.toggle('on'); }; });
+      app.querySelectorAll('[data-etc], [data-etg]').forEach(function (b) { b.onclick = function () { b.classList.toggle('on'); }; });
       var tg = function () { var sel = q('#etT'); var t = sel && tests.filter(function (x) { return x.id === sel.value; })[0]; return t ? t.grade : null; };
       q('#etAll').onclick = function () { var g = tg(); app.querySelectorAll('[data-etc]').forEach(function (b) { b.classList.toggle('on', +b.dataset.g === g); }); };
       q('#etGo').onclick = function () {
         var err = q('#etErr'), sel = q('#etT'); if (!sel) { err.textContent = 'Эхлээд тест нэмнэ үү.'; return; }
         var cs = Array.prototype.map.call(app.querySelectorAll('[data-etc].on'), function (b) { return b.dataset.etc; });
-        if (!cs.length) { err.textContent = 'Ангиа сонгоно уу.'; return; }
+        var gsel = Array.prototype.map.call(app.querySelectorAll('[data-etg].on'), function (b) { return b.dataset.etg; });
+        if (!cs.length && !gsel.length) { err.textContent = 'Анги эсвэл бүлгээ сонгоно уу.'; return; }
         var s = new Date(q('#etS').value), dur = Math.max(5, +q('#etD').value || 40); if (isNaN(s)) { err.textContent = 'Эхлэх цагаа оруулна уу.'; return; }
         var en = new Date(s.getTime() + dur * 60000);
-        var rows = cs.map(function (c) { return { teacher_id: me.id, test_id: sel.value, class_id: c, type: exType, starts_at: s.toISOString(), ends_at: en.toISOString() }; });
+        var rows = cs.map(function (c) { return { teacher_id: me.id, test_id: sel.value, class_id: c, type: exType, starts_at: s.toISOString(), ends_at: en.toISOString() }; })
+          .concat(gsel.map(function (g) { return { teacher_id: me.id, test_id: sel.value, group_id: g, type: exType, starts_at: s.toISOString(), ends_at: en.toISOString() }; }));
         this.disabled = true;
-        sb.from('exams').insert(rows).then(function (x) { if (!fail(x)) { toast(EXT[exType][0] + ' эхэллээ · ' + cs.length + ' анги'); exPreTest = null; exTake(); } });
+        sb.from('exams').insert(rows).then(function (x) { if (!fail(x)) { toast(EXT[exType][0] + ' эхэллээ · ' + rows.length + ' анги/бүлэг'); exPreTest = null; exTake(); } });
       };
       app.querySelectorAll('[data-eend]').forEach(function (b) { b.onclick = function () { sb.from('exams').update({ ends_at: new Date().toISOString() }).eq('id', b.dataset.eend).then(function (x) { if (!fail(x)) { toast('Шалгалт хаагдлаа'); exTake(); } }); }; });
       app.querySelectorAll('[data-eres]').forEach(function (b) { b.onclick = function () { exResId = b.dataset.eres; exTab = 'res'; showExams(); }; });
@@ -1423,14 +1547,15 @@ th{font-size:12px;color:#5A6178}
       var exams = r.data || [];
       if (!exams.length) { app.innerHTML = exHead() + '<div class="card muted">Одоогоор шалгалт аваагүй байна.</div>'; exBindHead(); return; }
       if (!exResId || !exams.some(function (e) { return e.id === exResId; })) exResId = exams[0].id;
-      var E = exams.filter(function (e) { return e.id === exResId; })[0], T = E.tests, X = EXT[E.type], cls = classes.filter(function (c) { return c.id === E.class_id; })[0];
-      Promise.all([sb.from('students').select('id,name,code').eq('class_id', E.class_id).eq('active', true).order('code'), sb.from('exam_results').select('*').eq('exam_id', E.id)]).then(function (r2) {
+      var E = exams.filter(function (e) { return e.id === exResId; })[0], T = E.tests, X = EXT[E.type], gE = E.group_id && groups.filter(function (g) { return g.id === E.group_id; })[0], cls = gE || classes.filter(function (c) { return c.id === E.class_id; })[0];
+      var kq = gE ? sb.from('students').select('id,name,code').in('id', (gE.group_members || []).map(function (m) { return m.student_id; }).concat(['00000000-0000-0000-0000-000000000000'])).order('code') : sb.from('students').select('id,name,code').eq('class_id', E.class_id).eq('active', true).order('code');
+      Promise.all([kq, sb.from('exam_results').select('*').eq('exam_id', E.id)]).then(function (r2) {
         var kids = r2[0].data || [], res = r2[1].data || [], by = {}; res.forEach(function (x) { by[x.student_id] = x; });
         var key = exKey(T), n = T.mode === 'forms' ? 0 : key.length, LB = T.mode === 'build' ? 'ABCDEF'.split('') : exLabels(T);
         var pcts = res.map(function (x) { return x.total ? x.score / x.total * 100 : 0; }), avg = pcts.length ? Math.round(pcts.reduce(function (a, b) { return a + b; }, 0) / pcts.length) : null;
         var ab = pcts.filter(function (p) { return p >= 80; }).length, ff = pcts.filter(function (p) { return p < 50; }).length;
         var qst = []; for (var i = 0; i < n; i++) { var ok = res.filter(function (x) { return x.answers && +x.answers[i] === key[i]; }).length; qst.push(res.length ? Math.round(ok / res.length * 100) : 0); }
-        var html = exHead() + '<div class="row"><label class="muted" for="erSel">Шалгалт</label><select id="erSel" style="max-width:100%">' + exams.map(function (e) { var c = classes.filter(function (k) { return k.id === e.class_id; })[0]; return '<option value="' + e.id + '"' + (e.id === exResId ? ' selected' : '') + '>' + fmt(e.starts_at) + ' · ' + EXT[e.type][0] + ' · ' + esc(e.tests ? e.tests.name : '') + ' · ' + esc(c ? c.name : '') + '</option>'; }).join('') + '</select></div>' +
+        var html = exHead() + '<div class="row"><label class="muted" for="erSel">Шалгалт</label><select id="erSel" style="max-width:100%">' + exams.map(function (e) { var c = (e.group_id && groups.filter(function (k) { return k.id === e.group_id; })[0]) || classes.filter(function (k) { return k.id === e.class_id; })[0]; return '<option value="' + e.id + '"' + (e.id === exResId ? ' selected' : '') + '>' + fmt(e.starts_at) + ' · ' + EXT[e.type][0] + ' · ' + esc(e.tests ? e.tests.name : '') + ' · ' + esc(c ? c.name : '') + '</option>'; }).join('') + '</select></div>' +
           '<div class="card" style="gap:14px"><div class="row between"><div><span style="font-size:12px;font-weight:700;border-radius:99px;padding:3px 10px;background:' + X[2] + ';color:' + X[1] + '">' + X[0] + '</span><h2 style="margin-top:6px">' + esc(T.name) + ' · ' + esc(cls ? cls.name : '') + '</h2></div><button class="btn sec" id="erCsv">Excel татах</button></div>' +
           '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px">' + [[res.length + ' / ' + kids.length, 'өгсөн', '#1A1F36'], [avg == null ? '—' : avg + '%', 'дундаж', '#1C7C4A'], [ab, 'A, B түвшин', '#1C7C4A'], [ff, 'F түвшин', '#B42318']].map(function (s) { return '<div style="background:#F4F6FB;border-radius:12px;padding:12px 14px"><div style="font-size:26px;font-weight:800;color:' + s[2] + '">' + s[0] + '</div><div class="muted" style="font-size:13px">' + s[1] + '</div></div>'; }).join('') + '</div>' +
           (T.mode === 'forms' ? '<div style="background:#FFF3E5;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px"><b>Google Forms-ийн хариу оруулах</b><div class="muted" style="font-size:13px">Forms → Responses → ⋮ → Download responses (.csv). "Таны код" болон оноо (Score) баганыг автоматаар танина.</div><label class="btn sec" style="align-self:flex-start;cursor:pointer;display:flex;align-items:center">⬆ CSV файл сонгох<input type="file" id="erImp" accept=".csv,text/csv" hidden></label><div id="erImpP"></div></div>' : '') +
@@ -1593,6 +1718,7 @@ th{font-size:12px;color:#5A6178}
           html += '<div class="card" style="border:2px solid #1C7C4A"><div class="row between"><h3>Ангид илгээх</h3><button class="btn ghost" data-panel="">Хаах</button></div>' +
             '<div class="muted">1. Аль анги руу</div><div class="row"><button class="btn green" id="allg" type="button">Бүх ' + libGrade + '-р анги</button></div><div class="row" id="pc">' +
             classes.map(function (c) { var on = a2.some(function (x) { return x.class_id === c.id; }); return '<button class="chip' + (on ? ' on' : '') + '" data-pc="' + c.id + '">' + esc(c.name) + '</button>'; }).join('') + '</div>' +
+            (groups.length ? '<div class="muted">Сонгон, давтлага, дугуйлан</div><div class="row" id="pg">' + groups.map(function (g) { return '<button class="chip" data-pg="' + g.id + '" style="border-color:#5B2A86">' + esc(g.name) + '</button>'; }).join('') + '</div>' : '') +
             '<div class="muted">2. Юуг нээх (видео, зураг илгээх нь үргэлж нээлттэй)</div><div class="row"><button class="chip on" id="ot">Дасгал, даалгавар</button><button class="chip on" id="oq">Тест</button></div>' +
             '<div class="muted">3. Хугацаа</div><div class="row" id="due"><button class="chip" data-d="1">Өнөөдөр</button><button class="chip on" data-d="3">3 хоног</button><button class="chip" data-d="7">1 долоо хоног</button></div>' +
             '<button class="btn green" id="send">Сонгосон анги руу илгээх</button></div>';
@@ -1701,22 +1827,107 @@ th{font-size:12px;color:#5A6178}
           sb.from('lessons').update({ test: test }).eq('id', L.id).then(function (x) { if (!fail(x)) { toast('Тест хадгалагдлаа · ' + test.length + ' асуулт'); libPanel = null; showLibrary(); } });
         };
         if (libPanel === 'send') {
-          app.querySelectorAll('#pc .chip, #ot, #oq').forEach(function (b) { b.onclick = function () { b.classList.toggle('on'); }; });
+          app.querySelectorAll('#pc .chip, #pg .chip, #ot, #oq').forEach(function (b) { b.onclick = function () { b.classList.toggle('on'); }; });
           q('#allg').onclick = function () { app.querySelectorAll('#pc .chip').forEach(function (x) { var c = classes.filter(function (k) { return k.id === x.dataset.pc; })[0]; x.classList.toggle('on', !!c && c.grade === libGrade); }); };
           app.querySelectorAll('#due .chip').forEach(function (b) { b.onclick = function () { app.querySelectorAll('#due .chip').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
           q('#send').onclick = function () {
             var cs = Array.prototype.map.call(app.querySelectorAll('#pc .chip.on'), function (b) { return b.dataset.pc; });
-            if (!cs.length) { toast('Дор хаяж нэг анги сонгоно уу'); return; }
+            var gsel = Array.prototype.map.call(app.querySelectorAll('#pg .chip.on'), function (b) { return b.dataset.pg; });
+            if (!cs.length && !gsel.length) { toast('Дор хаяж нэг анги эсвэл бүлэг сонгоно уу'); return; }
             var days = +app.querySelector('#due .chip.on').dataset.d;
             var due = new Date(); due.setDate(due.getDate() + days - 1); due.setHours(23, 59, 0, 0);
             var rows = cs.map(function (c) { return { lesson_id: L.id, class_id: c, visible: true, tasks_open: q('#ot').classList.contains('on'), test_open: q('#oq').classList.contains('on'), due_at: due.toISOString(), opened_at: new Date().toISOString() }; });
-            sb.from('lesson_access').upsert(rows).then(function (x) { if (!fail(x)) { toast(cs.length + ' анги руу илгээгдлээ'); libPanel = null; showLibrary(); } });
+            var grows = gsel.map(function (g) { return { lesson_id: L.id, group_id: g, visible: true, tasks_open: q('#ot').classList.contains('on'), test_open: q('#oq').classList.contains('on'), due_at: due.toISOString(), opened_at: new Date().toISOString() }; });
+            Promise.all([rows.length ? sb.from('lesson_access').upsert(rows) : Promise.resolve({}), grows.length ? sb.from('group_access').upsert(grows) : Promise.resolve({})]).then(function (x) { if (!fail(x[0]) && !fail(x[1])) { toast((cs.length + gsel.length) + ' анги/бүлэг рүү илгээгдлээ'); libPanel = null; showLibrary(); } });
           };
         }
       }
     });
   }
 
+  // ---------- СОНГОН / ДАВТЛАГА бүлэг ----------
+  var curGroup = null, gView = 'att', gDay = null;
+  function openGroupView(id, view) { curGroup = id; gView = view || 'att'; tab = 'review'; drawTabs(); fbSubnav(); showGroup(); }
+  function showGroup() {
+    var g = groups.filter(function (x) { return x.id === curGroup; })[0]; if (!g) { go('review'); return; }
+    var head = '<div class="row"><button class="btn ghost" id="gBack">← Журнал</button><h2 style="margin:0">' + esc(g.name) + '</h2><span class="pill" style="background:#F3E8FD;color:#5B2A86">' + (GKIND[g.kind] || 'Бүлэг') + '</span></div>' +
+      '<div class="row" style="gap:6px;border-bottom:1px solid #E1E4EE;padding-bottom:10px">' + [['att', 'Ирц'], ['members', 'Гишүүд (' + (g.group_members || []).length + ')'], ['settings', 'Тохиргоо']].map(function (v) { return '<button class="chip' + (gView === v[0] ? ' on' : '') + '" data-gv="' + v[0] + '">' + v[1] + '</button>'; }).join('') + '</div>';
+    var bindHead = function () { q('#gBack').onclick = function () { go('review'); }; app.querySelectorAll('[data-gv]').forEach(function (b) { b.onclick = function () { gView = b.dataset.gv; showGroup(); }; }); };
+    if (gView === 'members') {
+      app.innerHTML = head + '<div class="muted">Ачаалж байна…</div>'; bindHead();
+      sb.from('students').select('id,name,code,class_id').eq('active', true).order('code').then(function (r) {
+        var kids = r.data || [], sel = {}; (g.group_members || []).forEach(function (m) { sel[m.student_id] = true; });
+        var draw = function (filter) {
+          var f = (filter || '').toLowerCase();
+          q('#gList').innerHTML = classes.map(function (c) {
+            var ck = kids.filter(function (k) { return k.class_id === c.id && (!f || k.name.toLowerCase().indexOf(f) >= 0 || k.code.toLowerCase().indexOf(f) >= 0); });
+            if (!ck.length) return '';
+            var n = ck.filter(function (k) { return sel[k.id]; }).length;
+            return '<details class="card" style="gap:6px"' + (n || f ? ' open' : '') + '><summary style="cursor:pointer;font-weight:700;font-size:15px">' + esc(c.name) + ' анги <span class="muted" style="font-weight:500">· ' + n + ' сонгосон</span></summary>' +
+              '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;margin-top:8px">' + ck.map(function (k) { return '<label style="display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid ' + (sel[k.id] ? '#5B2A86' : '#E1E4EE') + ';border-radius:10px;background:' + (sel[k.id] ? '#F3E8FD' : '#fff') + ';cursor:pointer"><input type="checkbox" data-gm="' + k.id + '"' + (sel[k.id] ? ' checked' : '') + ' style="width:20px;height:20px"><span><b style="font-size:14px">' + esc(k.name) + '</b><br><span class="muted" style="font-size:12px">' + esc(k.code) + '</span></span></label>'; }).join('') + '</div></details>';
+          }).join('') || '<div class="card muted">Сурагч олдсонгүй.</div>';
+          q('#gCnt').textContent = Object.keys(sel).filter(function (k) { return sel[k]; }).length + ' сурагч сонгосон';
+          app.querySelectorAll('[data-gm]').forEach(function (b) { b.onchange = function () { sel[b.dataset.gm] = b.checked; draw(q('#gSearch').value); }; });
+        };
+        app.innerHTML = head + '<div class="row between"><input type="search" id="gSearch" placeholder="Нэр эсвэл кодоор хайх" aria-label="Сурагч хайх" style="max-width:320px"><span class="muted" id="gCnt"></span><button class="btn green" id="gSave">Гишүүдийг хадгалах</button></div>' +
+          '<div class="muted">Ангиа нээгээд хүүхдүүдээ сонгоно. Нэг хүүхэд олон бүлэгт байж болно.</div><div id="gList" style="display:flex;flex-direction:column;gap:10px"></div>';
+        bindHead(); draw('');
+        q('#gSearch').oninput = function () { draw(this.value); };
+        q('#gSave').onclick = function () {
+          var ids = Object.keys(sel).filter(function (k) { return sel[k]; }), b = this; b.disabled = true;
+          sb.from('group_members').delete().eq('group_id', g.id).then(function (x) {
+            if (fail(x)) { b.disabled = false; return; }
+            return (ids.length ? sb.from('group_members').insert(ids.map(function (i) { return { group_id: g.id, student_id: i }; })) : Promise.resolve({})).then(function (y) {
+              if (fail(y)) { b.disabled = false; return; }
+              toast(ids.length + ' сурагч хадгалагдлаа'); loadClasses().then(function () { gView = 'att'; showGroup(); });
+            });
+          });
+        };
+      });
+      return;
+    }
+    if (gView === 'settings') {
+      app.innerHTML = head + '<div class="card" style="gap:10px;max-width:520px"><label class="muted" for="gRen">Нэр</label><input type="text" id="gRen" value="' + esc(g.name) + '">' +
+        '<label class="muted" for="gKind">Төрөл</label><select id="gKind">' + Object.keys(GKIND).map(function (k) { return '<option value="' + k + '"' + (g.kind === k ? ' selected' : '') + '>' + GKIND[k] + '</option>'; }).join('') + '</select>' +
+        '<button class="btn" id="gRs">Хадгалах</button><hr style="border:0;border-top:1px solid #E1E4EE;width:100%"><button class="btn ghost" id="gDel" style="color:#B42318">Бүлгийг устгах</button><div class="muted" style="font-size:12px">Сурагчид ангиасаа хасагдахгүй. Зөвхөн энэ бүлэг, түүний ирц устна.</div></div>';
+      bindHead();
+      q('#gRs').onclick = function () { sb.from('groups').update({ name: q('#gRen').value.trim() || g.name, kind: q('#gKind').value }).eq('id', g.id).then(function (x) { if (!fail(x)) { toast('Хадгалагдлаа'); loadClasses().then(showGroup); } }); };
+      q('#gDel').onclick = function () { var b = this; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Үнэхээр устгах уу? Дахин дарна уу'; return; } sb.from('groups').delete().eq('id', g.id).then(function (x) { if (!fail(x)) { toast('Устгагдлаа'); loadClasses().then(function () { go('review'); }); } }); };
+      return;
+    }
+    // attendance
+    var pad = function (n) { return String(n).padStart(2, '0'); }, d0 = new Date();
+    if (!gDay) gDay = d0.getFullYear() + '-' + pad(d0.getMonth() + 1) + '-' + pad(d0.getDate());
+    var mem = (g.group_members || []).map(function (m) { return m.student_id; });
+    if (!mem.length) { app.innerHTML = head + '<div class="card" style="text-align:center;gap:10px"><b>Бүлэгт хүүхэд алга</b><button class="btn" id="gGoM">Гишүүд сонгох</button></div>'; bindHead(); q('#gGoM').onclick = function () { gView = 'members'; showGroup(); }; return; }
+    app.innerHTML = head + '<div class="muted">Ачаалж байна…</div>'; bindHead();
+    Promise.all([sb.from('students').select('id,name,code,class_id').in('id', mem).order('code'), sb.from('group_attendance').select('*').eq('group_id', g.id)]).then(function (r) {
+      var kids = r[0].data || [], all = r[1].data || [], today = {}; all.filter(function (a) { return a.day === gDay; }).forEach(function (a) { today[a.student_id] = a.status; });
+      var ST = { present: ['Ирсэн', '#E3F4EA', '#1C6B40'], absent: ['Тасалсан', '#FDECEA', '#A12A1E'], sick: ['Өвчтэй', '#F3E8FD', '#6B2FA3'], excused: ['Чөлөөтэй', '#EEF1FA', '#2747B8'], late: ['Хоцорсон', '#FFF3E5', '#8A4B0B'] };
+      var days = all.map(function (a) { return a.day; }).filter(function (d, i, arr) { return arr.indexOf(d) === i; }).length;
+      var cn = {}; classes.forEach(function (c) { cn[c.id] = c.name; });
+      app.innerHTML = head + '<div class="row between"><div class="row"><label class="muted" for="gDay">Өдөр</label><input type="date" id="gDay" value="' + gDay + '" style="height:42px"></div><div class="row"><button class="btn sec" id="gAllP">Бусдыг нь Ирсэн болгох</button><button class="btn ghost" id="gCsv">Excel татах</button></div></div>' +
+        '<div class="muted">Нийт ' + days + ' удаагийн хичээл бүртгэгдсэн · ' + kids.length + ' сурагч</div>' +
+        '<div style="display:flex;flex-direction:column;gap:6px">' + kids.map(function (k) {
+          var cur = today[k.id], cntP = all.filter(function (a) { return a.student_id === k.id && (a.status === 'present' || a.status === 'late'); }).length;
+          return '<div class="card" style="flex-direction:row;align-items:center;gap:10px;padding:10px 12px;flex-wrap:wrap"><span style="flex:1;min-width:160px"><b>' + esc(k.name) + '</b> <span class="muted" style="font-size:12px">' + esc(cn[k.class_id] || '') + ' · ирсэн ' + cntP + '/' + days + '</span></span>' +
+            Object.keys(ST).map(function (s2) { var on = cur === s2, x = ST[s2]; return '<button data-ga="' + k.id + '" data-s="' + s2 + '" style="height:38px;padding:0 12px;border-radius:99px;font-weight:600;font-size:13px;cursor:pointer;border:1.5px solid ' + (on ? x[2] : '#D5DAE8') + ';background:' + (on ? x[1] : '#fff') + ';color:' + (on ? x[2] : '#5A6178') + '">' + x[0] + '</button>'; }).join('') + '</div>';
+        }).join('') + '</div>';
+      bindHead();
+      q('#gDay').onchange = function () { gDay = this.value; showGroup(); };
+      var save = function (rows) { return sb.from('group_attendance').upsert(rows, { onConflict: 'group_id,student_id,day' }); };
+      app.querySelectorAll('[data-ga]').forEach(function (b) { b.onclick = function () { save([{ group_id: g.id, student_id: b.dataset.ga, day: gDay, status: b.dataset.s }]).then(function (x) { if (!fail(x)) showGroup(); }); }; });
+      q('#gAllP').onclick = function () { var rows = kids.filter(function (k) { return !today[k.id]; }).map(function (k) { return { group_id: g.id, student_id: k.id, day: gDay, status: 'present' }; }); if (!rows.length) { toast('Бүгд бүртгэгдсэн'); return; } save(rows).then(function (x) { if (!fail(x)) { toast(rows.length + ' сурагч Ирсэн'); showGroup(); } }); };
+      q('#gCsv').onclick = function () {
+        var dl = all.map(function (a) { return a.day; }).filter(function (d, i, arr) { return arr.indexOf(d) === i; }).sort();
+        var lines = [['Нэр', 'Код', 'Анги'].concat(dl).concat(['Ирсэн'])].concat(kids.map(function (k) { var row = [k.name, k.code, cn[k.class_id] || ''], p = 0;
+          dl.forEach(function (d) { var a = all.filter(function (x) { return x.student_id === k.id && x.day === d; })[0]; row.push(a ? ST[a.status][0] : ''); if (a && (a.status === 'present' || a.status === 'late')) p++; });
+          return row.concat([p + '/' + dl.length]); }));
+        var csv = '﻿' + lines.map(function (l) { return l.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = g.name + '-ирц.csv'; a.click();
+      };
+    });
+  }
   // ---------- CLASSES ----------
   function showClasses() {
     if (!classes.length) { go('review'); return; }
