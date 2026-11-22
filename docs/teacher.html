@@ -71,9 +71,97 @@ th{font-size:12px;color:#5A6178}
 .fold:hover img:nth-of-type(1){transform:translateX(calc(-50% - 40px)) translateY(-6px) rotate(-18deg)!important}
 .fold:hover img:nth-of-type(3){transform:translateX(calc(-50% + 40px)) translateY(-6px) rotate(18deg)!important}
 .fold:focus-visible{outline:3px solid #2747B8;outline-offset:3px;border-radius:14px}
+/* ---------- ӨНГӨНИЙ СЭДЭВ ---------- */
+body[data-theme=grape]{--side:#6C5DB8;--sideT:#EDEBFA;--sideOn:#E9E6F8;--sideOnT:#3E3480;--btn:#6C5DB8;--btnT:#fff;--acc:#D27BB4;--accT:#fff;--soft:#E9E6F8;--softT:#4E3F9A;--soft2:#F8E8F3;--soft2T:#A4467F;--bg:#F3F2FA;--tint:#F4F2FC;--brk:#EFECFA;--brkT:#6B62A0}
+body[data-theme=green]{--side:#2C3A2E;--sideT:#C9D6BE;--sideOn:#9BD136;--sideOnT:#1F2A1F;--btn:#3E6B3A;--btnT:#fff;--acc:#9BD136;--accT:#1F2A1F;--soft:#EEF6E0;--softT:#3E6B1A;--soft2:#FFF3D6;--soft2T:#8A5A00;--bg:#E9ECE6;--tint:#F6F9F0;--brk:#F1F4EC;--brkT:#5E6B58}
+body[data-theme=blue]{--side:#1E4FA8;--sideT:#D6E2F8;--sideOn:#fff;--sideOnT:#1E4FA8;--btn:#1E4FA8;--btnT:#fff;--acc:#3BB6A6;--accT:#fff;--soft:#DCE7FA;--softT:#1E4FA8;--soft2:#DDF3EF;--soft2T:#1F7A6E;--bg:#E8EFFA;--tint:#F3F6FC;--brk:#EEF3FB;--brkT:#55658A}
+body{background:var(--bg)}
+header{background:var(--side);color:var(--sideT)}
+header h1{color:#fff}
+body[data-theme=green] header h1{color:#fff}
+nav.tabs button{border-color:var(--sideT);color:var(--sideT)}
+nav.tabs button.on{background:var(--sideOn);color:var(--sideOnT);border-color:var(--sideOn)}
+.btn{background:var(--btn);color:var(--btnT)}
+.btn.sec{background:#fff;color:var(--btn);border-color:var(--btn)}
+.btn.dark{background:var(--side)}
+.chip.on{background:var(--btn);border-color:var(--btn);color:var(--btnT)}
+.names button.on{background:var(--btn);border-color:var(--btn)}
+.card{border-color:transparent;border-radius:18px;box-shadow:0 2px 12px rgba(40,30,90,.05)}
+@media(min-width:900px){
+  body{padding-left:232px}
+  header{position:fixed;left:0;top:0;bottom:0;width:232px;flex-direction:column;align-items:stretch;justify-content:flex-start;flex-wrap:nowrap;padding:24px 14px;gap:24px;overflow:auto;z-index:10}
+  header h1{font-size:17px;line-height:1.3}
+  nav.tabs{flex-direction:column;gap:4px;flex-wrap:nowrap}
+  nav.tabs button{border:0;border-radius:14px;text-align:left;height:46px;padding:0 16px;font-size:15px}
+  nav.tabs button:hover{background:rgba(255,255,255,.12)}
+  nav.tabs button.on:hover{background:var(--sideOn)}
+  nav.tabs button[data-t=out]{margin-top:18px;opacity:.75}
+  main{max-width:1440px}
+  body[data-theme=grape] header{background:#6C5DB8 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 260'%3E%3Cpath d='M70 260C70 190 80 140 120 70' stroke='%23B9AEF5' stroke-width='3' fill='none'/%3E%3Cellipse cx='128' cy='62' rx='12' ry='28' transform='rotate(30 128 62)' fill='%23A898F0'/%3E%3Cellipse cx='96' cy='120' rx='12' ry='30' transform='rotate(-40 96 120)' fill='%23C9BEFA'/%3E%3Cellipse cx='118' cy='140' rx='11' ry='27' transform='rotate(50 118 140)' fill='%239282E8'/%3E%3Cellipse cx='78' cy='175' rx='11' ry='28' transform='rotate(-50 78 175)' fill='%23B3A6F4'/%3E%3Cellipse cx='102' cy='200' rx='10' ry='24' transform='rotate(55 102 200)' fill='%23E3B8EA'/%3E%3Cpath d='M40 260q6-56 44-66q38 10 44 66z' fill='%23E9E4FF'/%3E%3C/svg%3E") no-repeat left -14px bottom -10px/210px auto}
+}
+/* ---------- НҮҮР ---------- */
+.home{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.hm-main{display:flex;flex-direction:column;gap:14px;min-width:0}.hm-side{display:flex;flex-direction:column;gap:14px}
+.hm-hi{margin:0;font-size:24px}
+.thsw{display:flex;gap:8px;align-items:center}.sw{width:30px;height:30px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #D5D8E4;padding:0}
+.sw.on{box-shadow:0 0 0 2px var(--btn)}.sw-grape{background:linear-gradient(135deg,#6C5DB8 50%,#D27BB4 50%)}.sw-green{background:linear-gradient(135deg,#2C3A2E 50%,#9BD136 50%)}.sw-blue{background:linear-gradient(135deg,#1E4FA8 50%,#3BB6A6 50%)}
+.hm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.hst{background:#fff;border:0;border-radius:16px;padding:14px 16px;box-shadow:0 2px 12px rgba(40,30,90,.05);border-left:5px solid var(--btn);display:flex;flex-direction:column;text-align:left;color:inherit;font:inherit}
+.hst small{font-size:13px;color:#6A6F85}.hst b{font-size:28px}.hst.s2{border-color:var(--acc)}.hst.s3{border-color:#E06A4E}.hst.s4{border-color:#6BB3C9}
+button.hst{cursor:pointer}
+.hm-card{background:#fff;border-radius:18px;padding:16px 18px;box-shadow:0 2px 12px rgba(40,30,90,.05);display:flex;flex-direction:column;gap:10px}
+.lnk{border:0;background:transparent;color:var(--btn);font-weight:700;font-size:14px;padding:6px 0}
+.gr{display:grid;grid-template-columns:72px repeat(5,minmax(0,1fr));gap:5px;margin-bottom:5px;font-size:13px}
+.wh{font-weight:700;color:#7A76A0;text-align:center;padding:5px;border-radius:10px}.wh.td{background:var(--btn);color:var(--btnT)}
+.gh{font-size:12px;font-weight:800;color:var(--acc);margin:6px 0 4px;letter-spacing:.04em}
+body[data-theme=green] .gh{color:#4D7A20}
+.gb{font-size:12px;color:var(--brkT);text-align:center;background:var(--brk);border-radius:8px;padding:3px;margin-bottom:5px}
+.pt{color:#8A8A9A;font-size:12px;display:flex;align-items:center;gap:6px}.pt b{color:#2B2B3A;font-size:13px}
+.wc{position:relative;height:30px;border-radius:9px;background:#F7F7FA;display:flex;align-items:center;justify-content:space-between;padding:0 9px}
+.wc.td{background:var(--tint)}
+.wc.on{background:var(--soft);color:var(--softT);font-weight:700;cursor:pointer;transition:transform .15s}
+.wc.on:hover{transform:scale(1.05)}
+.wc.nw{background:var(--acc);color:var(--accT);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.wc.sel{transform:scale(1.1);z-index:5;outline:2px solid var(--btn);box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.wc small{font-weight:500;opacity:.7;font-size:11px}
+.pop{position:absolute;z-index:20;top:-6px;left:calc(100% + 8px);width:220px;background:#fff;color:#2B2B3A;border-radius:16px;padding:12px;box-shadow:0 14px 40px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:8px;cursor:default;font-weight:500;animation:pin .18s ease-out;transform-origin:top left}
+.gr>span:nth-child(5) .pop,.gr>span:nth-child(6) .pop{left:auto;right:calc(100% + 8px);transform-origin:top right}
+@keyframes pin{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+.pt1{display:flex;gap:10px;align-items:center}.pc{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:14px;flex:none;background:var(--btn);color:var(--btnT)}
+.pt1 b{display:block;font-size:14px}.pt1 small{font-size:12px;color:#888}
+.pr{display:flex;justify-content:space-between;font-size:13px;background:#F6F6F8;border-radius:10px;padding:8px 10px}.pr span{color:#777}
+.pb{display:flex;gap:6px}.pb button{flex:1;height:40px;border:0;border-radius:10px;font-size:13px;font-weight:700;background:var(--btn);color:var(--btnT)}.pb button+button{background:#F0F0F3;color:#333}
+.wk-mob{display:none}
+.hdays{display:flex;gap:6px}.hdays button{flex:1;border:0;border-radius:12px;background:var(--tint);color:#6A6F85;padding:7px 0;font-weight:700;font-size:13px;display:flex;flex-direction:column;align-items:center}.hdays button b{font-size:12px;opacity:.7}
+.hdays button.on{background:var(--btn);color:var(--btnT)}
+.les{display:grid;grid-template-columns:50px 1fr auto;gap:10px;align-items:center;background:var(--tint);border-radius:14px;padding:9px 10px;margin-bottom:6px;cursor:pointer}
+.les .c{height:38px;border-radius:10px;background:var(--soft);color:var(--softT);display:grid;place-items:center;font-weight:800}
+.les b{display:block;font-size:14px}.les small{font-size:12.5px;color:#6A6F85}.les .s{font-size:11.5px;font-weight:700}
+.les.nw{background:var(--acc);color:var(--accT)}.les.nw small{color:inherit;opacity:.85}.les.dn{opacity:.5}
+.nowc{background:var(--soft);color:var(--softT);border-radius:18px;padding:12px 14px;display:flex;align-items:center;gap:12px}
+.nowc .c{width:46px;height:46px;border-radius:12px;background:var(--btn);color:var(--btnT);display:grid;place-items:center;font-weight:900;flex:none}
+.nowc b{display:block;font-size:15px}.nowc small{font-size:12.5px}
+.nowc button{margin-left:auto;border:0;border-radius:99px;background:var(--btn);color:var(--btnT);font-weight:700;padding:9px 16px}
+.ch{text-align:center;font-weight:800}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:12.5px}
+.cg .h{color:#8A8A9A;font-size:11px;padding:3px 0}.cd{border-radius:50%;aspect-ratio:1;display:grid;place-items:center}.cd.we{color:#AAA}
+.cd.today{background:var(--btn);color:var(--btnT);font-weight:800}.cd.exam{background:var(--acc);color:var(--accT)}.cd.due{background:#6BB3C9;color:#fff}
+.lgd{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:#6A6F85}.lgd span{display:flex;align-items:center;gap:6px}.lgd i{width:8px;height:8px;border-radius:50%}
+.lgd .l1{background:var(--btn)}.lgd .l2{background:var(--acc)}.lgd .l3{background:#6BB3C9}
+.tin{display:flex;gap:8px}.tin input{flex:1;min-width:0;height:42px}.tin button{width:42px;height:42px;border:0;border-radius:10px;background:var(--btn);color:var(--btnT);font-size:20px;font-weight:800}
+.todo{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid #F0F0F4;font-size:14px}
+.todo .chk{width:24px;height:24px;border-radius:7px;flex:none;padding:0;font-weight:800;border:2px solid #C9C6DC;background:#fff;color:var(--btnT)}
+.todo.dn .chk{background:var(--btn);border-color:var(--btn)}.todo .tt{flex:1;word-break:break-word}.todo.dn .tt{opacity:.5;text-decoration:line-through}
+.todo .x{border:0;background:transparent;color:#A9A6BC;font-size:15px;min-width:32px;min-height:32px}
+.setab td{padding:3px}.setab input{height:38px;width:100%;min-width:90px}.seh{background:var(--soft);color:var(--softT);font-weight:800}.sep{white-space:nowrap;color:#6A6F85}
+@media(max-width:1100px){.home{grid-template-columns:1fr}}
+@media(max-width:899px){header{padding:12px 16px}nav.tabs{flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:4px}nav.tabs button{flex:none;height:38px}}
+@media print{body{padding-left:0!important}}
+@media(max-width:760px){.wk-desk{display:none}.wk-mob{display:block}.hm-stats{grid-template-columns:repeat(2,1fr)}.hm-hi{font-size:20px}}
 </style>
+
 </head>
-<body>
+<body data-theme="grape">
 <header>
   <div><div class="sub" id="who">Багшийн хэсэг</div><h1 id="tTitle">EduSolveMN · Багшийн самбар</h1></div>
   <nav class="tabs" id="tabs" hidden></nav>
@@ -191,14 +279,14 @@ th{font-size:12px;color:#5A6178}
         }
         try { localStorage.removeItem('pendingT'); } catch (e) {}
         me = s.user; var _em = me.email || ''; document.getElementById('who').textContent = /^p\d{8}@edusolve\.mn$/.test(_em) ? _em.slice(1, 9) : _em;
-        sb.from('teachers').select('name,subject,school').eq('id', me.id).maybeSingle().then(function (tr) {
-          if (tr.data) T = tr.data;
+        sb.from('teachers').select('name,subject,school,theme').eq('id', me.id).maybeSingle().then(function (tr) {
+          if (tr.data) T = tr.data; applyTheme(T.theme);
           document.getElementById('tTitle').textContent = (T.subject || 'EduSolveMN') + ' · ' + (T.name || '') + ' багшийн самбар';
           document.title = 'EduSolveMN · ' + (T.name || 'Багшийн хэсэг');
           cleanupPhotos();
           sb.rpc('owner_overview').then(function (o) {
             isOwner = !!(o.data && o.data.owner);
-            loadClasses().then(function () { drawTabs(); go('review'); });
+            loadClasses().then(function () { drawTabs(); go('home'); });
           });
         });
       });
@@ -225,7 +313,7 @@ th{font-size:12px;color:#5A6178}
     });
   }
   function drawTabs() {
-    var T = [['review', 'Журнал'], ['library', 'Материалын сан'], ['exams', 'Шалгалт'], ['feedback', 'Санал хүсэлт' + (fbUnseen ? ' (' + fbUnseen + ')' : '')]];
+    var T = [['home', 'Нүүр'], ['review', 'Журнал'], ['library', 'Материалын сан'], ['exams', 'Шалгалт'], ['feedback', 'Санал хүсэлт' + (fbUnseen ? ' (' + fbUnseen + ')' : '')]];
     tabsEl.hidden = false;
     tabsEl.innerHTML = T.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (t[0] === tab || (t[0] === 'feedback' && (tab === 'team' || tab === 'myfb')) ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') +
       '<button data-t="out">Гарах</button>';
@@ -256,7 +344,142 @@ th{font-size:12px;color:#5A6178}
     sn.innerHTML = S.map(function (x) { return '<button class="chip' + (tab === x[0] ? ' on' : '') + '" style="min-height:42px;font-weight:700;padding:0 16px" data-fs2="' + x[0] + '">' + x[1] + '</button>'; }).join('');
     sn.querySelectorAll('[data-fs2]').forEach(function (b) { b.onclick = function () { go(b.dataset.fs2); }; });
   }
-  function go(t) { tab = t; drawTabs(); fbSubnav(); ({ review: showReview, library: showLibrary, exams: showExams, feedback: showFeedback, team: showTeam, myfb: showMyFeedback })[t](); countFb(); }
+  // ---------- НҮҮР: хуваарь, тэмдэглэл, өнгө ----------
+  var THEMES = { grape: 'Үзмэн', green: 'Ногоон', blue: 'Цэнхэр' };
+  function applyTheme(t) { document.body.dataset.theme = THEMES[t] ? t : 'grape'; }
+  var BELL = { 1: [['07:45', '08:25'], ['08:30', '09:10'], ['09:15', '09:55'], ['10:05', '10:45'], ['10:50', '11:30'], ['11:35', '12:15'], ['12:20', '13:00']],
+               2: [['13:15', '13:55'], ['14:00', '14:40'], ['14:45', '15:25'], ['15:35', '16:15'], ['16:20', '17:00'], ['17:05', '17:45'], ['17:50', '18:30']] };
+  var DAYN = ['Даваа', 'Мягмар', 'Лхагва', 'Пүрэв', 'Баасан'], DAYS = ['Да', 'Мя', 'Лх', 'Пү', 'Ба'];
+  var hmSel = null, hmDay = null;
+  function hmin(t) { var a = t.split(':'); return +a[0] * 60 + +a[1]; }
+  function roomTxt(r) { return r ? (/^\d/.test(r) ? r + ' тоот' : r) : '—'; }
+  function clsByLabel(l) { var n = String(l || '').toLowerCase().replace(/\s/g, ''); return classes.filter(function (c) { return String(c.name).toLowerCase().replace(/\s/g, '') === n; })[0]; }
+  function showHome() {
+    if (!document.getElementById('app').dataset.homeKeep) app.innerHTML = '<div class="muted">Ачаалж байна…</div>';
+    var now = new Date(), wd = now.getDay(), today = wd >= 1 && wd <= 5 ? wd : 0, nm = now.getHours() * 60 + now.getMinutes();
+    var monday = new Date(now); monday.setHours(0, 0, 0, 0); monday.setDate(monday.getDate() - ((wd + 6) % 7)); if (!today) monday.setDate(monday.getDate() + 7);
+    var d0 = new Date(now); d0.setHours(0, 0, 0, 0);
+    var wk = new Date(d0); wk.setDate(wk.getDate() - 7);
+    var mStart = new Date(now.getFullYear(), now.getMonth(), 1), mEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    Promise.all([
+      sb.from('teacher_schedule').select('day,shift,period,label,room'),
+      sb.from('teacher_notes').select('*').order('done').order('created_at', { ascending: false }).limit(30),
+      sb.from('submissions').select('id', { count: 'exact', head: true }).eq('status', 'review'),
+      sb.from('submissions').select('id', { count: 'exact', head: true }).gte('created_at', d0.toISOString()),
+      sb.from('submissions').select('id', { count: 'exact', head: true }).eq('status', 'review').eq('reason', 'late'),
+      sb.from('attendance').select('status').gte('day', wk.toISOString().slice(0, 10)),
+      sb.from('exams').select('starts_at').gte('starts_at', mStart.toISOString()).lt('starts_at', mEnd.toISOString()),
+      sb.from('lesson_access').select('due_at').gte('due_at', mStart.toISOString()).lt('due_at', mEnd.toISOString())
+    ]).then(function (R) {
+      var sch = R[0].data || [], notes = R[1].data || [];
+      var att = R[5].data || [], attP = att.length ? Math.round(att.filter(function (a) { return a.status === 'present'; }).length / att.length * 100) + '%' : '—';
+      var exD = {}, dueD = {}; (R[6].data || []).forEach(function (e) { exD[new Date(e.starts_at).getDate()] = 1; }); (R[7].data || []).forEach(function (e) { dueD[new Date(e.due_at).getDate()] = 1; });
+      var at = {}; sch.forEach(function (s) { at[s.day + '-' + s.shift + '-' + s.period] = s; });
+      // одоо / дараагийн
+      var nowL = null, nextL = null;
+      if (today) [1, 2].forEach(function (sh) { BELL[sh].forEach(function (b, i) { var s = at[today + '-' + sh + '-' + (i + 1)]; if (!s) return; var a = hmin(b[0]), z = hmin(b[1]); if (nm >= a && nm < z) nowL = { s: s, b: b, p: i + 1 }; else if (nm < a && (!nextL || a < hmin(nextL.b[0]))) nextL = { s: s, b: b, p: i + 1 }; }); });
+      var cur = nowL || nextL;
+      var dayCount = {}; sch.forEach(function (s) { dayCount[s.day] = (dayCount[s.day] || 0) + 1; });
+      var used2 = sch.some(function (s) { return s.shift === 2; });
+      // долоо хоногийн хүснэгт
+      function cell(day, sh, p) {
+        var s = at[day + '-' + sh + '-' + p], key = day + '-' + sh + '-' + p, td = day === today ? ' td' : '';
+        if (!s) return '<span class="wc' + td + '"></span>';
+        var isNow = nowL && day === today && nowL.s === s, b = BELL[sh][p - 1];
+        var pop = hmSel === key ? '<div class="pop" data-nopop><div class="pt1"><span class="pc">' + esc(s.label) + '</span><div><b>' + esc(clsByLabel(s.label) ? (T.subject || 'Хичээл') : s.label + ' анги') + '</b><small>' + DAYN[day - 1] + ' · ' + (sh === 1 ? 'I' : 'II') + ' ээлж</small></div></div>' +
+          '<div class="pr"><span>🕘 ' + p + '-р цаг</span><b>' + b[0] + '–' + b[1] + '</b></div><div class="pr"><span>🚪 Тоот</span><b>' + esc(roomTxt(s.room)) + '</b></div>' +
+          '<div class="pb"><button data-hatt="' + esc(s.label) + '">Ирц</button><button data-hgr="' + esc(s.label) + '">Үнэлгээ</button></div></div>' : '';
+        return '<span class="wc on' + td + (isNow ? ' nw' : '') + (hmSel === key ? ' sel' : '') + '" data-hc="' + key + '" role="button" tabindex="0">' + esc(s.label) + '<small>' + esc(s.room || '') + '</small>' + pop + '</span>';
+      }
+      var wh = '<div class="gr"><span></span>' + DAYS.map(function (d, i) { var dt = new Date(monday); dt.setDate(dt.getDate() + i); return '<span class="wh' + (i + 1 === today ? ' td' : '') + '">' + d + ' ' + dt.getDate() + '</span>'; }).join('') + '</div>';
+      [1, 2].forEach(function (sh) {
+        if (sh === 2 && !used2) return;
+        wh += '<div class="gh">' + (sh === 1 ? 'I ээлж' : 'II ээлж') + '</div>';
+        for (var p = 1; p <= 7; p++) {
+          wh += '<div class="gr"><span class="pt"><b>' + p + '</b>' + BELL[sh][p - 1][0] + '</span>' + [1, 2, 3, 4, 5].map(function (d) { return cell(d, sh, p); }).join('') + '</div>';
+          if (p === 3) wh += '<div class="gb">☕ Их завсарлага ' + (sh === 1 ? '09:55–10:05' : '15:25–15:35') + '</div>';
+        }
+      });
+      // утсанд: өдрийн жагсаалт
+      var ld = hmDay || today || 1;
+      var list = '<div class="hdays">' + DAYS.map(function (d, i) { return '<button class="' + (i + 1 === ld ? 'on' : '') + '" data-hd="' + (i + 1) + '">' + d + '<b>' + (dayCount[i + 1] || 0) + '</b></button>'; }).join('') + '</div>';
+      var lastSh = 0;
+      [1, 2].forEach(function (sh) { for (var p = 1; p <= 7; p++) { var s = at[ld + '-' + sh + '-' + p]; if (!s) continue; if (sh !== lastSh) { lastSh = sh; list += '<div class="gh">' + (sh === 1 ? 'I ээлж' : 'II ээлж') + '</div>'; }
+        var b = BELL[sh][p - 1], st = ld === today ? (nm >= hmin(b[1]) ? 'dn' : (nm >= hmin(b[0]) ? 'nw' : '')) : '';
+        list += '<div class="les ' + st + '" data-hatt="' + esc(s.label) + '"><span class="c">' + esc(s.label) + '</span><span><b>' + p + '-р цаг · ' + b[0] + '–' + b[1] + '</b><small>' + esc(roomTxt(s.room)) + '</small></span><span class="s">' + (st === 'nw' ? '● Одоо' : st === 'dn' ? 'Дууссан' : '') + '</span></div>'; } });
+      if (!dayCount[ld]) list += '<div class="muted" style="text-align:center;padding:14px">Энэ өдөр хичээлгүй</div>';
+      // календарь
+      var first = (mStart.getDay() + 6) % 7, dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(), cal = '';
+      ['Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя', 'Ня'].forEach(function (x) { cal += '<span class="h">' + x + '</span>'; });
+      for (var i = 0; i < first; i++) cal += '<span></span>';
+      for (var dd = 1; dd <= dim; dd++) { var we = (first + dd - 1) % 7 >= 5; cal += '<span class="cd' + (we ? ' we' : '') + (dd === now.getDate() ? ' today' : exD[dd] ? ' exam' : dueD[dd] ? ' due' : '') + '">' + dd + '</span>'; }
+      var MN = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+      var themeSw = '<div class="thsw" role="group" aria-label="Өнгө сонгох">' + Object.keys(THEMES).map(function (k) { return '<button class="sw sw-' + k + (document.body.dataset.theme === k ? ' on' : '') + '" data-th="' + k + '" title="' + THEMES[k] + '" aria-label="' + THEMES[k] + ' өнгө"></button>'; }).join('') + '</div>';
+      var html = '<div class="home">' +
+        '<div class="hm-main">' +
+          '<div class="row between"><h1 class="hm-hi">Өдрийн мэнд, ' + esc(String(T.name || '').replace(/^.*\./, '')) + ' багш 👋</h1>' + themeSw + '</div>' +
+          '<div class="hm-stats">' +
+            '<button class="hst s1" data-go="review"><small>Танд шалгах</small><b>' + (R[2].count || 0) + '</b></button>' +
+            '<div class="hst s2"><small>Өнөөдөр илгээсэн</small><b>' + (R[3].count || 0) + '</b></div>' +
+            '<div class="hst s3"><small>Хоцорсон</small><b>' + (R[4].count || 0) + '</b></div>' +
+            '<div class="hst s4"><small>7 хоногийн ирц</small><b>' + attP + '</b></div></div>' +
+          '<div class="hm-card"><div class="row between"><h2>Хичээлийн хуваарь</h2><button class="lnk" id="hmEdit">' + (sch.length ? 'Хуваарь засах ›' : '+ Хуваариа оруулах') + '</button></div>' +
+            (sch.length ? '<div class="wk-desk">' + wh + '</div><div class="wk-mob">' + list + '</div>' : '<div class="muted">Хуваариа нэг удаа оруулахад энд долоо хоногоор нь харагдана.</div>') + '</div>' +
+        '</div>' +
+        '<aside class="hm-side">' +
+          (cur ? '<div class="nowc"><span class="c">' + esc(cur.s.label) + '</span><div><b>' + (nowL ? 'Одоо' : 'Дараагийн') + '</b><small>' + cur.p + '-р цаг · ' + cur.b[0] + '–' + cur.b[1] + ' · ' + esc(roomTxt(cur.s.room)) + '</small></div><button data-hatt="' + esc(cur.s.label) + '">Ирц</button></div>'
+               : '<div class="nowc"><span class="c">☕</span><div><b>' + (today ? 'Өнөөдрийн хичээл дууссан' : 'Амралтын өдөр') + '</b><small>Сайхан амраарай</small></div></div>') +
+          '<div class="hm-card"><div class="ch">' + now.getFullYear() + ' · ' + MN[now.getMonth()] + '-р сар</div><div class="cg">' + cal + '</div>' +
+            '<div class="lgd"><span><i class="l1"></i>Өнөөдөр</span><span><i class="l2"></i>Шалгалт</span><span><i class="l3"></i>Даалгаврын хугацаа</span></div></div>' +
+          '<div class="hm-card"><div class="row between"><h2>Тэмдэглэл</h2><span class="muted">' + notes.filter(function (n) { return !n.done; }).length + ' үлдсэн</span></div>' +
+            '<div class="tin"><input type="text" id="nIn" maxlength="300" placeholder="Тэмдэглэл бичээд Enter…" aria-label="Шинэ тэмдэглэл"><button id="nAdd" aria-label="Нэмэх">+</button></div>' +
+            notes.map(function (n) { return '<div class="todo' + (n.done ? ' dn' : '') + '"><button class="chk" data-nd="' + n.id + '" data-v="' + (n.done ? 0 : 1) + '" aria-label="Хийсэн">' + (n.done ? '✓' : '') + '</button><span class="tt">' + esc(n.text) + '</span><small class="muted">' + fmt(n.created_at).split(' ')[0] + '</small><button class="x" data-nx="' + n.id + '" aria-label="Устгах">✕</button></div>'; }).join('') +
+          '</div>' +
+        '</aside></div>';
+      app.innerHTML = html; delete app.dataset.homeKeep;
+      function again() { app.dataset.homeKeep = '1'; showHome(); }
+      app.querySelectorAll('[data-th]').forEach(function (b) { b.onclick = function () { applyTheme(b.dataset.th); T.theme = b.dataset.th; sb.from('teachers').update({ theme: b.dataset.th }).eq('id', me.id).then(function (x) { if (!fail(x)) toast(THEMES[b.dataset.th] + ' өнгө хадгалагдлаа'); }); app.querySelectorAll('[data-th]').forEach(function (z) { z.classList.toggle('on', z === b); }); }; });
+      app.querySelectorAll('[data-hc]').forEach(function (b) { b.onclick = function (e) { if (e.target.closest('[data-nopop]')) return; hmSel = hmSel === b.dataset.hc ? null : b.dataset.hc; again(); }; b.onkeydown = function (e) { if (e.key === 'Enter') b.click(); }; });
+      app.querySelectorAll('[data-hd]').forEach(function (b) { b.onclick = function () { hmDay = +b.dataset.hd; again(); }; });
+      app.querySelectorAll('[data-hatt],[data-hgr]').forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); var l = b.dataset.hatt || b.dataset.hgr, c = clsByLabel(l); if (!c) { toast(l + ' анги системд бүртгэгдээгүй байна · Журнал → "+ Шинэ анги"'); return; } hmSel = null; openClassView(c.id, b.dataset.hgr ? 'table' : 'att'); }; });
+      app.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
+      q('#hmEdit').onclick = editSchedule;
+      function addNote() { var v = q('#nIn').value.trim(); if (!v) return; sb.from('teacher_notes').insert({ teacher_id: me.id, text: v }).then(function (x) { if (!fail(x)) again(); }); }
+      q('#nAdd').onclick = addNote; q('#nIn').onkeydown = function (e) { if (e.key === 'Enter') addNote(); };
+      app.querySelectorAll('[data-nd]').forEach(function (b) { b.onclick = function () { sb.from('teacher_notes').update({ done: b.dataset.v === '1' }).eq('id', b.dataset.nd).then(function (x) { if (!fail(x)) again(); }); }; });
+      app.querySelectorAll('[data-nx]').forEach(function (b) { b.onclick = function () { sb.from('teacher_notes').delete().eq('id', b.dataset.nx).then(function (x) { if (!fail(x)) again(); }); }; });
+    });
+  }
+  function editSchedule() {
+    sb.from('teacher_schedule').select('day,shift,period,label,room').then(function (r) {
+      var at = {}; (r.data || []).forEach(function (s) { at[s.day + '-' + s.shift + '-' + s.period] = s; });
+      var h = '<div class="card"><div class="row between"><h2>Хуваарь засах</h2><button class="btn ghost" id="seBack">← Нүүр</button></div>' +
+        '<div class="muted">Нүд бүрт <b>анги тоот</b> гэж бичнэ. Жишээ: <b>10е 313</b> эсвэл <b>8а м.тех</b>. Хоосон бол хичээлгүй. Анги нь таны үүсгэсэн ангитай ижил нэртэй бол Ирц товч шууд тэр анги руу орно.</div>' +
+        '<div class="tablebox"><table class="setab"><thead><tr><th>Цаг</th>' + DAYN.map(function (d) { return '<th>' + d + '</th>'; }).join('') + '</tr></thead><tbody>';
+      [1, 2].forEach(function (sh) {
+        h += '<tr><td colspan="6" class="seh">' + (sh === 1 ? 'I ээлж · 07:45–13:00' : 'II ээлж · 13:15–18:30') + '</td></tr>';
+        for (var p = 1; p <= 7; p++) {
+          h += '<tr><td class="sep"><b>' + p + '</b> ' + BELL[sh][p - 1][0] + '</td>';
+          for (var d = 1; d <= 5; d++) { var s = at[d + '-' + sh + '-' + p]; h += '<td><input type="text" maxlength="40" data-se="' + d + '-' + sh + '-' + p + '" value="' + (s ? esc(s.label + (s.room ? ' ' + s.room : '')) : '') + '" aria-label="' + DAYN[d - 1] + ' ' + (sh === 1 ? 'I' : 'II') + ' ээлж ' + p + '-р цаг"></td>'; }
+          h += '</tr>';
+        }
+      });
+      h += '</tbody></table></div><div class="row"><button class="btn" id="seSave">Хадгалах</button><span class="muted" id="seMsg"></span></div></div>';
+      app.innerHTML = h;
+      q('#seBack').onclick = function () { go('home'); };
+      q('#seSave').onclick = function () {
+        var rows = [], bad = '';
+        app.querySelectorAll('[data-se]').forEach(function (i) { var v = i.value.trim().replace(/\//g, ' ').replace(/\s+/g, ' ').trim(); if (!v) return; var k = i.dataset.se.split('-'), parts = v.split(' '); var lab = parts.shift(); if (lab.length > 30) { bad = v; return; } rows.push({ teacher_id: me.id, day: +k[0], shift: +k[1], period: +k[2], label: lab, room: parts.join(' ').slice(0, 20) || null }); });
+        if (bad) { q('#seMsg').textContent = 'Хэт урт: ' + bad; return; }
+        var btn = this; btn.disabled = true;
+        sb.from('teacher_schedule').delete().eq('teacher_id', me.id).then(function (x) {
+          if (fail(x)) { btn.disabled = false; return; }
+          (rows.length ? sb.from('teacher_schedule').insert(rows) : Promise.resolve({})).then(function (y) { btn.disabled = false; if (!fail(y)) { toast('Хуваарь хадгалагдлаа · ' + rows.length + ' цаг'); go('home'); } });
+        });
+      };
+    });
+  }
+  function go(t) { tab = t; drawTabs(); fbSubnav(); ({ home: showHome, review: showReview, library: showLibrary, exams: showExams, feedback: showFeedback, team: showTeam, myfb: showMyFeedback })[t](); countFb(); }
   function showMyFeedback() {
     var rating = 0;
     app.innerHTML = '<div class="card" style="max-width:640px"><h2>Платформын талаарх санал</h2><div class="muted">Таны санал платформыг сайжруулахад шууд ашиглагдана. Долоо хоногт нэг удаа бөглөхөд хангалттай.</div>' +
