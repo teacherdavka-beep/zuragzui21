@@ -168,6 +168,14 @@ main{padding-bottom:96px!important}
 @keyframes bspin{0%{transform:scale(.2) rotate(-40deg)}60%{transform:scale(1.25) rotate(10deg)}100%{transform:none}}
 .conf{position:absolute;top:-12px;width:9px;height:14px;border-radius:3px;animation:cfall 1.8s ease-in forwards}
 @keyframes cfall{to{transform:translateY(110vh) rotate(540deg)}}
+.myph{flex-direction:row;align-items:center;gap:12px;border:0;width:100%;color:inherit;font:inherit;cursor:pointer}
+.pgal{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pg{position:relative;border:0;padding:0;border-radius:14px;overflow:hidden;aspect-ratio:3/4;background:#E9ECF5;cursor:zoom-in}
+.pg img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .3s}
+.pgn{position:absolute;left:6px;top:6px;background:rgba(26,31,54,.8);color:#fff;font-weight:800;font-size:12px;border-radius:99px;min-width:22px;height:22px;display:grid;place-items:center;padding:0 6px}
+.pgt{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff;font-size:10.5px;font-weight:600;padding:14px 6px 5px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg i{position:absolute;right:6px;top:8px;width:10px;height:10px;border-radius:50%;border:2px solid #fff}
+.zsc img{max-height:100%;object-fit:contain}
 </style>
 </head>
 <body>
@@ -435,7 +443,8 @@ main{padding-bottom:96px!important}
       };
     });
   }
-  var stTerm = 0, stTab = 'home';
+  var stTerm = 0, stTab = 'home', lastNav = '';
+  function addNav() { if (!lastNav || app.querySelector('.snav')) return; app.insertAdjacentHTML('beforeend', lastNav.replace(/ class="on"/g, ' class=""')); app.querySelectorAll('.snav [data-tab]').forEach(function (b) { b.onclick = function () { stTab = b.dataset.tab; showHome(); }; }); }
   function showHome() {
     var xp = home.xp || 0;
     var L = isArt() ? [[0, 'Шавь'], [50, 'Зураач'], [120, 'Уран зураач'], [220, 'Мастер'], [350, 'Уран бүтээлч']] : [[0, 'Шавь'], [50, 'Зураач'], [120, 'Зураг төсөлч'], [220, 'Инженер'], [350, 'Архитектор']];
@@ -463,8 +472,14 @@ main{padding-bottom:96px!important}
     var todo = home.topics.map(function (t, k) { return { t: t, k: k }; }).filter(function (x) { return (x.t.tasks_open && !sentOk(x.t)) || x.t.sub_status === 'redo'; });
     var tests = home.topics.map(function (t, k) { return { t: t, k: k }; }).filter(function (x) { return x.t.test_open && x.t.test_count && !x.t.test_result; });
     if (stTab === 'home') {
-      html += bagHtml();
       html += '<div id="exBox" style="display:flex;flex-direction:column;gap:12px"></div>';
+      html += '<h1 style="font-size:19px;margin-top:4px">📸 Хийх ажил</h1>';
+      html += todo.length ? todo.map(function (x) { return card(x.t, x.k, x.t.sub_status === 'redo' ? 'Засаад илгээ' : (x.t.due_at ? fmtDate(x.t.due_at) + ' хүртэл илгээ' : 'Дадлага ажлаа илгээ')); }).join('') + tests.map(function (x) { return card(x.t, x.k, '📝 Тест өгөх · ' + (x.t.test_count || 0) + ' асуулт'); }).join('')
+        : (tests.length ? tests.map(function (x) { return card(x.t, x.k, '📝 Тест өгөх · ' + (x.t.test_count || 0) + ' асуулт'); }).join('') : '<div class="card" style="flex-direction:row;align-items:center;gap:12px"><span style="font-size:30px">🎉</span><div><b>Бүх ажлаа хийсэн байна!</b><div class="muted">' + buddyName() + ' баяртай байна.</div></div></div>');
+      var nPh = allMyPhotos().length;
+      html += '<button type="button" class="card myph" id="myPh"><span style="font-size:30px">🖼️</span><span style="flex:1;text-align:left"><b style="font-size:16px">Миний зургууд</b><span class="muted" style="display:block">' + (nPh ? nPh + ' зураг · бүгдийг нэг дор харах' : 'Илгээсэн зураг энд цугларна') + '</span></span><span class="tgo">›</span></button>';
+      html += bagHtml();
+    } else if (stTab === 'lessons') {
       html += '<h1 style="font-size:19px;margin-top:4px">📚 Миний хичээлүүд</h1><div class="muted">Видео үргэлж нээлттэй. Хоцорсон хичээлээ эндээс нөхнө.</div>';
       var termOf = function (d) { var m = new Date(d || Date.now()).getMonth() + 1; return m >= 9 && m <= 10 ? 1 : m >= 11 ? 2 : m <= 3 ? 3 : 4; };
       if (!stTerm) stTerm = termOf();
@@ -474,12 +489,6 @@ main{padding-bottom:96px!important}
       home.topics.forEach(function (t, k) { if (termOf(t.opened_at) !== stTerm) return; shown++; html += card(t, k); });
       if (!home.topics.length) html += '<div class="card muted">Багш одоогоор сэдэв нээгээгүй байна.</div>';
       else if (!shown) html += '<div class="card muted" style="text-align:center">' + ['I', 'II', 'III', 'IV'][stTerm - 1] + ' улиралд нээсэн сэдэв алга.</div>';
-    } else if (stTab === 'tasks') {
-      html += '<h1 style="font-size:19px">📸 Дадлага ажил</h1><div class="muted">Зургаа илгээх, багшийн буцаасан ажлаа засах хичээлүүд энд нэг дор. Хичээл дээр дарж ороод илгээнэ.</div>';
-      html += todo.length ? todo.map(function (x) { return card(x.t, x.k, x.t.sub_status === 'redo' ? 'Засаад илгээ' : (x.t.due_at ? fmtDate(x.t.due_at) + ' хүртэл' : 'Илгээх')); }).join('')
-        : '<div class="card" style="align-items:center;text-align:center;padding:24px"><span style="font-size:34px">🎉</span><b>Илгээх дадлага ажил алга</b><div class="muted">Бүх ажлаа хийсэн байна. ' + buddyName() + ' баяртай!</div></div>';
-      var sent = home.topics.map(function (t, k) { return { t: t, k: k }; }).filter(function (x) { return sentOk(x.t); }).slice(0, 8);
-      if (sent.length) html += '<h2 style="margin-top:6px">Илгээсэн</h2>' + sent.map(function (x) { return card(x.t, x.k); }).join('');
     } else if (stTab === 'exams') {
       html += '<h1 style="font-size:19px">📝 Шалгалт, тест</h1>';
       html += '<div id="exBox" style="display:flex;flex-direction:column;gap:12px"></div>';
@@ -492,11 +501,12 @@ main{padding-bottom:96px!important}
     }
     var nb = function (k, ic, lab, n) { return '<button type="button" class="' + (stTab === k ? 'on' : '') + '" data-tab="' + k + '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ic + '</svg><span>' + lab + '</span>' + (n ? '<em>' + n + '</em>' : '') + '</button>'; };
     html += '<nav class="snav" aria-label="Цэс">' +
-      nb('home', '<path d="M4 19.5V5a2 2 0 012-2h13v16H6.5A2.5 2.5 0 004 21.5"/><path d="M8 7h8M8 11h6"/>', 'Хичээл', 0) +
-      nb('tasks', '<rect x="3" y="6" width="18" height="14" rx="3"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/>', 'Дадлага', todo.length) +
+      nb('home', '<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>', 'Нүүр', todo.length) +
+      nb('lessons', '<path d="M4 19.5V5a2 2 0 012-2h13v16H6.5A2.5 2.5 0 004 21.5"/><path d="M8 7h8M8 11h6"/>', 'Хичээл', 0) +
       nb('exams', '<path d="M9 4h6l1 2h3v15H5V6h3z"/><path d="M9 12l2 2 4-4"/>', 'Шалгалт', tests.length) +
       nb('msg', '<path d="M4 5h16v11H8l-4 4z"/>', 'Захиа', 0) + '</nav>';
 
+    lastNav = html.slice(html.lastIndexOf('<nav class="snav"'));
     app.innerHTML = html;
     bindFeedback(); loadExams();
     var bsw = document.getElementById('bswap'); if (bsw) bsw.onclick = function (e) {
@@ -508,6 +518,7 @@ main{padding-bottom:96px!important}
       ov.querySelector('#bpx').onclick = function () { ov.remove(); }; ov.onclick = function (x) { if (x.target === ov) ov.remove(); };
     };
     if (stTab === 'home') bagCheck();
+    var mp = document.getElementById('myPh'); if (mp) mp.onclick = showMyPhotos;
     app.querySelectorAll('[data-bi]').forEach(function (b) { b.onclick = function () { var list = BAG[isArt() ? 'art' : 'draw'], i = +b.dataset.bi; toast(b.classList.contains('got') ? list[i][0] + ' ' + list[i][1] + ' — чиний цүнхэнд байна' : '❔ Нууц хэрэгсэл · даалгавраа илгээгээд нээгээрэй'); }; });
     app.querySelectorAll('.snav [data-tab]').forEach(function (b) { b.onclick = function () { stTab = b.dataset.tab; showHome(); }; });
     var bd = app.querySelector('.buddy'); if (bd) bd.onclick = function () { bd.classList.remove('jump'); void bd.getBoundingClientRect(); bd.classList.add('jump'); var r = bd.getBoundingClientRect(); for (var h = 0; h < 6; h++) (function (h) { var e = document.createElement('span'); e.className = 'bheart'; e.textContent = ['💖', '⭐', '✨', '💛', '🎨', '💜'][h]; e.style.left = (r.left + r.width / 2 + (h - 2.5) * 14) + 'px'; e.style.top = (r.top + 20) + 'px'; e.style.animationDelay = (h * 60) + 'ms'; document.body.appendChild(e); setTimeout(function () { e.remove(); }, 1400); })(h); var M = { asleep: ['Zzz… ажил илгээвэл би сэрнэ', 'Намайг сэрээгээч…'], calm: ['Сайн уу! Би дөнгөж сэрлээ', 'Хамтдаа ажиллая'], star: ['Чи гайхалтай!', 'Ингээд л яв! 🚀', 'Би чамаар бахархаж байна'], happy: ['Өнөөдөр юу зурах вэ?', 'Хамтдаа хичээе!', 'Дараагийн түвшин ойрхон байна'], sleepy: ['Ажлаа илгээвэл би сэрнэ…', 'Ммм… нөхөх ажил байна', 'Нэг ажил илгээгээд үзээрэй'], sad: ['Надад туслаач… ажлаа илгээгээрэй', 'Би чамайг хүлээж байна', 'Нэг нэгээр нь нөхье'] }[buddyMood()]; toast({ pencil: '✏️ ', ruler: '📏 ', compass: '📐 ', brush: '🖌️ ', palette: '🎨 ', tube: '🧴 ' }[buddyType()] + M[Math.floor(Math.random() * M.length)]); };
@@ -554,6 +565,7 @@ main{padding-bottom:96px!important}
     bindDel();
     var tb = document.getElementById('test'); if (tb) tb.onclick = showTest;
     bindFeedback();
+    addNav();
     window.scrollTo(0, 0);
   }
 
@@ -584,6 +596,33 @@ main{padding-bottom:96px!important}
           '</div>';
       }).join('') + '</div>' +
       (subs[0].status === 'fake' ? '' : '<button class="btn sec" id="delAll" data-sub="' + subs[0].id + '" style="color:#B42318;border-color:#E8B4B0">Өмнөхөө устгаад дахин илгээх</button>');
+  }
+  function allMyPhotos() {
+    var out = [];
+    (home.topics || []).forEach(function (t) { var sub = (t.my_subs || [])[0]; if (!sub || !sub.paths) return; sub.paths.forEach(function (pth, i) { out.push({ path: pth, title: t.title, num: t.num, st: sub.status, at: sub.at, i: i + 1, n: sub.paths.length }); }); });
+    return out.sort(function (a, b) { return (b.at || '').localeCompare(a.at || ''); });
+  }
+  function showMyPhotos() {
+    var L = allMyPhotos(), ST = { auto: ['Журналд орсон', '#14805A'], ok: ['Батлагдсан', '#14805A'], review: ['Шалгаж байна', '#2E6FD8'], redo: ['Буцаасан', '#C0394E'] };
+    var html = '<button class="link" id="back">← Нүүр</button><h1>🖼️ Миний зургууд</h1><div class="muted">' + L.length + ' зураг · зураг дээр дарж томруулна</div>';
+    html += L.length ? '<div class="pgal">' + L.map(function (x, k) { var src = photoUrls[x.path] || ''; return '<button type="button" class="pg" data-pg="' + k + '"><img alt="Зураг ' + (k + 1) + '" data-pp="' + esc(x.path) + '"' + (src ? ' src="' + src + '"' : ' style="opacity:0"') + '><span class="pgn">' + (k + 1) + '</span><span class="pgt">' + (x.num ? 'Х' + x.num + ' · ' : '') + esc(x.title) + '</span><i style="background:' + ((ST[x.st] || ['', '#8A8FB0'])[1]) + '"></i></button>'; }).join('') + '</div>'
+      : '<div class="card" style="align-items:center;text-align:center;padding:26px"><span style="font-size:36px">📷</span><b>Одоохондоо зураг алга</b><div class="muted">Дадлага ажлаа илгээхэд энд цугларна.</div></div>';
+    app.innerHTML = html; addNav();
+    document.getElementById('back').onclick = function () { stTab = 'home'; showHome(); };
+    loadPhotoUrls();
+    app.querySelectorAll('[data-pg]').forEach(function (b) { b.onclick = function () {
+      var k = +b.dataset.pg, ov = document.createElement('div'); ov.className = 'zov';
+      var draw = function () { var x = L[k], st = ST[x.st] || [x.st || '', '#8A8FB0'];
+        ov.innerHTML = '<div class="zbar"><button type="button" id="zp" aria-label="Өмнөх">‹</button><span style="flex:1;color:#fff;font-size:14px;align-self:center;text-align:center"><b>Зураг ' + (k + 1) + ' / ' + L.length + '</b><br><span style="opacity:.8">' + esc(x.title) + ' · <span style="color:' + (st[1] === '#C0394E' ? '#FF9AA9' : '#9FE7C8') + '">' + st[0] + '</span></span></span><button type="button" id="zn" aria-label="Дараах">›</button><button type="button" id="zx">✕</button></div><div class="zsc" style="display:flex;align-items:center"><img alt="" src="' + (photoUrls[x.path] || '') + '"></div>';
+        ov.querySelector('#zp').onclick = function () { k = (k - 1 + L.length) % L.length; draw(); };
+        ov.querySelector('#zn').onclick = function () { k = (k + 1) % L.length; draw(); };
+        ov.querySelector('#zx').onclick = function () { ov.remove(); };
+      };
+      document.body.appendChild(ov); draw();
+      var sx = 0; ov.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; }, { passive: true });
+      ov.addEventListener('touchend', function (e) { var dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 50) { k = (k + (dx < 0 ? 1 : -1) + L.length) % L.length; draw(); } });
+    }; });
+    window.scrollTo(0, 0);
   }
   function loadPhotoUrls() {
     var need = Array.prototype.some.call(app.querySelectorAll('img[data-pp]'), function (im) { return !photoUrls[im.dataset.pp]; });
