@@ -92,6 +92,82 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
 .xs-q button{flex:1;min-width:0;height:30px;border-radius:7px;border:1px solid #D5DAE8;background:#fff;font-size:13px;font-weight:700;color:#1A1F36;padding:0}
 .xs-q button.on{background:#2747B8;border-color:#2747B8;color:#fff}
 @media(min-width:800px){.xs{display:grid;grid-template-columns:1fr 340px;grid-template-rows:auto auto 1fr}.xs-top,.xs-tabs{grid-column:1/-1}.xs-view{grid-column:1}.xs-ans{grid-column:2;max-height:none;border-top:0;border-left:2px solid #1E2A5A}.xs-grid{grid-template-columns:1fr}.xs-q button{height:36px}}
+
+/* ---------- ХӨӨРХӨН ЗАГВАР ---------- */
+body{background:linear-gradient(180deg,#E6EEFB 0%,#F3EAF7 60%,#FDF3EC 100%) fixed}
+header{position:relative;overflow:hidden;background:linear-gradient(125deg,#3BB6A6 0%,#2E6FD8 60%,#5B4FD6 100%);border-radius:0 0 28px 28px;padding:22px 20px 22px;box-shadow:0 10px 28px rgba(46,111,216,.25)}
+header:before,header:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.12)}
+header:before{width:180px;height:180px;right:-50px;top:-70px}header:after{width:110px;height:110px;right:70px;bottom:-60px;background:rgba(255,255,255,.08)}
+header .sub{color:#DDEBFF;position:relative}header .ttl{position:relative;font-size:25px;font-weight:800;margin:4px 0 8px}
+#hWho{display:flex;gap:6px;flex-wrap:wrap}.hchip{background:rgba(255,255,255,.2);color:#fff;border-radius:99px;padding:4px 11px;font-size:12.5px;font-weight:700;backdrop-filter:blur(4px)}
+.card{border:0;border-radius:22px;box-shadow:0 4px 18px rgba(60,60,140,.08)}
+main>.card:first-child{background:linear-gradient(135deg,#FFFFFF 0%,#F2EEFF 100%)}
+.btn{border-radius:14px;background:linear-gradient(110deg,#2E6FD8,#5B4FD6);box-shadow:0 6px 14px rgba(46,111,216,.25);font-weight:700}
+.btn.sec{background:#fff;box-shadow:none;border:1.5px solid #C9D6F5;color:#2E6FD8}
+.btn.dark{background:#1E2A5A}
+.bar{height:12px;background:#E9E6FB}.bar>div{height:12px;background:linear-gradient(90deg,#3BB6A6,#7C6CF0);border-radius:99px}
+.pill{font-weight:700}.p-blue{background:#EAF0FF;color:#2E6FD8}.p-green{background:#E2F6EE;color:#14805A}.p-amber{background:#FFF1DF;color:#A0560B}.p-red{background:#FFE8EC;color:#C0394E}
+.topic{flex-direction:row;align-items:center;gap:12px;border:0;border-radius:20px;padding:12px 14px;box-shadow:0 4px 14px rgba(60,60,140,.07);position:relative}
+.topic .tnum{flex:none;width:48px;height:48px;border-radius:16px;background:var(--tc);color:#fff;display:grid;place-items:center;font-weight:900;font-size:19px;box-shadow:0 6px 12px rgba(0,0,0,.12)}
+.topic .tbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.topic .tgo{font-size:26px;color:#B5BCD6;font-weight:300}
+.topic.now{box-shadow:0 0 0 2.5px var(--tc),0 8px 20px rgba(60,60,140,.12)}
+.link{color:#2E6FD8}
+.opt{border-radius:14px}.opt.on{border-color:#5B4FD6;background:#EFEBFF}
+.choice button{border-radius:14px}
+.xs-top{background:linear-gradient(110deg,#2E6FD8,#5B4FD6)}.xs-tabs>button.on{background:#5B4FD6;border-color:#5B4FD6}.xs-q button.on{background:#5B4FD6;border-color:#5B4FD6}.xs-ah button{background:linear-gradient(110deg,#2E6FD8,#5B4FD6)}
+.xs-ans{border-top-color:#5B4FD6}
+.buddy{flex:none;cursor:pointer;overflow:visible}.b-star .bb,.b-happy .bb{animation:bbob 2.4s ease-in-out infinite;transform-origin:56px 116px}
+.b-sleepy .bb{animation:bsway 3.6s ease-in-out infinite;transform-origin:56px 116px}.b-sad .bb{transform:translateY(3px)}
+.bz{animation:bzz 2.2s ease-in-out infinite}.bsp{animation:bsp 1.6s ease-in-out infinite;transform-origin:center}
+.buddy.jump .bb{animation:bjump .6s ease}
+@keyframes bbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes bsway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes bzz{0%{opacity:0;transform:translate(0,4px)}50%{opacity:1}100%{opacity:0;transform:translate(6px,-8px)}}
+@keyframes bsp{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes bjump{0%{transform:translateY(0) rotate(0)}35%{transform:translateY(-18px) rotate(-8deg)}70%{transform:translateY(0) rotate(6deg)}100%{transform:none}}
+.bmsg{font-size:13px;font-weight:700;border-radius:10px;padding:5px 9px;align-self:flex-start}
+.bmsg.b-star{background:#FFF3CF;color:#8A5A00}.bmsg.b-happy{background:#E2F6EE;color:#14805A}.bmsg.b-sleepy{background:#FFF1DF;color:#A0560B}.bmsg.b-sad{background:#EEF0F6;color:#4A5170}
+@media(prefers-reduced-motion:reduce){.buddy *{animation:none!important}}
+.terms{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:#fff;border-radius:16px;padding:5px;box-shadow:0 4px 14px rgba(60,60,140,.07)}
+.terms button{border:0;background:transparent;border-radius:12px;height:44px;font-weight:700;font-size:13.5px;color:#5A6178;position:relative}
+.terms button.on{background:linear-gradient(110deg,#2E6FD8,#5B4FD6);color:#fff}
+.terms em{font-style:normal;position:absolute;top:2px;right:4px;font-size:10.5px;background:#FF8FB1;color:#fff;border-radius:99px;padding:0 5px;line-height:16px}
+.snav{position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom));width:min(500px,calc(100% - 20px));z-index:20;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:22px;padding:6px;box-shadow:0 10px 30px rgba(40,40,110,.18)}
+.snav button{border:0;background:transparent;border-radius:16px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0;color:#7A81A0;font-size:11.5px;font-weight:700;position:relative;min-height:54px}
+.snav button.on{background:linear-gradient(110deg,#2E6FD8,#5B4FD6);color:#fff}
+.snav em{font-style:normal;position:absolute;top:3px;right:calc(50% - 22px);background:#FF5C7A;color:#fff;font-size:10.5px;border-radius:99px;min-width:18px;line-height:18px;padding:0 4px}
+main{padding-bottom:96px!important}
+.bswap{border:0;background:#EEF1FF;color:#2E6FD8;font-weight:700;font-size:12px;border-radius:99px;padding:2px 9px;margin-left:2px}
+.bpick{position:fixed;inset:0;z-index:95;background:rgba(20,20,60,.45);display:flex;align-items:flex-end;justify-content:center}
+.bpc{background:#fff;width:min(520px,100%);border-radius:24px 24px 0 0;padding:20px 16px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;animation:bup .25s ease}
+@keyframes bup{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.bgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.bgrid button{border:2px solid #E1E4EE;background:#FAFAFE;border-radius:18px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bgrid button.on{border-color:#5B4FD6;background:#F1EEFF}.bgrid .muted{font-size:11px;text-align:center;line-height:1.3}
+/* хөдөлгөөн: нүд цавчих, гар даллах, амьсгалах */
+.buddy .beyes{transform-box:fill-box;transform-origin:center;animation:bblink 4.2s infinite}
+.b-happy .barmr,.b-star .barmr{transform-box:fill-box;transform-origin:0% 50%;animation:bwave 2.2s ease-in-out infinite}
+.b-star .barml{transform-box:fill-box;transform-origin:100% 50%;animation:bwave2 2.2s ease-in-out infinite}
+.b-sleepy .bb{animation:bbreath 3.4s ease-in-out infinite!important;transform-origin:56px 116px}
+.b-happy .bb,.b-star .bb{animation:bsquash 2.4s ease-in-out infinite!important;transform-origin:56px 118px}
+.b-sleepy .beyes,.b-sad .beyes{animation:none}
+@keyframes bblink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes bwave{0%,100%{transform:rotate(0)}25%{transform:rotate(-28deg)}50%{transform:rotate(6deg)}75%{transform:rotate(-20deg)}}
+@keyframes bwave2{0%,100%{transform:rotate(0)}50%{transform:rotate(24deg)}}
+@keyframes bbreath{0%,100%{transform:scale(1,1)}50%{transform:scale(1.03,.97)}}
+@keyframes bsquash{0%,100%{transform:translateY(0) scale(1,1)}40%{transform:translateY(-5px) scale(.97,1.03)}55%{transform:translateY(0) scale(1.04,.96)}70%{transform:scale(1,1)}}
+.bheart{position:fixed;z-index:120;font-size:22px;pointer-events:none;animation:bfly 1.2s ease-out forwards}
+@keyframes bfly{0%{opacity:0;transform:translateY(0) scale(.5)}20%{opacity:1;transform:translateY(-10px) scale(1.1)}100%{opacity:0;transform:translateY(-90px) scale(.9) rotate(15deg)}}
+.bagg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.bi{border:0;border-radius:14px;background:#F1F3F9;aspect-ratio:1/1.1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:2px}
+.bi span{font-size:24px;filter:grayscale(1) opacity(.35)}.bi small{font-size:9.5px;font-weight:700;color:#7A81A0;line-height:1.1;text-align:center}
+.bi.got{background:linear-gradient(160deg,#FFF6D8,#FFE3EE);box-shadow:inset 0 0 0 1.5px #FFD27A}.bi.got span{filter:none;animation:bipop .5s ease}
+@keyframes bipop{0%{transform:scale(.4)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.bagpop{position:fixed;inset:0;z-index:130;background:rgba(20,20,60,.5);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.bagc{background:#fff;border-radius:26px;padding:24px 22px;width:min(320px,86%);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;animation:bup .3s ease}
+.bagbig{font-size:72px;animation:bspin 1s ease}
+@keyframes bspin{0%{transform:scale(.2) rotate(-40deg)}60%{transform:scale(1.25) rotate(10deg)}100%{transform:none}}
+.conf{position:absolute;top:-12px;width:9px;height:14px;border-radius:3px;animation:cfall 1.8s ease-in forwards}
+@keyframes cfall{to{transform:translateY(110vh) rotate(540deg)}}
 </style>
 </head>
 <body>
@@ -122,8 +198,9 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
   function setHeader() {
     document.getElementById('hSub').textContent = info ? (info.school + ' · ' + info.subject) : 'EduSolveMN';
     var cn = home ? home['class'] : (info ? info['class'] : '');
-    document.getElementById('hTitle').textContent = cn ? (cn + ' анги') : 'Ангийн самбар';
-    document.getElementById('hWho').textContent = home ? (home.name + ' · ' + home.code) : '';
+    var fn = home ? String(home.name || '').trim().split(/\s+/).pop() : '';
+    document.getElementById('hTitle').textContent = home ? ('Сайн уу, ' + fn + '! 👋') : (cn ? (cn + ' анги') : 'Ангийн самбар');
+    document.getElementById('hWho').innerHTML = home ? ('<span class="hchip">' + esc(cn || '') + ' анги</span><span class="hchip">Код ' + esc(home.code) + '</span>') : '';
   }
   function fmtDate(d) { if (!d) return ''; var x = new Date(d); return (x.getMonth() + 1) + '/' + x.getDate(); }
   function logout() { try { localStorage.removeItem('tok'); } catch (e) {} token = null; home = null; showLogin(); }
@@ -182,20 +259,104 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
     if (t.sub_status === 'redo') return '<span class="pill p-amber">↺ Багш буцаасан · дахин илгээ</span>';
     return '<span class="pill p-red">Илгээгээгүй</span>';
   }
-  function avatarSvg(lv, lazy) {
-    var a = lazy ? 0 : 1, s = lazy ? 1 : 0;
-    return '<svg width="92" height="100" viewBox="0 0 110 120" role="img" aria-label="Миний дүр">' +
-      '<rect x="22" y="2" width="66" height="10" rx="3" fill="#F5D547" opacity="' + (lv >= 4 ? 1 : 0) + '"/><path d="M30 14 Q55 -6 80 14 Z" fill="#F5D547" opacity="' + (lv >= 4 ? 1 : 0) + '"/>' +
-      '<rect x="25" y="14" width="60" height="50" rx="16" fill="#DCE6FF" stroke="#1E2A5A" stroke-width="2.5"/>' +
-      '<circle cx="43" cy="38" r="5" fill="#1E2A5A" opacity="' + a + '"/><circle cx="67" cy="38" r="5" fill="#1E2A5A" opacity="' + a + '"/>' +
-      '<path d="M37 39 h12 M61 39 h12" stroke="#1E2A5A" stroke-width="3" stroke-linecap="round" opacity="' + s + '"/>' +
-      '<path d="M44 52 Q55 60 66 52" fill="none" stroke="#1E2A5A" stroke-width="3" stroke-linecap="round" opacity="' + a + '"/>' +
-      '<path d="M48 54 h14" stroke="#1E2A5A" stroke-width="3" stroke-linecap="round" opacity="' + s + '"/>' +
-      '<text x="86" y="18" font-size="14" font-weight="700" fill="#5A6178" opacity="' + s + '">z z</text>' +
-      '<rect x="30" y="68" width="50" height="40" rx="12" fill="' + (lazy ? '#C5CADB' : '#7FB2FF') + '" stroke="#1E2A5A" stroke-width="2.5"/>' +
-      '<path d="M84 70 L98 52" stroke="#E07A1F" stroke-width="5" stroke-linecap="round" opacity="' + (lv >= 2 ? 1 : 0) + '"/>' +
-      '<path d="M12 104 L20 76 L28 104 M20 76 v-6" fill="none" stroke="#1E2A5A" stroke-width="2.5" stroke-linecap="round" opacity="' + (lv >= 3 ? 1 : 0) + '"/>' +
-      '<path d="M55 80 l3 6 7 1 -5 5 1 7 -6 -3 -6 3 1 -7 -5 -5 7 -1 z" fill="#F5D547" stroke="#1E2A5A" stroke-width="1.2" opacity="' + (lv >= 5 ? 1 : 0) + '"/></svg>';
+  // Харандаа — хүүхдийн оролцооноос хамаарч сэтгэл санаа нь өөрчлөгддөг өөрийн дүр
+  var BAG = {
+    draw: [['✏️', 'Харандаа'], ['🧽', 'Баллуур'], ['📏', 'Шугам'], ['📐', 'Гурвалжин'], ['🖊️', 'Бал'], ['📋', 'Зургийн самбар'], ['🖍️', 'Маркер'], ['✂️', 'Хайч'], ['📘', 'Зургийн дэвтэр'], ['🏆', 'Алтан гортик']],
+    art: [['🖌️', 'Бийр'], ['🎨', 'Палитр'], ['🖍️', 'Өнгийн харандаа'], ['🫙', 'Усны сав'], ['🧽', 'Хөвөн'], ['📒', 'Зургийн дэвтэр'], ['✂️', 'Хайч'], ['🖼️', 'Хүрээ'], ['🧑\u200d🎨', 'Зураачийн малгай'], ['🏆', 'Алтан бийр']]
+  };
+  function bagEarned() { // зөвшөөрөгдсөн даалгавар + өгсөн тест тус бүр 1 хэрэгсэл
+    return ((home && home.topics) || []).reduce(function (a, t) { return a + ((t.sub_status === 'ok' || t.sub_status === 'auto') ? 1 : 0) + (t.test_result ? 1 : 0); }, 0);
+  }
+  function bagHtml() {
+    var list = BAG[isArt() ? 'art' : 'draw'], n = Math.min(list.length, bagEarned());
+    return '<div class="card bag"><div class="row"><b style="font-size:16px">🎒 Миний цүнх</b><span class="pill p-blue">' + n + ' / ' + list.length + '</span></div>' +
+      '<div class="muted" style="margin-top:-4px">Даалгавраа батлуулах, тест өгөх бүрт шинэ хэрэгсэл авна.</div>' +
+      '<div class="bagg">' + list.map(function (it, i) { var got = i < n; return '<button type="button" class="bi' + (got ? ' got' : '') + '" data-bi="' + i + '" aria-label="' + (got ? it[1] : 'Нууц хэрэгсэл') + '"><span>' + (got ? it[0] : '❔') + '</span><small>' + (got ? it[1] : (i === n ? 'Дараагийнх' : '')) + '</small></button>'; }).join('') + '</div></div>';
+  }
+  function bagCheck() {
+    var list = BAG[isArt() ? 'art' : 'draw'], n = Math.min(list.length, bagEarned()), k = 'bag_' + (home && home.code), old = 0;
+    try { old = +(localStorage.getItem(k) || 0); localStorage.setItem(k, n); } catch (e) { return; }
+    if (n > old && old >= 0 && n > 0) { var it = list[n - 1], ov = document.createElement('div'); ov.className = 'bagpop';
+      ov.innerHTML = '<div class="bagc"><div class="bagbig">' + it[0] + '</div><b style="font-size:20px">Шинэ хэрэгсэл!</b><div>Чи <b>' + it[1] + '</b> авлаа 🎉</div><div class="muted">' + n + ' / ' + list.length + ' цуглуулсан</div><button type="button" class="btn">Гайхалтай!</button></div>';
+      document.body.appendChild(ov); for (var c = 0; c < 18; c++) { var e = document.createElement('i'); e.className = 'conf'; e.style.left = (Math.random() * 100) + '%'; e.style.background = ['#FF6B6B', '#FCC419', '#51CF66', '#4DABF7', '#9775FA', '#FF8FB1'][c % 6]; e.style.animationDelay = (Math.random() * .4) + 's'; ov.appendChild(e); }
+      ov.querySelector('button').onclick = function () { ov.remove(); }; }
+  }
+  var buddyLv = 1;
+  function buddyMood(lv) {
+    // түвшин ахих тусам царай нь сайжирна; ажил хоцорвол нойрмоглож, гунигтай болно
+    var pend = (home && home.pending_old) || 0; lv = lv || buddyLv;
+    if (pend >= 3) return 'sad';
+    if (pend >= 1) return 'sleepy';
+    return lv <= 1 ? 'asleep' : lv === 2 ? 'calm' : lv >= 5 ? 'star' : 'happy';
+  }
+  var BUD = { pencil: 'Харандаа', ruler: 'Шугам', compass: 'Гортик', brush: 'Бийр', palette: 'Палитр', tube: 'Будаг' };
+  function isArt() { var sn = (home && home.subject_name) || ''; if (sn) return /дүрслэх|урлаг/i.test(sn); var g = parseInt(String((home && home['class']) || ''), 10); return !!(g && g <= 9); }
+  var ART = ['brush', 'palette', 'tube'], DRAW = ['pencil', 'ruler', 'compass'];
+  function buddySet() { return isArt() ? ART : DRAW; }
+  function buddyDefault() { return buddySet()[0]; }
+  function buddyType() { var v = null; try { v = localStorage.getItem('buddy_' + (home && home.code)); } catch (e) {} return buddySet().indexOf(v) >= 0 ? v : buddyDefault(); }
+  function buddyName() { return BUD[buddyType()]; }
+  function avatarSvg(lv, lazy, forceType, small) {
+    var ty = forceType || buddyType(), m = buddyMood(lv), ink = '#2A2346', face = m === 'asleep' ? 'sleepy' : m;
+    var COL = { pencil: { star: '#FFC83D', happy: '#FFD25C', sleepy: '#F1DC9A' }, ruler: { star: '#4FA8F5', happy: '#6FB7F5', sleepy: '#A9CDEB' }, compass: { star: '#A98BFF', happy: '#B69CFF', sleepy: '#CFC3EE' }, brush: { star: '#FF7E8A', happy: '#FF95A0', sleepy: '#F2C1C6' }, palette: { star: '#F5C87E', happy: '#F7D597', sleepy: '#EFE0C2' }, tube: { star: '#4FD1A8', happy: '#6FDDB8', sleepy: '#B5E6D4' } }[ty];
+    var body = m === 'sad' ? '#CBD1DE' : COL[m === 'asleep' ? 'sleepy' : m === 'calm' ? 'happy' : m];
+    var bigEye = function (cx, cy, wet) { return '<ellipse cx="' + cx + '" cy="' + cy + '" rx="6" ry="7.5" fill="' + ink + '"/><ellipse cx="' + (cx + 2) + '" cy="' + (cy - 3) + '" rx="2.6" ry="3" fill="#fff"/><circle cx="' + (cx - 2.2) + '" cy="' + (cy + 3) + '" r="1.3" fill="#fff"/>' + (wet ? '<path d="M' + (cx - 5) + ' ' + (cy + 5) + ' q5 3 10 0" stroke="#9FD3FF" stroke-width="2" fill="none"/>' : ''); };
+    var calmEye = function (cx) { return '<circle cx="' + cx + '" cy="52" r="3.8" fill="' + ink + '"/><circle cx="' + (cx + 1.3) + '" cy="50.6" r="1.3" fill="#fff"/>'; };
+    var eyes = face === 'calm' ? calmEye(46) + calmEye(66) : face === 'sleepy' ? '<path d="M40 53 q6 5 12 0 M60 53 q6 5 12 0" stroke="' + ink + '" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M41 49 l3 2 M71 49 l-3 2" stroke="' + ink + '" stroke-width="2" stroke-linecap="round"/>'
+      : face === 'sad' ? bigEye(46, 51, true) + bigEye(66, 51, true) + '<path d="M39 41 q5 -3 10 1 M73 41 q-5 -3 -10 1" stroke="' + ink + '" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M72 58 q3 6 0 8 q-3 -2 0 -8z" fill="#7CC4FF"/>'
+      : face === 'star' ? '<path d="M40 54 q6 -9 12 0 M60 54 q6 -9 12 0" stroke="' + ink + '" stroke-width="3.2" fill="none" stroke-linecap="round"/>'
+      : bigEye(46, 51) + bigEye(66, 51);
+    var mouth = face === 'calm' ? '<path d="M51 62 q5 4 10 0" stroke="' + ink + '" stroke-width="2.6" fill="none" stroke-linecap="round"/>' : face === 'sad' ? '<path d="M50 67 q3 -3 6 0 q3 3 6 0" stroke="' + ink + '" stroke-width="2.4" fill="none" stroke-linecap="round" transform="rotate(180 56 66)"/>'
+      : face === 'sleepy' ? '<ellipse cx="56" cy="65" rx="3" ry="2.4" fill="' + ink + '"/><circle cx="66" cy="66" r="3" fill="none" stroke="#9FD3FF" stroke-width="1.6" class="bz"/>'
+      : face === 'star' ? '<path d="M49 61 q7 10 14 0 z" fill="' + ink + '" stroke="' + ink + '" stroke-width="2" stroke-linejoin="round"/><path d="M52 65.5 q4 2.5 8 0 q-4 -3 -8 0z" fill="#FF7A93"/>'
+      : '<path d="M50 62 q3 3.5 6 0 q3 3.5 6 0" stroke="' + ink + '" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+    var cheeks = face === 'sad' ? '<ellipse cx="38" cy="61" rx="5" ry="3" fill="#FF9EB5" opacity=".35"/><ellipse cx="74" cy="61" rx="5" ry="3" fill="#FF9EB5" opacity=".35"/>' : '<ellipse cx="38" cy="61" rx="6" ry="3.6" fill="#FF9EB5" opacity=".85"/><ellipse cx="74" cy="61" rx="6" ry="3.6" fill="#FF9EB5" opacity=".85"/>';
+    var ax = { pencil: [33, 79], ruler: [34, 78], compass: [32, 80], brush: [33, 79], palette: [24, 88], tube: [34, 78] }[ty], dy = m === 'sad' ? 12 : -6, dx = m === 'sad' ? 14 : -6;
+    var arms = '<path d="M' + ax[0] + ' 66 q-9 ' + dy + ' -14 ' + dx + ' M' + ax[1] + ' 66 q9 ' + dy + ' 14 ' + dx + '" stroke="' + ink + '" stroke-width="3" fill="none" stroke-linecap="round"/>';
+    var shape;
+    if (ty === 'ruler') {
+      var tk = ''; for (var y = 34; y <= 106; y += 8) tk += 'M78 ' + y + ' h' + (y % 16 === 14 ? -9 : -5) + ' ';
+      shape = '<rect x="34" y="24" width="44" height="92" rx="14" fill="' + body + '" stroke="' + ink + '" stroke-width="2.5"/><path d="' + tk + '" stroke="' + ink + '" stroke-width="1.6" opacity=".55"/><circle cx="56" cy="106" r="3.5" fill="none" stroke="' + ink + '" stroke-width="1.6" opacity=".5"/>';
+    } else if (ty === 'brush') {
+      shape = '<path d="M42 30 q14 -30 28 0 z" fill="#5BA8F7" stroke="' + ink + '" stroke-width="2.5" stroke-linejoin="round"/><path d="M50 14 q-2 6 2 12 M60 12 q2 7 -1 14" stroke="#fff" stroke-width="2" fill="none" opacity=".7" stroke-linecap="round"/>' +
+        '<rect x="40" y="28" width="32" height="10" rx="3" fill="#C9CEDB" stroke="' + ink + '" stroke-width="2.2"/>' +
+        '<path d="M33 40 h46 v40 q0 14 -12 22 l-11 16 l-11 -16 q-12 -8 -12 -22 z" fill="' + body + '" stroke="' + ink + '" stroke-width="2.5" stroke-linejoin="round"/><circle cx="56" cy="112" r="2.5" fill="' + ink + '" opacity=".35"/>';
+    } else if (ty === 'palette') {
+      shape = '<path d="M56 22 c26 0 40 16 40 36 c0 14 -10 16 -18 14 c-8 -2 -12 4 -8 12 c4 8 -4 16 -16 16 c-24 0 -40 -18 -40 -40 c0 -22 18 -38 42 -38 z" fill="' + body + '" stroke="' + ink + '" stroke-width="2.5"/>' +
+        '<circle cx="80" cy="44" r="5" fill="#FF6B6B" stroke="' + ink + '" stroke-width="1.5"/><circle cx="34" cy="38" r="5" fill="#4DABF7" stroke="' + ink + '" stroke-width="1.5"/><circle cx="30" cy="66" r="5" fill="#51CF66" stroke="' + ink + '" stroke-width="1.5"/><circle cx="76" cy="26" r="0" fill="none"/><circle cx="58" cy="30" r="4.5" fill="#FCC419" stroke="' + ink + '" stroke-width="1.5"/><circle cx="44" cy="82" r="4.5" fill="#9775FA" stroke="' + ink + '" stroke-width="1.5"/>' +
+        '<ellipse cx="80" cy="68" rx="5" ry="4" fill="#fff" stroke="' + ink + '" stroke-width="2"/>';
+    } else if (ty === 'tube') {
+      shape = '<rect x="48" y="14" width="16" height="12" rx="3" fill="#FF6B6B" stroke="' + ink + '" stroke-width="2.2"/><path d="M44 26 h24 l6 10 h-36 z" fill="#C9CEDB" stroke="' + ink + '" stroke-width="2.2" stroke-linejoin="round"/>' +
+        '<path d="M38 36 h36 q4 0 4 4 v56 l-4 12 h-36 l-4 -12 v-56 q0 -4 4 -4 z" fill="#FFFFFF" stroke="' + ink + '" stroke-width="2.5" stroke-linejoin="round"/>' +
+        '<rect x="34" y="42" width="44" height="40" rx="4" fill="' + body + '" stroke="' + ink + '" stroke-width="2"/><path d="M36 102 h40 M36 107 h40" stroke="' + ink + '" stroke-width="1.6" opacity=".4"/>';
+    } else if (ty === 'compass') {
+      shape = '<path d="M46 78 L36 112 M66 78 L76 112" stroke="' + ink + '" stroke-width="4" stroke-linecap="round"/><path d="M36 112 l-2 7" stroke="#8A8FB0" stroke-width="2.5" stroke-linecap="round"/><path d="M73 108 l6 2 -1 8 z" fill="#F4D3A6" stroke="' + ink + '" stroke-width="1.6"/>' +
+        '<circle cx="56" cy="56" r="25" fill="' + body + '" stroke="' + ink + '" stroke-width="2.5"/><rect x="51" y="20" width="10" height="12" rx="3" fill="#8A8FB0" stroke="' + ink + '" stroke-width="2"/><circle cx="56" cy="31" r="4" fill="#FFD25C" stroke="' + ink + '" stroke-width="2"/>';
+    } else {
+      shape = '<rect x="33" y="36" width="46" height="52" rx="12" fill="' + body + '" stroke="' + ink + '" stroke-width="2.5"/><path d="M45 36 v52 M67 36 v52" stroke="' + ink + '" stroke-width="1" opacity=".15"/>' +
+        '<path d="M33 88 L56 116 L79 88 z" fill="#F4D3A6" stroke="' + ink + '" stroke-width="2.5" stroke-linejoin="round"/><path d="M50 108 L56 116 L62 108 z" fill="' + ink + '"/>' +
+        (lv >= 4 ? '' : '<rect x="33" y="22" width="46" height="12" rx="5" fill="#FF8FB1" stroke="' + ink + '" stroke-width="2.5"/><rect x="33" y="32" width="46" height="5" fill="#B8BCCB" stroke="' + ink + '" stroke-width="2"/>');
+    }
+    var hy = { compass: 24, ruler: 18, pencil: 30, brush: 10, palette: 24, tube: 14 }[ty];
+    var hat = lv >= 4 ? '<path d="M30 ' + hy + ' q26 -26 52 0 z" fill="#FF9F1C" stroke="' + ink + '" stroke-width="2.5"/><rect x="26" y="' + (hy - 2) + '" width="60" height="6" rx="3" fill="#FFB84D" stroke="' + ink + '" stroke-width="2"/>' : '';
+    var crown = lv >= 5 ? '<path d="M44 ' + (hy - 16) + ' l4 -10 8 8 8 -8 4 10 z" fill="#FFD43B" stroke="' + ink + '" stroke-width="2"/>' : '';
+    // level tools: the other two friends' tools
+    var tools = { pencil: ['ruler', 'compass'], ruler: ['pencil', 'compass'], compass: ['pencil', 'ruler'], brush: ['palette', 'tube'], palette: ['brush', 'tube'], tube: ['brush', 'palette'] }[ty];
+    var TOOL = {
+      ruler: '<g transform="rotate(-25 92 70)"><rect x="86" y="46" width="11" height="46" rx="2" fill="#6FB7F5" stroke="' + ink + '" stroke-width="2"/><path d="M86 54 h5 M86 62 h4 M86 70 h5 M86 78 h4 M86 86 h5" stroke="' + ink + '" stroke-width="1.5"/></g>',
+      pencil: '<g transform="rotate(25 94 72)"><rect x="89" y="48" width="9" height="34" rx="2" fill="#FFD25C" stroke="' + ink + '" stroke-width="2"/><path d="M89 82 l4.5 9 4.5 -9z" fill="#F4D3A6" stroke="' + ink + '" stroke-width="1.6"/><rect x="89" y="44" width="9" height="6" rx="2" fill="#FF8FB1" stroke="' + ink + '" stroke-width="1.6"/></g>',
+      brush: '<g transform="rotate(25 94 72)"><rect x="90" y="54" width="7" height="34" rx="3" fill="#FF95A0" stroke="' + ink + '" stroke-width="1.8"/><rect x="89" y="47" width="9" height="8" rx="2" fill="#C9CEDB" stroke="' + ink + '" stroke-width="1.6"/><path d="M89 47 q4.5 -14 9 0z" fill="#5BA8F7" stroke="' + ink + '" stroke-width="1.6"/></g>',
+      palette: '<g transform="translate(0 44) scale(.48)"><path d="M56 22 c26 0 40 16 40 36 c0 14 -10 16 -18 14 c-8 -2 -12 4 -8 12 c4 8 -4 16 -16 16 c-24 0 -40 -18 -40 -40 c0 -22 18 -38 42 -38 z" fill="#F7D597" stroke="' + ink + '" stroke-width="3.5"/><circle cx="34" cy="40" r="6" fill="#FF6B6B"/><circle cx="56" cy="32" r="6" fill="#4DABF7"/><circle cx="32" cy="64" r="6" fill="#51CF66"/></g>',
+      tube: '<g transform="rotate(20 92 74)"><rect x="86" y="58" width="14" height="30" rx="3" fill="#fff" stroke="' + ink + '" stroke-width="1.8"/><rect x="86" y="64" width="14" height="14" fill="#6FDDB8"/><rect x="89" y="51" width="8" height="7" rx="2" fill="#FF6B6B" stroke="' + ink + '" stroke-width="1.6"/></g>',
+      compass: '<path d="M14 98 L22 66 L30 98 M22 66 v-6" fill="none" stroke="' + ink + '" stroke-width="2.5" stroke-linecap="round"/><circle cx="22" cy="60" r="3" fill="' + ink + '"/>'
+    };
+    var leftNative = { compass: 1, palette: 1 }; var place = function (k, left) { var g = TOOL[k]; if (left !== !!leftNative[k]) g = '<g transform="translate(112 0) scale(-1 1)">' + g + '</g>'; return g; };
+    var tl = (lv >= 2 ? place(tools[0], false) : '') + (lv >= 3 ? place(tools[1], true) : '');
+    var zz = m === 'sleepy' || m === 'asleep' || m === 'sad' ? '<text x="84" y="22" font-size="15" font-weight="800" fill="#8A8FB0" class="bz">' + (m === 'sad' ? '…' : 'z z') + '</text>' : '';
+    var spark = m === 'star' ? '<path d="M12 30 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z M98 14 l1.5 4 4 1.5 -4 1.5 -1.5 4 -1.5 -4 -4 -1.5 4 -1.5z" fill="#FFC83D" class="bsp"/>' : '';
+    var w = small ? 64 : 100;
+    return '<svg class="buddy b-' + (m === 'asleep' ? 'sleepy' : m === 'calm' ? 'happy' : m) + '" width="' + w + '" height="' + Math.round(w * 1.13) + '" viewBox="0 -4 112 128" role="img" aria-label="' + BUD[ty] + ' · ' + { star: 'баяртай', happy: 'сэргэг', calm: 'сэрсэн', asleep: 'унтаж байна', sleepy: 'нойрмог', sad: 'гунигтай' }[m] + '">' + spark + crown + zz +
+      '<g class="bb">' + shape + hat + '<g class="beyes">' + eyes + '</g>' + cheeks + '<g class="bmouth">' + mouth + '</g><g class="barml">' + arms.replace(/ M\d+ 66 .*"( stroke)/, '"$1') + '</g><g class="barmr">' + arms.replace(/M\d+ 66 q-9 -?\d+ -14 -?\d+ /, '') + '</g></g>' + tl + '</svg>';
   }
   // ---------- ШАЛГАЛТ (student) ----------
   var EXN = { garaa: 'Гарааны шалгалт', yavts: 'Явцын шалгалт', ulir: 'Улирлын шалгалт' };
@@ -203,7 +364,7 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
     var box = document.getElementById('exBox'); if (!box) return;
     sb.rpc('student_exams', { p_token: token }).then(function (r) {
       var list = (r.data || []).filter(function (e) { return !e.done ? new Date(e.ends_at) > new Date() : true; });
-      if (!list.length) { box.innerHTML = ''; return; }
+      if (!list.length) { box.innerHTML = '<div class="card" style="flex-direction:row;align-items:center;gap:12px;border-style:dashed"><span style="font-size:26px">📝</span><div><b>Шалгалт</b><div class="muted" style="font-size:13px">Одоогоор нээлттэй шалгалт алга. Багш эхлүүлэхэд энд гарч ирнэ.</div></div></div>'; return; }
       box.innerHTML = list.map(function (e) {
         var open = !e.done && new Date(e.ends_at) > new Date();
         return '<div class="card" style="border:2px solid ' + (open ? '#B42318' : '#C5CADB') + ';gap:8px"><div class="row"><span class="pill ' + (open ? 'p-red' : 'p-green') + '">' + (EXN[e.type] || 'Шалгалт') + '</span>' +
@@ -274,37 +435,85 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
       };
     });
   }
+  var stTerm = 0, stTab = 'home';
   function showHome() {
     var xp = home.xp || 0;
-    var L = [[0, 'Шавь'], [50, 'Зураач'], [120, 'Зураг төсөлч'], [220, 'Инженер'], [350, 'Архитектор']];
+    var L = isArt() ? [[0, 'Шавь'], [50, 'Зураач'], [120, 'Уран зураач'], [220, 'Мастер'], [350, 'Уран бүтээлч']] : [[0, 'Шавь'], [50, 'Зураач'], [120, 'Зураг төсөлч'], [220, 'Инженер'], [350, 'Архитектор']];
     var i = 0; while (i < L.length - 1 && xp >= L[i + 1][0]) i++;
     var next = L[i + 1];
     var pct = next ? Math.round((xp - L[i][0]) / (next[0] - L[i][0]) * 100) : 100;
+    buddyLv = i + 1;
     var lazy = (home.pending_old || 0) > 0;
     var LBL = { no_notebook: 'Дэвтэргүй', no_supplies: 'Хэрэглэгдэхүүнгүй', phone: 'Утас', sleep: 'Унтсан', talk: 'Ярьсан', disrupt: 'Саад', late: 'Хоцорсон' };
     var counts = {};
     (home.behavior || []).forEach(function (b) { if (LBL[b.kind]) counts[b.kind] = (counts[b.kind] || 0) + 1; });
     var beh = Object.keys(counts).map(function (k) { return LBL[k] + ' ' + counts[k]; });
     var html = '<div class="card"><div style="display:flex;gap:12px;align-items:center">' + avatarSvg(i + 1, lazy) +
-      '<div style="flex:1;display:flex;flex-direction:column;gap:5px"><span class="muted">Миний дүр · ' + (i + 1) + '-р түвшин</span>' +
+      '<div style="flex:1;display:flex;flex-direction:column;gap:5px"><span class="muted">Миний ' + buddyName() + ' · ' + (i + 1) + '-р түвшин · <button type="button" class="bswap" id="bswap">Дүр солих</button></span>' +
       '<b style="font-size:18px">' + L[i][1] + '</b>' +
-      '<span style="font-size:13px;font-weight:600;color:' + (lazy ? '#8A4B0B' : '#1C6B40') + '">' + (lazy ? 'Нойрмог байна · ' + home.pending_old + ' ажлаа нөхөөрэй' : 'Сэргэг байна') + '</span>' +
+      '<span class="bmsg b-' + ({ asleep: 'sleepy', calm: 'happy' }[buddyMood()] || buddyMood()) + '">' + ({ star: '🌟 ' + buddyName() + ' баярлаж байна! Чи шилдэг нь', happy: '😊 ' + buddyName() + ' сэргэг байна', calm: '🙂 ' + buddyName() + ' сэрлээ! Ажлаа илгээвэл баярлана', asleep: '💤 ' + buddyName() + ' унтаж байна · ажлаа илгээж сэрээгээрэй', sleepy: '😴 ' + buddyName() + ' нойрмоглож байна · ' + home.pending_old + ' ажлаа нөхөөрэй', sad: '🥺 ' + buddyName() + ' гунигтай байна · ' + home.pending_old + ' ажил чамайг хүлээж байна' })[buddyMood()] + '</span>' +
       '<div class="bar"><div style="width:' + pct + '%"></div></div><span class="muted">' + xp + ' оноо' + (next ? ' · дараагийн түвшин ' + next[0] : '') + '</span></div></div>' +
       '<div class="muted">Энэ сарын хичээлийн тэмдэглэл: ' + (beh.length ? esc(beh.join(', ')) + ' удаа' : 'тэмдэглэл алга, сайн байна') + '</div></div>';
-    html += '<div id="exBox" style="display:flex;flex-direction:column;gap:12px"></div>';
-    html += '<h1 style="font-size:18px">Сэдвүүд</h1><div class="muted">Хоцорсон хичээлээ эндээс нөхнө. Видео үргэлж нээлттэй.</div>';
-    if (!home.topics.length) html += '<div class="card muted">Багш одоогоор сэдэв нээгээгүй байна.</div>';
-    home.topics.forEach(function (t, k) {
-      var isNew = t.tasks_open || t.test_open;
-      html += '<button class="topic' + (isNew ? ' now' : '') + '" data-k="' + k + '"><div class="row"><span style="font-size:12px;font-weight:600;color:' + (isNew ? '#2747B8' : '#5A6178') + '">' +
-        (isNew ? 'Нээлттэй даалгавартай' : fmtDate(t.opened_at) + ' · ' + esc(t.unit)) + '</span>' + statusPill(t) + '</div>' +
-        '<b style="font-size:16px">' + (t.num ? 'Хичээл ' + t.num + ' · ' : '') + esc(t.title) + '</b></button>';
-    });
-    html += feedbackCard(null) + '<button class="link" id="out">Гарах</button>';
+    if (stTab !== 'home') html = '';
+    var TC = ['#7C6CF0', '#3BB6A6', '#F08A5D', '#E86CA8', '#4F8CF7', '#F2B53C'];
+    var card = function (t, k, sub) { var isNew = t.tasks_open || t.test_open, tc = TC[(t.num || k) % TC.length];
+      return '<button class="topic' + (isNew ? ' now' : '') + '" data-k="' + k + '" style="--tc:' + tc + '"><span class="tnum">' + (t.num || '•') + '</span><div class="tbody"><div class="row"><span style="font-size:12px;font-weight:600;color:' + (isNew ? '#2747B8' : '#5A6178') + '">' +
+        (sub || (isNew ? 'Нээлттэй даалгавартай' : fmtDate(t.opened_at) + ' · ' + esc(t.unit))) + '</span>' + statusPill(t) + '</div><b style="font-size:16px">' + esc(t.title) + '</b></div><span class="tgo">›</span></button>'; };
+    var sentOk = function (t) { return t.sub_status === 'auto' || t.sub_status === 'ok' || t.sub_status === 'review'; };
+    var todo = home.topics.map(function (t, k) { return { t: t, k: k }; }).filter(function (x) { return (x.t.tasks_open && !sentOk(x.t)) || x.t.sub_status === 'redo'; });
+    var tests = home.topics.map(function (t, k) { return { t: t, k: k }; }).filter(function (x) { return x.t.test_open && x.t.test_count && !x.t.test_result; });
+    if (stTab === 'home') {
+      html += bagHtml();
+      html += '<div id="exBox" style="display:flex;flex-direction:column;gap:12px"></div>';
+      html += '<h1 style="font-size:19px;margin-top:4px">📚 Миний хичээлүүд</h1><div class="muted">Видео үргэлж нээлттэй. Хоцорсон хичээлээ эндээс нөхнө.</div>';
+      var termOf = function (d) { var m = new Date(d || Date.now()).getMonth() + 1; return m >= 9 && m <= 10 ? 1 : m >= 11 ? 2 : m <= 3 ? 3 : 4; };
+      if (!stTerm) stTerm = termOf();
+      var tcnt = [0, 0, 0, 0, 0]; home.topics.forEach(function (t) { tcnt[termOf(t.opened_at)]++; });
+      html += '<div class="terms" role="tablist">' + [1, 2, 3, 4].map(function (n) { return '<button type="button" role="tab" aria-selected="' + (n === stTerm) + '" class="' + (n === stTerm ? 'on' : '') + '" data-term="' + n + '">' + ['I', 'II', 'III', 'IV'][n - 1] + ' улирал' + (tcnt[n] ? '<em>' + tcnt[n] + '</em>' : '') + '</button>'; }).join('') + '</div>';
+      var shown = 0;
+      home.topics.forEach(function (t, k) { if (termOf(t.opened_at) !== stTerm) return; shown++; html += card(t, k); });
+      if (!home.topics.length) html += '<div class="card muted">Багш одоогоор сэдэв нээгээгүй байна.</div>';
+      else if (!shown) html += '<div class="card muted" style="text-align:center">' + ['I', 'II', 'III', 'IV'][stTerm - 1] + ' улиралд нээсэн сэдэв алга.</div>';
+    } else if (stTab === 'tasks') {
+      html += '<h1 style="font-size:19px">📸 Дадлага ажил</h1><div class="muted">Зургаа илгээх, багшийн буцаасан ажлаа засах хичээлүүд энд нэг дор. Хичээл дээр дарж ороод илгээнэ.</div>';
+      html += todo.length ? todo.map(function (x) { return card(x.t, x.k, x.t.sub_status === 'redo' ? 'Засаад илгээ' : (x.t.due_at ? fmtDate(x.t.due_at) + ' хүртэл' : 'Илгээх')); }).join('')
+        : '<div class="card" style="align-items:center;text-align:center;padding:24px"><span style="font-size:34px">🎉</span><b>Илгээх дадлага ажил алга</b><div class="muted">Бүх ажлаа хийсэн байна. ' + buddyName() + ' баяртай!</div></div>';
+      var sent = home.topics.map(function (t, k) { return { t: t, k: k }; }).filter(function (x) { return sentOk(x.t); }).slice(0, 8);
+      if (sent.length) html += '<h2 style="margin-top:6px">Илгээсэн</h2>' + sent.map(function (x) { return card(x.t, x.k); }).join('');
+    } else if (stTab === 'exams') {
+      html += '<h1 style="font-size:19px">📝 Шалгалт, тест</h1>';
+      html += '<div id="exBox" style="display:flex;flex-direction:column;gap:12px"></div>';
+      if (tests.length) html += '<h2 style="margin-top:6px">Нээлттэй тест</h2>' + tests.map(function (x) { return card(x.t, x.k, (x.t.test_count || 0) + ' асуулт · шууд дүгнэгдэнэ'); }).join('');
+      var doneT = home.topics.map(function (t, k) { return { t: t, k: k }; }).filter(function (x) { return x.t.test_result; });
+      if (doneT.length) html += '<h2 style="margin-top:6px">Өгсөн тест</h2>' + doneT.map(function (x) { return card(x.t, x.k, 'Дүн ' + x.t.test_result.score + '/' + x.t.test_result.total); }).join('');
+    } else {
+      html = '<h1 style="font-size:19px">✉️ Багшид захиа</h1><div class="muted">Ойлгомжгүй зүйл, санал хүсэлтээ багшдаа бичээрэй.</div>';
+      html += feedbackCard(null) + '<button class="link" id="out">Гарах</button>';
+    }
+    var nb = function (k, ic, lab, n) { return '<button type="button" class="' + (stTab === k ? 'on' : '') + '" data-tab="' + k + '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ic + '</svg><span>' + lab + '</span>' + (n ? '<em>' + n + '</em>' : '') + '</button>'; };
+    html += '<nav class="snav" aria-label="Цэс">' +
+      nb('home', '<path d="M4 19.5V5a2 2 0 012-2h13v16H6.5A2.5 2.5 0 004 21.5"/><path d="M8 7h8M8 11h6"/>', 'Хичээл', 0) +
+      nb('tasks', '<rect x="3" y="6" width="18" height="14" rx="3"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/>', 'Дадлага', todo.length) +
+      nb('exams', '<path d="M9 4h6l1 2h3v15H5V6h3z"/><path d="M9 12l2 2 4-4"/>', 'Шалгалт', tests.length) +
+      nb('msg', '<path d="M4 5h16v11H8l-4 4z"/>', 'Захиа', 0) + '</nav>';
+
     app.innerHTML = html;
     bindFeedback(); loadExams();
+    var bsw = document.getElementById('bswap'); if (bsw) bsw.onclick = function (e) {
+      e.stopPropagation(); var cur = buddyType(), ov = document.createElement('div'); ov.className = 'bpick';
+      var pk = function (k) { return '<button type="button" data-bt="' + k + '" class="' + (k === cur ? 'on' : '') + '">' + avatarSvg(3, false, k, true) + '<b>' + BUD[k] + '</b></button>'; };
+      ov.innerHTML = '<div class="bpc"><b style="font-size:18px">Найзаа сонго</b><div class="muted">Бүгд хамтдаа зураг зурдаг. Чи аль нь вэ?</div><div class="bgrid">' + buddySet().map(function (k) { return pk(k); }).join('') + '</div><button type="button" class="btn sec" id="bpx">Хаах</button></div>';
+      document.body.appendChild(ov);
+      ov.querySelectorAll('[data-bt]').forEach(function (b) { b.onclick = function () { try { localStorage.setItem('buddy_' + home.code, b.dataset.bt); } catch (x) {} ov.remove(); toast('Сайн уу! Би ' + BUD[b.dataset.bt] + ' 👋'); showHome(); }; });
+      ov.querySelector('#bpx').onclick = function () { ov.remove(); }; ov.onclick = function (x) { if (x.target === ov) ov.remove(); };
+    };
+    if (stTab === 'home') bagCheck();
+    app.querySelectorAll('[data-bi]').forEach(function (b) { b.onclick = function () { var list = BAG[isArt() ? 'art' : 'draw'], i = +b.dataset.bi; toast(b.classList.contains('got') ? list[i][0] + ' ' + list[i][1] + ' — чиний цүнхэнд байна' : '❔ Нууц хэрэгсэл · даалгавраа илгээгээд нээгээрэй'); }; });
+    app.querySelectorAll('.snav [data-tab]').forEach(function (b) { b.onclick = function () { stTab = b.dataset.tab; showHome(); }; });
+    var bd = app.querySelector('.buddy'); if (bd) bd.onclick = function () { bd.classList.remove('jump'); void bd.getBoundingClientRect(); bd.classList.add('jump'); var r = bd.getBoundingClientRect(); for (var h = 0; h < 6; h++) (function (h) { var e = document.createElement('span'); e.className = 'bheart'; e.textContent = ['💖', '⭐', '✨', '💛', '🎨', '💜'][h]; e.style.left = (r.left + r.width / 2 + (h - 2.5) * 14) + 'px'; e.style.top = (r.top + 20) + 'px'; e.style.animationDelay = (h * 60) + 'ms'; document.body.appendChild(e); setTimeout(function () { e.remove(); }, 1400); })(h); var M = { asleep: ['Zzz… ажил илгээвэл би сэрнэ', 'Намайг сэрээгээч…'], calm: ['Сайн уу! Би дөнгөж сэрлээ', 'Хамтдаа ажиллая'], star: ['Чи гайхалтай!', 'Ингээд л яв! 🚀', 'Би чамаар бахархаж байна'], happy: ['Өнөөдөр юу зурах вэ?', 'Хамтдаа хичээе!', 'Дараагийн түвшин ойрхон байна'], sleepy: ['Ажлаа илгээвэл би сэрнэ…', 'Ммм… нөхөх ажил байна', 'Нэг ажил илгээгээд үзээрэй'], sad: ['Надад туслаач… ажлаа илгээгээрэй', 'Би чамайг хүлээж байна', 'Нэг нэгээр нь нөхье'] }[buddyMood()]; toast({ pencil: '✏️ ', ruler: '📏 ', compass: '📐 ', brush: '🖌️ ', palette: '🎨 ', tube: '🧴 ' }[buddyType()] + M[Math.floor(Math.random() * M.length)]); };
     app.querySelectorAll('.topic').forEach(function (b) { b.onclick = function () { curTopic = home.topics[+b.dataset.k]; showTopic(); }; });
-    document.getElementById('out').onclick = logout;
+    app.querySelectorAll('[data-term]').forEach(function (b) { b.onclick = function () { stTerm = +b.dataset.term; var y = window.scrollY; showHome(); window.scrollTo(0, y); }; });
+    if (document.getElementById('out')) document.getElementById('out').onclick = logout;
     window.scrollTo(0, 0);
   }
 

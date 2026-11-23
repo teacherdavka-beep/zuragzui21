@@ -1810,35 +1810,35 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
   // ---- bank
   function exBank(gs) {
     app.innerHTML = exHead() + '<div class="muted">Ачаалж байна…</div>'; exBindHead();
-    Promise.all([
-      sb.from('units').select('id,name,sort').eq('grade', exGrade).order('sort'),
-      sb.from('lessons').select('id,num,title,unit_id,units!inner(grade)').eq('units.grade', exGrade).order('num'),
-      sb.from('tests').select('*').eq('grade', exGrade).order('created_at', { ascending: false })
-    ]).then(function (r) {
+    sb.from('units').select('id,name,sort').eq('grade', exGrade).order('sort').then(function (ru) {
+      var uids = (ru.data || []).map(function (u) { return u.id; });
+      return Promise.all([Promise.resolve(ru),
+        uids.length ? sb.from('lessons').select('id,num,title,unit_id').in('unit_id', uids).order('num') : Promise.resolve({ data: [] }),
+        sb.from('tests').select('*').eq('grade', exGrade).order('created_at', { ascending: false })]);
+    }).then(function (r) {
       var units = r[0].data || [], lessons = r[1].data || [], tests = r[2].data || [];
-      var cnt = function (id) { return tests.filter(function (t) { return t.lesson_id === id; }).length; };
-      var shown = exLesson === 'all' ? tests : tests.filter(function (t) { return t.lesson_id === exLesson; });
-      var cur = lessons.filter(function (l) { return l.id === exLesson; })[0];
+      if (exLesson !== 'all' && !EXT[exLesson]) exLesson = 'all';
+      var cnt = function (k) { return tests.filter(function (t) { return (t.kind || 'yavts') === k; }).length; };
+      var shown = exLesson === 'all' ? tests : tests.filter(function (t) { return (t.kind || 'yavts') === exLesson; });
+      var cur = null;
       var html = exHead() + '<div style="display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:16px;align-items:start">' +
         '<div class="card" style="gap:6px"><div class="row" style="gap:6px">' + gs.map(function (g) { return '<button class="chip' + (g === exGrade ? ' on' : '') + '" data-exg="' + g + '">' + g + '-р анги</button>'; }).join('') + '</div>' +
         '<button class="btn ghost" style="text-align:left;' + (exLesson === 'all' ? 'background:#EEF1FA;font-weight:700' : '') + '" data-exl="all">Бүх тест (' + tests.length + ')</button>' +
-        units.map(function (u) { return '<b style="font-size:14px;margin-top:6px">📁 ' + esc(u.name) + '</b>' + lessons.filter(function (l) { return l.unit_id === u.id; }).map(function (l) {
-          return '<button class="btn ghost" style="text-align:left;height:auto;min-height:38px;padding:6px 10px;' + (exLesson === l.id ? 'background:#EEF1FA;font-weight:700' : 'font-weight:500') + '" data-exl="' + l.id + '">Х' + l.num + ' · ' + esc(l.title) + ' <span class="muted">(' + cnt(l.id) + ')</span></button>'; }).join(''); }).join('') +
-        (units.length ? '' : '<div class="muted">Материалын санд нэгж, хичээл нэмбэл энд сэдвээр цэгцэрнэ.</div>') + '</div>' +
+        ['garaa', 'yavts', 'ulir'].map(function (k) { return '<button class="btn ghost" style="text-align:left;display:flex;align-items:center;gap:10px;' + (exLesson === k ? 'background:' + EXT[k][2] + ';font-weight:800;color:' + EXT[k][1] : 'font-weight:600') + '" data-exl="' + k + '"><span style="width:12px;height:12px;border-radius:50%;background:' + EXT[k][1] + '"></span>' + EXT[k][0] + ' <span class="muted" style="margin-left:auto">' + cnt(k) + '</span></button>'; }).join('') + '</div>' +
         '<div style="display:flex;flex-direction:column;gap:10px"><div class="row between"><h2>' + (cur ? 'Х' + cur.num + ' · ' + esc(cur.title) : exGrade + '-р анги · бүх тест') + '</h2><button class="btn" id="exNew">+ Тест нэмэх</button></div>' +
         (shown.length ? '' : '<div class="card muted">Тест алга. "+ Тест нэмэх" дарж эхлээрэй.</div>') +
         shown.map(function (t) {
           var n = t.mode === 'build' ? (t.questions || []).length : (t.key || []).length, l = lessons.filter(function (x) { return x.id === t.lesson_id; })[0];
           return '<div class="card" style="flex-direction:row;align-items:center;gap:14px"><span style="width:52px;height:56px;border-radius:8px;background:' + MODEN[t.mode][1] + ';color:#fff;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;text-align:center;flex:0 0 auto">' + MODEN[t.mode][0] + '</span>' +
-            '<span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">' + esc(t.name) + '</b><span class="muted" style="font-size:13px">' + (t.mode === 'forms' ? 'Google Forms' : n + ' асуулт') + (l ? ' · Х' + l.num + ' ' + esc(l.title) : '') + '</span></span>' +
+            '<span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">' + esc(t.name) + '</b><span class="muted" style="font-size:13px"><b style="color:' + EXT[t.kind || 'yavts'][1] + '">' + EXT[t.kind || 'yavts'][0] + '</b> · ' + (t.mode === 'forms' ? 'Google Forms' : n + ' асуулт') + (l ? ' · Х' + l.num + ' ' + esc(l.title) : '') + '</span></span>' +
             '<button class="btn ghost" data-exe="' + t.id + '">Засах</button><button class="btn sec" data-exgo="' + t.id + '">Шалгалт авах →</button><button class="btn ghost" data-exdel="' + t.id + '" aria-label="Устгах">✕</button></div>';
         }).join('') + '</div></div>';
       app.innerHTML = html; exBindHead(); bindPv();
       app.querySelectorAll('[data-exg]').forEach(function (b) { b.onclick = function () { exGrade = +b.dataset.exg; exLesson = 'all'; showExams(); }; });
       app.querySelectorAll('[data-exl]').forEach(function (b) { b.onclick = function () { exLesson = b.dataset.exl; showExams(); }; });
-      q('#exNew').onclick = function () { exEdit = { grade: exGrade, lesson_id: exLesson === 'all' ? null : exLesson, unit_id: cur ? cur.unit_id : null, name: cur ? 'Х' + cur.num + ' · ' + cur.title + ' — тест' : '', mode: 'file', files: [], key: [], opts: 4, labels: 'latin', questions: [], forms_url: '' }; showExams(); };
+      q('#exNew').onclick = function () { exEdit = { grade: exGrade, lesson_id: null, unit_id: null, kind: EXT[exLesson] ? exLesson : 'yavts', name: '', mode: 'file', files: [], key: [], opts: 4, labels: 'latin', questions: [], forms_url: '' }; showExams(); };
       app.querySelectorAll('[data-exe]').forEach(function (b) { b.onclick = function () { exEdit = JSON.parse(JSON.stringify(tests.filter(function (t) { return t.id === b.dataset.exe; })[0])); showExams(); }; });
-      app.querySelectorAll('[data-exgo]').forEach(function (b) { b.onclick = function () { exTab = 'take'; exPreTest = b.dataset.exgo; showExams(); }; });
+      app.querySelectorAll('[data-exgo]').forEach(function (b) { b.onclick = function () { var tt = tests.filter(function (x) { return x.id === b.dataset.exgo; })[0]; if (tt && tt.kind) exType = tt.kind; exTab = 'take'; exPreTest = b.dataset.exgo; showExams(); }; });
       app.querySelectorAll('[data-exdel]').forEach(function (b) { b.onclick = function () { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Устгах уу?'; return; } sb.from('tests').delete().eq('id', b.dataset.exdel).then(function (x) { if (!fail(x)) { toast('Устгагдлаа'); showExams(); } }); }; });
     });
   }
@@ -1848,6 +1848,7 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
     var M = [['file', '1. Файлаар тест', 'Зураг/PDF эсвэл цаасан тестээ утсаар авч оруулна, хажуугаас нь зөв хариултаа сонгоно'], ['build', '2. Систем дээр үүсгэх', 'Forms шиг асуулт, зураг, сонголтоо энд бичнэ'], ['forms', '3. Google Forms линк', 'Forms-ийн линк холбоно. Хариуг Дүн хэсэгт CSV-ээр оруулна']];
     var html = exHead() + '<div class="row between"><h2>' + (t.id ? 'Тест засах' : 'Шинэ тест') + '</h2><button class="btn ghost" id="exBack">← Тестийн сан</button></div>' +
       '<label class="muted" for="exName">Тестийн нэр</label><input type="text" id="exName" value="' + esc(t.name) + '" placeholder="Жишээ: Огтлогдсон призм — явцын тест">' +
+      '<div class="row" style="gap:6px" role="group" aria-label="Шалгалтын төрөл">' + ['garaa', 'yavts', 'ulir'].map(function (k) { var on = (t.kind || 'yavts') === k; return '<button type="button" class="chip' + (on ? ' on' : '') + '" data-exk="' + k + '" style="' + (on ? 'background:' + EXT[k][1] + ';border-color:' + EXT[k][1] : '') + '">' + EXT[k][0] + '</button>'; }).join('') + '</div>' +
       '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">' + M.map(function (m) { var on = t.mode === m[0]; return '<button data-exm="' + m[0] + '" style="text-align:left;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;cursor:pointer;background:' + (on ? '#1E2A5A' : '#fff') + ';color:' + (on ? '#fff' : '#1A1F36') + ';border:2px solid ' + (on ? '#1E2A5A' : '#E1E4EE') + '"><b style="font-size:15px">' + m[1] + '</b><span style="font-size:12px;opacity:.85">' + m[2] + '</span></button>'; }).join('') + '</div>';
     if (t.mode === 'file') {
       html += '<div class="row">' + (t.files || []).map(function (u, i) { return '<div style="position:relative;width:96px;height:120px;border:1px solid #C5CADB;border-radius:8px;overflow:hidden;background:#F4F6FB;display:flex;align-items:center;justify-content:center">' + (/\.pdf(\?|$)/i.test(u) ? '<b style="color:#B42318">PDF</b>' : '<img alt="Хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;height:100%;object-fit:cover">') + '<button class="thx" data-exfd="' + i + '" aria-label="Хасах">✕</button></div>'; }).join('') +
@@ -1897,6 +1898,7 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
       app.querySelectorAll('[data-dtu]').forEach(function (inp) { inp.onchange = function () { var f = this.files[0]; if (!f) return; keep(); toast('Хуулж байна…'); var i = +inp.dataset.dtu; exUpload(f, false).then(function (u) { t.draw_tasks[i].img = u; exEditor(); }).catch(function () { toast('Хуулж чадсангүй'); }); }; });
     }
     q('#exBack').onclick = function () { exEdit = null; showExams(); };
+    app.querySelectorAll('[data-exk]').forEach(function (b) { b.onclick = function () { keep(); t.kind = b.dataset.exk; exEditor(); }; });
     app.querySelectorAll('[data-exm]').forEach(function (b) { b.onclick = function () { keep(); t.mode = b.dataset.exm; exEditor(); }; });
     var saveFiles = function (msg) { if (!t.id) { if (msg) toast(msg); return; } sb.from('tests').update({ files: t.files || [] }).eq('id', t.id).then(function (x) { if (!fail(x)) toast(msg || 'Хадгалагдлаа'); }); };
     if (t.mode === 'file') {
@@ -1935,7 +1937,7 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
     q('#exSave').onclick = function () {
       keep(); if (t._sync) t._sync();
       var err = q('#exErr'); if (!t.name.trim()) { err.textContent = 'Тестийн нэрээ бичнэ үү.'; return; }
-      var row = { teacher_id: me.id, grade: t.grade, unit_id: t.unit_id || null, lesson_id: t.lesson_id || null, name: t.name.trim(), mode: t.mode };
+      var row = { teacher_id: me.id, grade: t.grade, unit_id: t.unit_id || null, lesson_id: t.lesson_id || null, name: t.name.trim(), mode: t.mode, kind: t.kind || 'yavts' };
       if (t.mode === 'file') {
         var miss = []; for (var i = 0; i < (t.key || []).length; i++) if (t.key[i] == null || t.key[i] >= t.opts) miss.push(i + 1);
         var dts = (t.draw_tasks || []).filter(function (d) { return (d.text || '').trim() || d.img; });
