@@ -244,7 +244,7 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
 .kstep input{width:64px;height:42px;text-align:center;font-weight:800;font-size:17px}
 .kx{flex:0 0 32px;height:32px;border:0;border-radius:8px;background:transparent;color:#A9A6BC;font-size:14px;padding:0}.kx:hover{background:#FDECEC;color:#B42318}
 .kadd{margin-top:4px;height:40px;border:1.5px dashed #A9B1CC;border-radius:10px;background:#F7F8FC;color:var(--btn);font-weight:700}
-.pgw{border:1px solid #E1E4EE;border-radius:10px;overflow:hidden}.pgh{display:flex;justify-content:space-between;align-items:center;padding:4px 4px 4px 10px;background:#F4F6FB;font-size:13px}.pgh .btn{height:34px;color:#B42318}
+.pgw{border:1px solid #E1E4EE;border-radius:10px;overflow:hidden}.pgh{display:flex;justify-content:space-between;align-items:center;padding:4px 4px 4px 10px;background:#F4F6FB;font-size:13px}.pgh .btn{height:34px;color:#B42318}.thx{position:absolute;right:4px;top:4px;width:34px;height:34px;border-radius:50%;border:0;background:#B42318;color:#fff;font-size:16px;font-weight:800;padding:0;box-shadow:0 2px 6px rgba(0,0,0,.3)}.clrall{align-self:flex-start;color:#B42318;border-color:#F3C5C5}.pgh{gap:6px}.pgh b{flex:1}.pgh .split{color:var(--btn)!important;font-weight:700}
 </style>
 
 </head>
@@ -1749,6 +1749,12 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
       return chain.then(function () { return out; });
     });
   }
+  function splitStoredPdf(url, uploadFn) {
+    toast('PDF-ийг хуудас болгож байна…');
+    return fetch(url).then(function (r) { if (!r.ok) throw new Error('fetch'); return r.blob(); })
+      .then(function (b) { return pdfPages(new File([b], 'test.pdf', { type: 'application/pdf' })); })
+      .then(function (pages) { return Promise.all(pages.map(uploadFn)); });
+  }
   function expandFiles(fl) { // PDF -> хуудас бүр тусдаа зураг
     return Promise.all(fl.map(function (f) { return /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name) ? pdfPages(f) : Promise.resolve([f]); })).then(function (a) { return [].concat.apply([], a); });
   }
@@ -1825,12 +1831,13 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
       '<label class="muted" for="exName">Тестийн нэр</label><input type="text" id="exName" value="' + esc(t.name) + '" placeholder="Жишээ: Огтлогдсон призм — явцын тест">' +
       '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">' + M.map(function (m) { var on = t.mode === m[0]; return '<button data-exm="' + m[0] + '" style="text-align:left;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;cursor:pointer;background:' + (on ? '#1E2A5A' : '#fff') + ';color:' + (on ? '#fff' : '#1A1F36') + ';border:2px solid ' + (on ? '#1E2A5A' : '#E1E4EE') + '"><b style="font-size:15px">' + m[1] + '</b><span style="font-size:12px;opacity:.85">' + m[2] + '</span></button>'; }).join('') + '</div>';
     if (t.mode === 'file') {
-      html += '<div class="row">' + (t.files || []).map(function (u, i) { return '<div style="position:relative;width:96px;height:120px;border:1px solid #C5CADB;border-radius:8px;overflow:hidden;background:#F4F6FB;display:flex;align-items:center;justify-content:center">' + (/\.pdf(\?|$)/i.test(u) ? '<b style="color:#B42318">PDF</b>' : '<img alt="Хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;height:100%;object-fit:cover">') + '<button class="btn ghost" data-exfd="' + i + '" aria-label="Хасах" style="position:absolute;right:4px;top:4px;height:28px;min-width:28px;padding:0 6px;background:#fff">✕</button></div>'; }).join('') +
+      html += '<div class="row">' + (t.files || []).map(function (u, i) { return '<div style="position:relative;width:96px;height:120px;border:1px solid #C5CADB;border-radius:8px;overflow:hidden;background:#F4F6FB;display:flex;align-items:center;justify-content:center">' + (/\.pdf(\?|$)/i.test(u) ? '<b style="color:#B42318">PDF</b>' : '<img alt="Хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;height:100%;object-fit:cover">') + '<button class="thx" data-exfd="' + i + '" aria-label="Хасах">✕</button></div>'; }).join('') +
         '<label class="btn sec" style="display:flex;align-items:center;justify-content:center;width:96px;height:120px;cursor:pointer;text-align:center">📷 Утсаар авах<input type="file" id="exCam" accept="image/*" capture="environment" hidden></label>' +
         '<label class="btn sec" style="display:flex;align-items:center;justify-content:center;width:96px;height:120px;cursor:pointer;text-align:center">+ Файл / зураг<input type="file" id="exUp" accept="image/*,application/pdf" multiple hidden></label></div>' +
+        ((t.files || []).length ? '<button type="button" class="btn ghost clrall" id="exClr">🗑 Бүх хуудсыг хасаад дахин оруулах</button>' : '') +
         '<label style="display:flex;gap:8px;align-items:center;font-size:14px;font-weight:600"><input type="checkbox" id="exScan" checked style="width:20px;height:20px"> Скан шиг тодруулах</label>' +
         '<div style="display:grid;grid-template-columns:' + ((t.files || []).length ? 'minmax(0,1.5fr) minmax(280px,1fr)' : '1fr') + ';gap:16px;align-items:start">' +
-        ((t.files || []).length ? '<div style="max-height:75vh;overflow:auto;border:1px solid #E1E4EE;border-radius:12px;background:#fff;padding:8px;display:flex;flex-direction:column;gap:8px">' + t.files.map(function (u, i) { return '<div class="pgw"><div class="pgh"><b>Хуудас ' + (i + 1) + '</b><button type="button" class="btn ghost" data-exfd="' + i + '">✕ Энэ хуудсыг хасах</button></div>' + (/\.pdf(\?|$)/i.test(u) ? '<iframe title="Хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;height:70vh;border:0"></iframe>' : '<img alt="Хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;display:block">') + '</div>'; }).join('') + '</div>' : '') +
+        ((t.files || []).length ? '<div style="max-height:75vh;overflow:auto;border:1px solid #E1E4EE;border-radius:12px;background:#fff;padding:8px;display:flex;flex-direction:column;gap:8px">' + t.files.map(function (u, i) { return '<div class="pgw"><div class="pgh"><b>' + (/\.pdf(\?|$)/i.test(u) ? 'PDF файл' : 'Хуудас ' + (i + 1)) + '</b>' + (/\.pdf(\?|$)/i.test(u) ? '<button type="button" class="btn sec split" data-exsplit="' + i + '">✂ Хуудсуудад задлах</button>' : '') + '<button type="button" class="btn ghost" data-exfd="' + i + '">✕ Хасах</button></div>' + (/\.pdf(\?|$)/i.test(u) ? '<iframe title="Хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;height:70vh;border:0"></iframe>' : '<img alt="Хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;display:block">') + '</div>'; }).join('') + '</div>' : '') +
         '<div class="card" style="position:sticky;top:8px;gap:8px"><b>Зөв хариултаа сонгоно</b>' +
         keyStepper('exN', (t.key || []).length || 10, 80) + '<div class="row"><label class="muted" for="exO">Сонголт</label><select id="exO">' + [3, 4, 5].map(function (n) { return '<option' + ((t.opts || 4) === n ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select><select id="exL" aria-label="Үсэг"><option value="latin"' + (t.labels !== 'cyr' ? ' selected' : '') + '>a b c d</option><option value="cyr"' + (t.labels === 'cyr' ? ' selected' : '') + '>А Б В Г</option></select></div>' +
         '<div id="exK" style="display:flex;flex-direction:column;gap:4px;max-height:60vh;overflow:auto"></div><div class="muted" id="exKp"></div></div></div>';
@@ -1874,6 +1881,10 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
         expandFiles(fl).then(function (fl2) { return Promise.all(fl2.map(function (f) { return exUpload(f, scan); })); }).then(function (urls) { t.files = (t.files || []).concat(urls); toast(urls.length + ' хуудас нэмэгдлээ'); exEditor(); }).catch(function (e) { console.error(e); toast('Хуулж чадсангүй'); }); };
       q('#exUp').onchange = up; q('#exCam').onchange = up;
       app.querySelectorAll('[data-exfd]').forEach(function (b) { b.onclick = function () { keep(); t.files.splice(+b.dataset.exfd, 1); exEditor(); }; });
+      if (q('#exClr')) q('#exClr').onclick = function () { var b = this; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Үнэхээр бүгдийг хасах уу? Дахин дарна'; return; } keep(); t.files = []; toast('Хуудсууд хасагдлаа · шинээр оруулна уу'); exEditor(); };
+      app.querySelectorAll('[data-exsplit]').forEach(function (b) { b.onclick = function () { keep(); var i = +b.dataset.exsplit; b.disabled = true;
+        splitStoredPdf(t.files[i], function (f) { return exUpload(f, false); }).then(function (urls) { t.files.splice.apply(t.files, [i, 1].concat(urls)); toast(urls.length + ' хуудас боллоо · хэрэггүйгээ ✕ дарж хасна'); exEditor(); }).catch(function (e) { console.error(e); b.disabled = false; toast('Задалж чадсангүй'); });
+      }; });
     } else if (t.mode === 'build') {
       var sync = function () { keep(); app.querySelectorAll('[data-exq]').forEach(function (x) { t.questions[+x.dataset.exq].q = x.value; }); app.querySelectorAll('[data-exo]').forEach(function (x) { var p = x.dataset.exo.split('_'); t.questions[+p[0]].opts[+p[1]] = x.value; }); };
       app.querySelectorAll('[data-exok]').forEach(function (b) { b.onclick = function () { sync(); var p = b.dataset.exok.split('_'); t.questions[+p[0]].ok = +p[1]; exEditor(); }; });
@@ -2110,14 +2121,15 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
             '<div class="muted">Бэлэн тестийнхээ зургийг эсвэл PDF-ийг оруулна. Сурагч утсаараа хараад зөвхөн хариултаа (1a 2b…) сонгож илгээнэ, шууд дүгнэгдэнэ.</div>' +
             '<div class="row">' + (L.test_files || []).map(function (u, i) { return '<div style="position:relative;width:110px;height:140px;border:1px solid #C5CADB;border-radius:8px;overflow:hidden;background:#F4F6FB;display:flex;align-items:center;justify-content:center">' +
               (/\.pdf(\?|$)/i.test(u) ? '<b style="color:#B42318">PDF</b>' : '<img alt="Тестийн хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;height:100%;object-fit:cover">') +
-              '<button class="btn ghost" data-tfdel="' + i + '" aria-label="Хасах" style="position:absolute;right:4px;top:4px;height:30px;min-width:30px;padding:0 8px;background:#fff">✕</button></div>'; }).join('') +
+              '<button class="thx" data-tfdel="' + i + '" aria-label="Хасах">✕</button></div>'; }).join('') +
             '<label class="btn sec" style="display:flex;align-items:center;justify-content:center;width:110px;height:140px;cursor:pointer;text-align:center">📷 Утсаар зураг авах<input type="file" id="tfcam" accept="image/*" capture="environment" hidden></label>' +
             '<label class="btn sec" style="display:flex;align-items:center;justify-content:center;width:110px;height:140px;cursor:pointer;text-align:center">+ Файл / зураг нэмэх<input type="file" id="tfup" accept="image/*,application/pdf" multiple hidden></label></div>' +
+            ((L.test_files || []).length ? '<button type="button" class="btn ghost clrall" id="tfClr">🗑 Бүх хуудсыг хасаад дахин оруулах</button>' : '') +
             '<label style="display:flex;gap:8px;align-items:center;font-size:14px;font-weight:600"><input type="checkbox" id="tscan" checked style="width:20px;height:20px"> Скан шиг тодруулах (цаасыг цагаан, бичгийг тод болгоно, сүүдрийг арилгана)</label>' +
             '<div class="muted" style="font-size:12px">Цаасан тестээ гэрэлтэй газар, дээрээс нь шулуун авна. Хуудас бүрийг тусад нь авна.</div>' +
             ((L.test_files || []).length ? '<div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);gap:16px;align-items:start">' +
               '<div style="max-height:75vh;overflow:auto;border:1px solid #E1E4EE;border-radius:12px;background:#fff;padding:8px;display:flex;flex-direction:column;gap:8px">' +
-              (L.test_files || []).map(function (u, i) { return '<div class="pgw"><div class="pgh"><b>Хуудас ' + (i + 1) + '</b><button type="button" class="btn ghost" data-tfdel="' + i + '">✕ Энэ хуудсыг хасах</button></div>' + (/\.pdf(\?|$)/i.test(u) ? '<iframe title="Тестийн хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;height:70vh;border:0"></iframe>' : '<img alt="Тестийн хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;display:block">') + '</div>'; }).join('') + '</div>' +
+              (L.test_files || []).map(function (u, i) { return '<div class="pgw"><div class="pgh"><b>' + (/\.pdf(\?|$)/i.test(u) ? 'PDF файл' : 'Хуудас ' + (i + 1)) + '</b>' + (/\.pdf(\?|$)/i.test(u) ? '<button type="button" class="btn sec split" data-tfsplit="' + i + '">✂ Хуудсуудад задлах</button>' : '') + '<button type="button" class="btn ghost" data-tfdel="' + i + '">✕ Хасах</button></div>' + (/\.pdf(\?|$)/i.test(u) ? '<iframe title="Тестийн хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;height:70vh;border:0"></iframe>' : '<img alt="Тестийн хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;display:block">') + '</div>'; }).join('') + '</div>' +
               '<div style="position:sticky;top:8px;display:flex;flex-direction:column;gap:10px">' : '<div style="display:flex;flex-direction:column;gap:10px">') +
             '<b>Зөв хариултаа сонгоно</b>' +
             keyStepper('tn', (L.test_key || []).length || 10, 60) +
@@ -2237,6 +2249,13 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
             }).then(function (n) { toast(n + ' хуудас нэмэгдлээ'); showLibrary(); }).catch(function (e) { console.error(e); toast('Хуулж чадсангүй'); });
           };
           q('#tfup').onchange = upT; q('#tfcam').onchange = upT;
+          if (q('#tfClr')) q('#tfClr').onclick = function () { var b = this; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Үнэхээр бүгдийг хасах уу? Дахин дарна'; return; } sb.from('lessons').update({ test_files: [] }).eq('id', L.id).then(function (x) { if (!fail(x)) { toast('Хуудсууд хасагдлаа · шинээр оруулна уу'); showLibrary(); } }); };
+          app.querySelectorAll('[data-tfsplit]').forEach(function (b) { b.onclick = function () { var i = +b.dataset.tfsplit; b.disabled = true;
+            splitStoredPdf(L.test_files[i], function (f) { var path = me.id + '/test/' + L.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 7) + '.jpg';
+              return sb.storage.from('public-materials').upload(path, f, { contentType: 'image/jpeg' }).then(function (r) { if (r.error) throw r.error; return sb.storage.from('public-materials').getPublicUrl(path).data.publicUrl; }); })
+            .then(function (urls) { var arr = (L.test_files || []).slice(); arr.splice.apply(arr, [i, 1].concat(urls)); return sb.from('lessons').update({ test_files: arr }).eq('id', L.id).then(function (x) { if (fail(x)) return; toast(urls.length + ' хуудас боллоо · хэрэггүйгээ ✕ дарж хасна'); showLibrary(); }); })
+            .catch(function (e) { console.error(e); b.disabled = false; toast('Задалж чадсангүй'); });
+          }; });
           app.querySelectorAll('[data-tfdel]').forEach(function (b) { b.onclick = function () {
             var arr = (L.test_files || []).slice(); arr.splice(+b.dataset.tfdel, 1);
             sb.from('lessons').update({ test_files: arr }).eq('id', L.id).then(function (x) { if (!fail(x)) showLibrary(); });
