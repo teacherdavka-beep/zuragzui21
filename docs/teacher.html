@@ -1863,6 +1863,7 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
     var keep = function () { t.name = q('#exName').value; };
     q('#exBack').onclick = function () { exEdit = null; showExams(); };
     app.querySelectorAll('[data-exm]').forEach(function (b) { b.onclick = function () { keep(); t.mode = b.dataset.exm; exEditor(); }; });
+    var saveFiles = function (msg) { if (!t.id) { if (msg) toast(msg); return; } sb.from('tests').update({ files: t.files || [] }).eq('id', t.id).then(function (x) { if (!fail(x)) toast(msg || 'Хадгалагдлаа'); }); };
     if (t.mode === 'file') {
       var key = (t.key || []).slice();
       var drawK = function () {
@@ -1878,12 +1879,12 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
       };
       q('#exN').oninput = drawK; q('#exO').onchange = drawK; q('#exL').onchange = drawK; drawK();
       var up = function () { var fl = Array.prototype.slice.call(this.files || []); this.value = ''; if (!fl.length) return; keep(); toast('Хуулж байна…'); var scan = q('#exScan').checked;
-        expandFiles(fl).then(function (fl2) { return Promise.all(fl2.map(function (f) { return exUpload(f, scan); })); }).then(function (urls) { t.files = (t.files || []).concat(urls); toast(urls.length + ' хуудас нэмэгдлээ'); exEditor(); }).catch(function (e) { console.error(e); toast('Хуулж чадсангүй'); }); };
+        expandFiles(fl).then(function (fl2) { return Promise.all(fl2.map(function (f) { return exUpload(f, scan); })); }).then(function (urls) { t.files = (t.files || []).concat(urls); saveFiles(urls.length + ' хуудас нэмэгдлээ'); exEditor(); }).catch(function (e) { console.error(e); toast('Хуулж чадсангүй'); }); };
       q('#exUp').onchange = up; q('#exCam').onchange = up;
-      app.querySelectorAll('[data-exfd]').forEach(function (b) { b.onclick = function () { keep(); t.files.splice(+b.dataset.exfd, 1); exEditor(); }; });
-      if (q('#exClr')) q('#exClr').onclick = function () { var b = this; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Үнэхээр бүгдийг хасах уу? Дахин дарна'; return; } keep(); t.files = []; toast('Хуудсууд хасагдлаа · шинээр оруулна уу'); exEditor(); };
+      app.querySelectorAll('[data-exfd]').forEach(function (b) { b.onclick = function () { keep(); t.files.splice(+b.dataset.exfd, 1); saveFiles('Хуудас хасагдлаа'); exEditor(); }; });
+      if (q('#exClr')) q('#exClr').onclick = function () { var b = this; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Үнэхээр бүгдийг хасах уу? Дахин дарна'; return; } keep(); t.files = []; saveFiles('Хуудсууд хасагдлаа · шинээр оруулна уу'); exEditor(); };
       app.querySelectorAll('[data-exsplit]').forEach(function (b) { b.onclick = function () { keep(); var i = +b.dataset.exsplit; b.disabled = true;
-        splitStoredPdf(t.files[i], function (f) { return exUpload(f, false); }).then(function (urls) { t.files.splice.apply(t.files, [i, 1].concat(urls)); toast(urls.length + ' хуудас боллоо · хэрэггүйгээ ✕ дарж хасна'); exEditor(); }).catch(function (e) { console.error(e); b.disabled = false; toast('Задалж чадсангүй'); });
+        splitStoredPdf(t.files[i], function (f) { return exUpload(f, false); }).then(function (urls) { t.files.splice.apply(t.files, [i, 1].concat(urls)); saveFiles(urls.length + ' хуудас боллоо · хэрэггүйгээ ✕ дарж хасна'); exEditor(); }).catch(function (e) { console.error(e); b.disabled = false; toast('Задалж чадсангүй'); });
       }; });
     } else if (t.mode === 'build') {
       var sync = function () { keep(); app.querySelectorAll('[data-exq]').forEach(function (x) { t.questions[+x.dataset.exq].q = x.value; }); app.querySelectorAll('[data-exo]').forEach(function (x) { var p = x.dataset.exo.split('_'); t.questions[+p[0]].opts[+p[1]] = x.value; }); };
