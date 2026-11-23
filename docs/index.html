@@ -57,6 +57,18 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
 .bar{height:10px;border-radius:99px;background:#EEF1FA;overflow:hidden}.bar>div{height:10px;background:#2747B8}
 .faces{display:flex;gap:6px;flex-wrap:wrap}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1A1F36;color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;z-index:9;max-width:90%}
+.tbox{background:#fff;border:1px solid #E1E4EE;border-radius:16px;overflow:hidden;position:sticky;top:0;z-index:5;box-shadow:0 6px 16px rgba(20,30,80,.12)}
+.tbar{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #EEF1FA;font-size:13px}.tbar .muted{flex:1;font-size:12px}
+.tbar button{border:1.5px solid #C5CADB;background:#fff;border-radius:99px;font-weight:700;font-size:13px;padding:6px 12px;color:#1A1F36}
+.tpages{max-height:42vh;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:10px;background:#F4F6FB;-webkit-overflow-scrolling:touch}
+.tbox.big .tpages{max-height:72vh}
+.tpg{position:relative}.tpg span{position:absolute;left:8px;top:8px;background:rgba(26,31,54,.75);color:#fff;font-size:12px;font-weight:700;border-radius:99px;padding:3px 9px}
+.tpg img{width:100%;display:block;border-radius:10px;border:1px solid #C5CADB;background:#fff;cursor:zoom-in}
+.zov{position:fixed;inset:0;z-index:100;background:#111;display:flex;flex-direction:column}
+.zbar{display:flex;gap:8px;padding:10px;padding-top:max(10px,env(safe-area-inset-top));background:#1A1F36}
+.zbar button{height:44px;min-width:52px;border:0;border-radius:10px;background:#fff;font-size:20px;font-weight:800}.zbar #zx{margin-left:auto;font-size:15px;padding:0 14px}
+.zsc{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}.zsc img{width:100%;display:block;background:#fff}
+@media(min-width:900px){.tpages{max-height:60vh}}
 </style>
 </head>
 <body>
@@ -507,12 +519,14 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
   // ---------- TEST ----------
   function showFileTest(t, d) {
     var L = (d.labels === 'cyr' ? 'АБВГДЕ' : 'abcdef').slice(0, d.opts || 4).split(''), n = d.n, ans = {};
-    var files = (d.files || []).map(function (u, i) {
+    var fl = d.files || [];
+    var files = fl.map(function (u, i) {
       return /\.pdf(\?|$)/i.test(u) ? '<a class="btn sec" style="display:flex;align-items:center;justify-content:center;text-decoration:none" target="_blank" rel="noopener" href="' + esc(u) + '">Тестийн хуудас ' + (i + 1) + ' нээх (PDF) ↗</a>'
-        : '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img alt="Тестийн хуудас ' + (i + 1) + '" src="' + esc(u) + '" style="width:100%;border-radius:10px;border:1px solid #C5CADB;background:#fff"></a>';
+        : '<div class="tpg"><span>Хуудас ' + (i + 1) + ' / ' + fl.length + '</span><img alt="Тестийн хуудас ' + (i + 1) + '" src="' + esc(u) + '" data-zoom="' + i + '"></div>';
     }).join('');
     var html = '<button class="link" id="back">← Буцах</button><h1>Тест · ' + esc(t.title) + '</h1>' +
-      '<div class="card">' + (files || '<div class="muted">Тестийн хуудсыг багш ангид тараана.</div>') + '<div class="muted">Зураг дээр дарж томруулна.</div></div>' +
+      (files ? '<div class="tbox" id="tbox"><div class="tbar"><b>📄 Тест</b><span class="muted">Зураг дээр дарж томруулна</span><button type="button" id="tsz">▾ Том</button></div><div class="tpages" id="tpages">' + files + '</div></div>'
+        : '<div class="card"><div class="muted">Тестийн хуудсыг багш ангид тараана.</div></div>') +
       '<div class="card"><h2>Хариултын хуудас</h2><div class="muted">Асуулт бүрийн зөв хариултын үсгийг сонгоно.</div>' +
       Array.apply(null, { length: n }).map(function (_, i) {
         return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #EEF1FA"><b style="width:34px;font-size:16px">' + (i + 1) + '.</b>' +
@@ -521,6 +535,14 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
       '<div class="muted" id="cnt">0 / ' + n + ' хариулсан</div><div class="err" id="err"></div><button class="btn" id="fin">Илгээх</button>';
     app.innerHTML = html;
     document.getElementById('back').onclick = showTopic;
+    var tsz = document.getElementById('tsz'); if (tsz) tsz.onclick = function () { var tb = document.getElementById('tbox'), big = tb.classList.toggle('big'); tsz.textContent = big ? '▴ Жижиг' : '▾ Том'; };
+    app.querySelectorAll('[data-zoom]').forEach(function (im) { im.onclick = function () {
+      var z = 1, ov = document.createElement('div'); ov.className = 'zov';
+      ov.innerHTML = '<div class="zbar"><button type="button" data-z="-1" aria-label="Жижигрүүлэх">−</button><button type="button" data-z="1" aria-label="Томруулах">+</button><button type="button" id="zx">✕ Хаах</button></div><div class="zsc"><img alt="" src="' + im.src + '"></div>';
+      document.body.appendChild(ov); var zi = ov.querySelector('img');
+      ov.querySelectorAll('[data-z]').forEach(function (b) { b.onclick = function () { z = Math.max(1, Math.min(3, z + 0.5 * +b.dataset.z)); zi.style.width = (z * 100) + '%'; }; });
+      ov.querySelector('#zx').onclick = function () { ov.remove(); };
+    }; });
     app.querySelectorAll('.opt').forEach(function (b) {
       b.onclick = function () {
         ans[b.dataset.q] = +b.dataset.o;
