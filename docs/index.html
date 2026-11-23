@@ -377,7 +377,7 @@ main{padding-bottom:96px!important}
         var open = !e.done && new Date(e.ends_at) > new Date();
         return '<div class="card" style="border:2px solid ' + (open ? '#B42318' : '#C5CADB') + ';gap:8px"><div class="row"><span class="pill ' + (open ? 'p-red' : 'p-green') + '">' + (EXN[e.type] || 'Шалгалт') + '</span>' +
           (open ? '<span class="muted">' + fmtDate(e.ends_at) + ' хүртэл</span>' : '') + '</div><b style="font-size:17px">' + esc(e.name) + '</b>' +
-          (e.done ? '<div style="font-weight:700;color:#1C6B40">✓ Өгсөн' + (e.result ? ' · ' + e.result.score + '/' + e.result.total : '') + '</div>'
+          (e.done ? (e.result ? '<div style="font-weight:800;color:#1C6B40;font-size:17px">✓ Таны дүн: ' + e.result.score + ' / ' + e.result.total + ' · ' + Math.round(e.result.score / Math.max(1, e.result.total) * 100) + '%</div>' : '<div style="font-weight:700;color:#2E6FD8">✓ Өгсөн · ⏳ Дүн удахгүй гарна</div>')
             : '<button class="btn" data-exstart="' + e.id + '">Шалгалт эхлэх</button>') + '</div>';
       }).join('');
       box.querySelectorAll('[data-exstart]').forEach(function (b) { b.onclick = function () { startExam(b.dataset.exstart); }; });
@@ -399,7 +399,8 @@ main{padding-bottom:96px!important}
         Promise.all(ups).then(function (u) { var pm = {}; u.forEach(function (x) { (pm[x.i] = pm[x.i] || []).push(x.path); }); return sb.rpc('student_finish_exam', { p_token: token, p_exam: id, p_answers: ans, p_photos: pm }); })
           .then(function (r2) { var d2 = r2.data || {}; if (done) done();
             if (d2.error) { toast(d2.error === 'done' ? 'Аль хэдийн өгсөн байна' : 'Шалгалт хаагдсан байна'); showHome(); return; }
-            app.innerHTML = '<div class="card" style="align-items:center;text-align:center;padding:28px 18px"><h1>Тестийн дүн: ' + d2.score + '/' + d2.total + '</h1>' + (d2.draw_total ? '<div class="muted">Зургийн даалгаврыг (' + d2.draw_total + ' оноо) багш шалгаад оноо өгнө.</div>' : '') + '<div class="muted">Дүн багшид автоматаар очлоо.</div><button class="btn" id="ok">Нүүр хуудас</button></div>';
+            app.innerHTML = d2.pending ? '<div class="card" style="align-items:center;text-align:center;padding:28px 18px;gap:8px"><span style="font-size:46px">📨</span><h1>Шалгалт амжилттай илгээгдлээ!</h1><div class="muted" style="font-size:15px">Дүн удахгүй гарна. Багш шалгаж баталсны дараа <b>Шалгалт</b> хэсэгт харагдана.</div><button class="btn" id="ok">Нүүр хуудас</button></div>'
+              : '<div class="card" style="align-items:center;text-align:center;padding:28px 18px"><h1>Тестийн дүн: ' + d2.score + '/' + d2.total + '</h1>' + (d2.draw_total ? '<div class="muted">Зургийн даалгаврыг (' + d2.draw_total + ' оноо) багш шалгаад оноо өгнө.</div>' : '') + '<div class="muted">Дүн багшид автоматаар очлоо.</div><button class="btn" id="ok">Нүүр хуудас</button></div>';
             document.getElementById('ok').onclick = showHome; })
           .catch(function (e) { console.error(e); b.disabled = false; b.textContent = 'Илгээх'; err.textContent = 'Зураг илгээж чадсангүй. Интернэтээ шалгаад дахин дарна уу.'; });
       };
