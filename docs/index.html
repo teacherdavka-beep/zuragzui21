@@ -461,7 +461,7 @@ main{padding-bottom:96px!important}
     var html = '<div class="card"><div style="display:flex;gap:12px;align-items:center">' + avatarSvg(i + 1, lazy) +
       '<div style="flex:1;display:flex;flex-direction:column;gap:5px"><span class="muted">Миний ' + buddyName() + ' · ' + (i + 1) + '-р түвшин · <button type="button" class="bswap" id="bswap">Дүр солих</button></span>' +
       '<b style="font-size:18px">' + L[i][1] + '</b>' +
-      '<span class="bmsg b-' + ({ asleep: 'sleepy', calm: 'happy' }[buddyMood()] || buddyMood()) + '">' + ({ star: '🌟 ' + buddyName() + ' баярлаж байна! Чи шилдэг нь', happy: '😊 ' + buddyName() + ' сэргэг байна', calm: '🙂 ' + buddyName() + ' сэрлээ! Ажлаа илгээвэл баярлана', asleep: '💤 ' + buddyName() + ' унтаж байна · ажлаа илгээж сэрээгээрэй', sleepy: '😴 ' + buddyName() + ' нойрмоглож байна · ' + home.pending_old + ' ажлаа нөхөөрэй', sad: '🥺 ' + buddyName() + ' гунигтай байна · ' + home.pending_old + ' ажил чамайг хүлээж байна' })[buddyMood()] + '</span>' +
+      '' +
       '<div class="bar"><div style="width:' + pct + '%"></div></div><span class="muted">' + xp + ' оноо' + (next ? ' · дараагийн түвшин ' + next[0] : '') + '</span></div></div>' +
       '<div class="muted">Энэ сарын хичээлийн тэмдэглэл: ' + (beh.length ? esc(beh.join(', ')) + ' удаа' : 'тэмдэглэл алга, сайн байна') + '</div></div>';
     if (stTab !== 'home') html = '';
