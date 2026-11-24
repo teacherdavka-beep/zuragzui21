@@ -258,6 +258,17 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
 .pvsc.row{overflow-x:auto;overflow-y:auto;scroll-snap-type:x mandatory}.pvsc.row .pvin{flex-direction:row;align-items:flex-start;width:auto!important}
 .pvsc.row .pgw{flex:0 0 calc(var(--pz,1) * 100%);scroll-snap-align:start;background:#fff}
 .clrbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.exb{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:16px;align-items:start}
+.exc-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.exc-a{display:flex;gap:8px;align-items:center;flex:none}
+.exhd h2{min-width:0}.exhd #exNew{white-space:nowrap;flex:none}
+@media(max-width:760px){
+.exh{flex-wrap:nowrap!important}.exh .chip{flex:1;padding:0 8px!important;font-size:14px!important;white-space:nowrap}
+.exb{grid-template-columns:1fr;gap:12px}
+.exf{padding:12px!important}.exf .exk .btn{min-height:40px;padding:0 12px;font-size:14px}
+.exhd h2{font-size:17px}
+.exc{flex-wrap:wrap;gap:10px 12px!important;padding:14px!important}.exc>span:first-child{width:46px!important;height:48px!important}
+.exc-a{width:100%}.exc-a .btn{flex:1;min-height:42px;padding:0 8px;white-space:nowrap}.exc-a [data-exe]{flex:0 0 auto;padding:0 18px}.exc-a [data-exdel]{flex:0 0 46px}
+}
 </style>
 
 </head>
@@ -1794,7 +1805,7 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
   }
   function exHead() {
     var T = [['bank', 'Тестийн сан'], ['take', 'Шалгалт авах'], ['res', 'Дүн']];
-    return '<div class="row" style="gap:6px">' + T.map(function (t) { return '<button class="chip' + (exTab === t[0] ? ' on' : '') + '" style="min-height:44px;font-size:15px;font-weight:700;padding:0 18px" data-ext="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>';
+    return '<div class="row exh" style="gap:6px">' + T.map(function (t) { return '<button class="chip' + (exTab === t[0] ? ' on' : '') + '" style="min-height:44px;font-size:15px;font-weight:700;padding:0 18px" data-ext="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>';
   }
   function exBindHead() { app.querySelectorAll('[data-ext]').forEach(function (b) { b.onclick = function () { exTab = b.dataset.ext; exEdit = null; showExams(); }; }); }
   function exMyGrades() { var g = classes.map(function (c) { return +c.grade; }).filter(function (x, i, a) { return x && a.indexOf(x) === i; }).sort(function (a, b) { return a - b; }); return g; }
@@ -1821,17 +1832,17 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
       var cnt = function (k) { return tests.filter(function (t) { return (t.kind || 'yavts') === k; }).length; };
       var shown = exLesson === 'all' ? tests : tests.filter(function (t) { return (t.kind || 'yavts') === exLesson; });
       var cur = null;
-      var html = exHead() + '<div style="display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:16px;align-items:start">' +
-        '<div class="card" style="gap:6px"><div class="row" style="gap:6px">' + gs.map(function (g) { return '<button class="chip' + (g === exGrade ? ' on' : '') + '" data-exg="' + g + '">' + g + '-р анги</button>'; }).join('') + '</div>' +
+      var html = exHead() + '<div class="exb">' +
+        '<div class="card exf" style="gap:6px"><div class="row" style="gap:6px">' + gs.map(function (g) { return '<button class="chip' + (g === exGrade ? ' on' : '') + '" data-exg="' + g + '">' + g + '-р анги</button>'; }).join('') + '</div><div class="exk" style="display:flex;flex-direction:column;gap:6px">' +
         '<button class="btn ghost" style="text-align:left;' + (exLesson === 'all' ? 'background:#EEF1FA;font-weight:700' : '') + '" data-exl="all">Бүх тест (' + tests.length + ')</button>' +
-        ['garaa', 'yavts', 'ulir'].map(function (k) { return '<button class="btn ghost" style="text-align:left;display:flex;align-items:center;gap:10px;' + (exLesson === k ? 'background:' + EXT[k][2] + ';font-weight:800;color:' + EXT[k][1] : 'font-weight:600') + '" data-exl="' + k + '"><span style="width:12px;height:12px;border-radius:50%;background:' + EXT[k][1] + '"></span>' + EXT[k][0] + ' <span class="muted" style="margin-left:auto">' + cnt(k) + '</span></button>'; }).join('') + '</div>' +
-        '<div style="display:flex;flex-direction:column;gap:10px"><div class="row between"><h2>' + (cur ? 'Х' + cur.num + ' · ' + esc(cur.title) : exGrade + '-р анги · бүх тест') + '</h2><button class="btn" id="exNew">+ Тест нэмэх</button></div>' +
+        ['garaa', 'yavts', 'ulir'].map(function (k) { return '<button class="btn ghost" style="text-align:left;display:flex;align-items:center;gap:10px;' + (exLesson === k ? 'background:' + EXT[k][2] + ';font-weight:800;color:' + EXT[k][1] : 'font-weight:600') + '" data-exl="' + k + '"><span style="width:12px;height:12px;border-radius:50%;background:' + EXT[k][1] + '"></span>' + EXT[k][0] + ' <span class="muted" style="margin-left:auto">' + cnt(k) + '</span></button>'; }).join('') + '</div></div>' +
+        '<div style="display:flex;flex-direction:column;gap:10px;min-width:0"><div class="row between exhd" style="gap:10px"><h2>' + (cur ? 'Х' + cur.num + ' · ' + esc(cur.title) : exGrade + '-р анги · бүх тест') + '</h2><button class="btn" id="exNew">+ Тест нэмэх</button></div>' +
         (shown.length ? '' : '<div class="card muted">Тест алга. "+ Тест нэмэх" дарж эхлээрэй.</div>') +
         shown.map(function (t) {
           var n = t.mode === 'build' ? (t.questions || []).length : (t.key || []).length, l = lessons.filter(function (x) { return x.id === t.lesson_id; })[0];
-          return '<div class="card" style="flex-direction:row;align-items:center;gap:14px"><span style="width:52px;height:56px;border-radius:8px;background:' + MODEN[t.mode][1] + ';color:#fff;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;text-align:center;flex:0 0 auto">' + MODEN[t.mode][0] + '</span>' +
-            '<span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">' + esc(t.name) + '</b><span class="muted" style="font-size:13px"><b style="color:' + EXT[t.kind || 'yavts'][1] + '">' + EXT[t.kind || 'yavts'][0] + '</b> · ' + (t.mode === 'forms' ? 'Google Forms' : n + ' асуулт') + (l ? ' · Х' + l.num + ' ' + esc(l.title) : '') + '</span></span>' +
-            '<button class="btn ghost" data-exe="' + t.id + '">Засах</button><button class="btn sec" data-exgo="' + t.id + '">Шалгалт авах →</button><button class="btn ghost" data-exdel="' + t.id + '" aria-label="Устгах">✕</button></div>';
+          return '<div class="card exc" style="flex-direction:row;align-items:center;gap:14px"><span style="width:52px;height:56px;border-radius:8px;background:' + MODEN[t.mode][1] + ';color:#fff;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;text-align:center;flex:0 0 auto">' + MODEN[t.mode][0] + '</span>' +
+            '<span class="exc-t"><b style="font-size:15px">' + esc(t.name) + '</b><span class="muted" style="font-size:13px"><b style="color:' + EXT[t.kind || 'yavts'][1] + '">' + EXT[t.kind || 'yavts'][0] + '</b> · ' + (t.mode === 'forms' ? 'Google Forms' : n + ' асуулт') + (l ? ' · Х' + l.num + ' ' + esc(l.title) : '') + '</span></span>' +
+            '<span class="exc-a"><button class="btn ghost" data-exe="' + t.id + '">Засах</button><button class="btn sec" data-exgo="' + t.id + '">Шалгалт авах →</button><button class="btn ghost" data-exdel="' + t.id + '" aria-label="Устгах">✕</button></span></div>';
         }).join('') + '</div></div>';
       app.innerHTML = html; exBindHead(); bindPv();
       app.querySelectorAll('[data-exg]').forEach(function (b) { b.onclick = function () { exGrade = +b.dataset.exg; exLesson = 'all'; showExams(); }; });

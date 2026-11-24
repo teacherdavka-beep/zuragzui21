@@ -91,6 +91,15 @@ textarea{width:100%;min-height:90px;border:1.5px solid #C5CADB;border-radius:10p
 .xs-q{display:flex;align-items:center;gap:3px}.xs-q i{font-style:normal;font-weight:800;font-size:12.5px;width:22px;color:#5B6478}
 .xs-q button{flex:1;min-width:0;height:30px;border-radius:7px;border:1px solid #D5DAE8;background:#fff;font-size:13px;font-weight:700;color:#1A1F36;padding:0}
 .xs-q button.on{background:#2747B8;border-color:#2747B8;color:#fff}
+.xs-view{position:relative}.xs-view>img{cursor:zoom-in}.xs-view>img.zin{cursor:zoom-out}
+.xs-hint{position:sticky;top:8px;left:8px;z-index:2;display:inline-block;margin:8px 0 -38px 8px;background:rgba(26,31,54,.82);color:#fff;font-size:13px;font-weight:700;border-radius:99px;padding:6px 12px;pointer-events:none;animation:xshint 5s forwards}
+@keyframes xshint{0%,75%{opacity:1}100%{opacity:0}}
+.xs-q.done i{color:#14805A}
+.xs-big{background:#EEF1FA!important;color:#2747B8!important;border:1.5px solid #C9D6F5!important;padding:0 10px!important;margin-left:auto}
+.xs-big+button{margin-left:0!important}
+.xs-grid{position:relative;padding-bottom:max(10px,env(safe-area-inset-bottom))}.xs-ah span,.xs-ah b,.xs-ah button{white-space:nowrap}
+@media(max-width:799px){.xs-ah{gap:6px}.xs-ah button{padding:0 12px}.xs-ans{max-height:40vh}.xs-ans.big{max-height:75vh}.xs-grid{grid-template-columns:1fr;gap:6px}.xs-q{gap:6px}.xs-q i{width:30px;font-size:16px;text-align:center}.xs-q button{height:42px;font-size:16px;border-radius:10px;border-width:1.5px}.xs-ah{padding:8px 10px}}
+@media(min-width:800px){.xs-big{display:none}.xs-big+button{margin-left:auto!important}.xs{grid-template-rows:auto auto minmax(0,1fr)}.xs-ans{grid-row:3;min-height:0}.xs-view{grid-row:3}}
 @media(min-width:800px){.xs{display:grid;grid-template-columns:1fr 340px;grid-template-rows:auto auto 1fr}.xs-top,.xs-tabs{grid-column:1/-1}.xs-view{grid-column:1}.xs-ans{grid-column:2;max-height:none;border-top:0;border-left:2px solid #1E2A5A}.xs-grid{grid-template-columns:1fr}.xs-q button{height:36px}}
 
 /* ---------- ХӨӨРХӨН ЗАГВАР ---------- */
@@ -813,7 +822,7 @@ main{padding-bottom:96px!important}
   // ---------- ШАЛГАЛТЫН ДЭЛГЭЦ: том хуудас + жижиг хариулт ----------
   function examSplit(o) {
     // o: { title, files[], n, labels[], until, draw[], onBack, onSubmit(ans, photos, btn, err) }
-    var ans = {}, cur = 0, zoom = 1, ph = {}, files = (o.files || []).filter(function (u) { return !/\.pdf(\?|$)/i.test(u); }), pdfs = (o.files || []).filter(function (u) { return /\.pdf(\?|$)/i.test(u); });
+    var ans = {}, cur = 0, zoom = 1, big = false, ph = {}, files = (o.files || []).filter(function (u) { return !/\.pdf(\?|$)/i.test(u); }), pdfs = (o.files || []).filter(function (u) { return /\.pdf(\?|$)/i.test(u); });
     var draw = o.draw || [], tabs = files.map(function (_, i) { return { k: 'p' + i, t: 'Хуудас ' + (i + 1) }; }).concat(draw.map(function (_, i) { return { k: 'd' + i, t: '✏️ Зураг ' + (i + 1) }; }));
     if (!tabs.length && pdfs.length) tabs.push({ k: 'pdf', t: 'PDF' });
     var ov = document.createElement('div'); ov.className = 'xs'; document.body.appendChild(ov); document.body.style.overflow = 'hidden';
@@ -822,7 +831,7 @@ main{padding-bottom:96px!important}
     function viewHtml() {
       var tb = tabs[cur]; if (!tb) return '<div class="muted" style="padding:20px">Тестийн хуудсыг багш тараана.</div>';
       if (tb.k === 'pdf') return pdfs.map(function (u, i) { return '<a class="btn sec" style="margin:12px" target="_blank" rel="noopener" href="' + esc(u) + '">PDF ' + (i + 1) + ' нээх ↗</a>'; }).join('');
-      if (tb.k[0] === 'p') return '<img alt="' + tb.t + '" src="' + esc(files[+tb.k.slice(1)]) + '" style="width:' + (zoom * 100) + '%">';
+      if (tb.k[0] === 'p') return (zoom === 1 ? '<div class="xs-hint">👆 Зураг дээр товшвол томорно</div>' : '') + '<img alt="' + tb.t + '" src="' + esc(files[+tb.k.slice(1)]) + '" class="' + (zoom > 1 ? 'zin' : '') + '" style="width:' + (zoom * 100) + '%">';
       var i = +tb.k.slice(1), d = draw[i], my = ph[i] || [];
       return '<div class="xs-draw"><b>' + (i + 1) + '-р зургийн даалгавар · ' + (d.points || 0) + ' оноо</b><div style="white-space:pre-wrap;line-height:1.5">' + esc(d.text || '') + '</div>' + (d.img ? '<img alt="" src="' + esc(d.img) + '" style="width:100%;border-radius:10px">' : '') +
         '<div class="xs-tip">Дэвтэр дээрээ байгуулаад, <b>зүүн доод буланд ' + esc(home.code || '') + '</b> кодоо бичнэ. Дараа нь зургаа авна.</div>' +
@@ -834,15 +843,23 @@ main{padding-bottom:96px!important}
       ov.innerHTML = '<div class="xs-top"><button type="button" id="xsBack">← Гарах</button><b>' + esc(o.title) + '</b>' + (o.until ? '<span class="xs-tm" id="xsTm"></span>' : '') + '</div>' +
         '<div class="xs-tabs">' + tabs.map(function (t, i) { return '<button type="button" data-tab="' + i + '" class="' + (i === cur ? 'on' : '') + (t.k[0] === 'd' && (ph[+t.k.slice(1)] || []).length ? ' ok' : '') + '">' + t.t + '</button>'; }).join('') + (isPage ? '<span class="xs-z"><button type="button" data-zz="-1" aria-label="Жижигрүүлэх">−</button><button type="button" data-zz="1" aria-label="Томруулах">+</button></span>' : '') + '</div>' +
         '<div class="xs-view" id="xsView">' + viewHtml() + '</div>' +
-        '<div class="xs-ans"><div class="xs-ah"><b>Хариулт</b><span>' + nA + ' / ' + o.n + '</span>' + (draw.length ? '<span>· зураг ' + draw.filter(function (_, i) { return (ph[i] || []).length; }).length + '/' + draw.length + '</span>' : '') + '<button type="button" id="xsFin">Илгээх</button></div><div class="err" id="xsErr"></div>' +
-        '<div class="xs-grid">' + Array.apply(null, { length: o.n }).map(function (_, i) { return '<div class="xs-q"><i>' + (i + 1) + '</i>' + o.labels.map(function (l, j) { return '<button type="button" data-q="' + i + '" data-o="' + j + '" class="' + (ans[i] === j ? 'on' : '') + '">' + l + '</button>'; }).join('') + '</div>'; }).join('') + '</div></div>';
+        '<div class="xs-ans' + (big ? ' big' : '') + '"><div class="xs-ah"><b>Хариулт</b><span>' + nA + ' / ' + o.n + '</span>' + (draw.length ? '<span>· 📷 ' + draw.filter(function (_, i) { return (ph[i] || []).length; }).length + '/' + draw.length + '</span>' : '') + '<button type="button" class="xs-big" id="xsBig">' + (big ? '▼ Хураах' : '▲ Дэлгэх') + '</button><button type="button" id="xsFin">Илгээх</button></div><div class="err" id="xsErr"></div>' +
+        '<div class="xs-grid">' + Array.apply(null, { length: o.n }).map(function (_, i) { return '<div class="xs-q' + (ans[i] != null ? ' done' : '') + '" data-row="' + i + '"><i>' + (i + 1) + '</i>' + o.labels.map(function (l, j) { return '<button type="button" data-q="' + i + '" data-o="' + j + '" class="' + (ans[i] === j ? 'on' : '') + '">' + l + '</button>'; }).join('') + '</div>'; }).join('') + '</div></div>';
       bind();
     }
     function bind() {
       ov.querySelector('#xsBack').onclick = function () { var b = this; if (!b.dataset.sure && (Object.keys(ans).length || Object.keys(ph).length)) { b.dataset.sure = 1; b.textContent = 'Гарах уу? Хариулт устна'; return; } close(); o.onBack(); };
       ov.querySelectorAll('[data-tab]').forEach(function (b) { b.onclick = function () { cur = +b.dataset.tab; render(); ov.querySelector('#xsView').scrollTop = 0; }; });
-      ov.querySelectorAll('[data-zz]').forEach(function (b) { b.onclick = function () { zoom = Math.max(1, Math.min(3, zoom + 0.5 * +b.dataset.zz)); var im = ov.querySelector('#xsView img'); if (im) im.style.width = (zoom * 100) + '%'; }; });
-      ov.querySelectorAll('.xs-grid [data-q]').forEach(function (b) { b.onclick = function () { ans[b.dataset.q] = +b.dataset.o; ov.querySelectorAll('.xs-grid [data-q="' + b.dataset.q + '"]').forEach(function (x) { x.classList.toggle('on', x === b); }); ov.querySelector('.xs-ah span').textContent = Object.keys(ans).length + ' / ' + o.n; }; });
+      ov.querySelectorAll('[data-zz]').forEach(function (b) { b.onclick = function () { zoom = Math.max(1, Math.min(3, zoom + 0.5 * +b.dataset.zz)); var im = ov.querySelector('#xsView>img'); if (im) { im.style.width = (zoom * 100) + '%'; im.classList.toggle('zin', zoom > 1); } }; });
+      var pim = ov.querySelector('#xsView>img');
+      if (pim) pim.onclick = function (e) {
+        var v = ov.querySelector('#xsView'), r = pim.getBoundingClientRect(), vr = v.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+        zoom = zoom > 1 ? 1 : 2.5; pim.style.width = (zoom * 100) + '%'; pim.classList.toggle('zin', zoom > 1);
+        var h = v.querySelector('.xs-hint'); if (h) h.remove();
+        v.scrollLeft = fx * pim.offsetWidth - (e.clientX - vr.left); v.scrollTop = fy * pim.offsetHeight - (e.clientY - vr.top);
+      };
+      ov.querySelector('#xsBig').onclick = function () { big = !big; ov.querySelector('.xs-ans').classList.toggle('big', big); this.textContent = big ? '▼ Хураах' : '▲ Дэлгэх'; };
+      ov.querySelectorAll('.xs-grid [data-q]').forEach(function (b) { b.onclick = function () { ans[b.dataset.q] = +b.dataset.o; ov.querySelectorAll('.xs-grid [data-q="' + b.dataset.q + '"]').forEach(function (x) { x.classList.toggle('on', x === b); }); b.parentNode.classList.add('done'); var nx = ov.querySelector('.xs-q[data-row="' + (+b.dataset.q + 1) + '"]'), g = ov.querySelector('.xs-grid'); if (nx && g && nx.offsetTop + nx.offsetHeight > g.scrollTop + g.clientHeight) g.scrollTo({ top: nx.offsetTop - g.clientHeight + nx.offsetHeight + 8, behavior: 'smooth' }); ov.querySelector('.xs-ah span').textContent = Object.keys(ans).length + ' / ' + o.n; }; });
       ov.querySelectorAll('[data-phin]').forEach(function (inp) { inp.onchange = function () { var f = this.files[0]; if (!f) return; var i = +tabs[cur].k.slice(1); shrinkPh(f).then(function (p) { if (!p) return; (ph[i] = ph[i] || []).push(p); render(); }); }; });
       ov.querySelectorAll('[data-phx]').forEach(function (b) { b.onclick = function () { var i = +tabs[cur].k.slice(1); ph[i].splice(+b.dataset.phx, 1); if (!ph[i].length) delete ph[i]; render(); }; });
       ov.querySelector('#xsFin').onclick = function () {
