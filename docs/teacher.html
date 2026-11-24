@@ -288,6 +288,9 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
 .hr-sl{display:grid;grid-template-columns:80px minmax(0,1fr);gap:8px;align-items:center;font-size:14px;font-weight:600;color:#3A4566}
 .hr-rss{flex:none;width:62px!important;height:40px;padding:0 4px!important;font-size:13px}
 .hr-qr{flex-direction:row!important;align-items:center;justify-content:space-between;gap:12px;background:#EEF3FB!important}.hr-qr .btn{flex:none;height:42px;padding:0 18px}
+.hr-codes{margin-top:14px;display:flex;flex-direction:column;gap:10px;border-top:1px solid #EEF1F7;padding-top:14px}
+.hr-cg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.hr-cc{display:flex;gap:12px;align-items:center;background:#F8FAFE;border:1px solid #E1E8F5;border-radius:14px;padding:10px}.hr-cc svg{flex:none;width:92px;height:92px;background:#fff;border-radius:6px}.hr-cc>div{min-width:0;display:flex;flex-direction:column;gap:2px}.hr-kp{font-size:14px}.hr-cpb{align-self:flex-start;border:0;background:none;color:#1E4FA8;font-weight:700;font-size:13px;padding:4px 0;cursor:pointer}
+@media(max-width:760px){.hr-cg{grid-template-columns:1fr}}
 .hr-how{background:#F3F6FC;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.6;color:#3A4566}
 @media(max-width:760px){.hr-grid{grid-template-columns:1fr}.hr-form{grid-template-columns:1fr 110px}.hr-btns{gap:3px}.hr-btns button{min-width:36px;padding:0 4px;font-size:12.5px;height:38px}.hr-nm{font-size:14px}.hr-tile b{font-size:26px}}
 /* ---------- НЭВТРЭХ ХЭСЭГ (сурагч, багш ижил загвар) ---------- */
@@ -742,7 +745,7 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
     };
     bindHead();
     var today = hrToday(), m0 = hrDay.slice(0, 8) + '01';
-    sb.from('students').select('id,name,code,hr_role,hr_salaa').eq('class_id', hc.id).eq('active', true).order('name').then(function (rs) {
+    sb.from('students').select('id,name,code,pin,hr_role,hr_salaa').eq('class_id', hc.id).eq('active', true).order('name').then(function (rs) {
       var kids = rs.data || [], ids = kids.map(function (k) { return k.id; }), byId = {}; kids.forEach(function (k) { byId[k.id] = k; });
       var nm = function (id) { return byId[id] ? esc(byId[id].name) : '—'; };
       Promise.all([
@@ -845,6 +848,16 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
               [['father', 'Аав'], ['mother', 'Ээж'], ['self', 'Сурагч']].map(function (x) { return '<label><span>' + x[1] + '</span><span class="hr-ctin"><input type="tel" inputmode="tel" maxlength="20" placeholder="Дугаар" data-ct="' + k.id + '" data-cf="' + x[0] + '" value="' + esc(c[x[0]] || '') + '">' + (tel(c[x[0]]) ? '<a href="tel:' + tel(c[x[0]]) + '" aria-label="Залгах">📞</a>' : '') + '</span></label>'; }).join('') + '</div></div>'; }).join('') + '</div>';
         } else {
           var dg = kids.filter(function (k) { return k.hr_role === 'darga'; })[0], jj = kids.filter(function (k) { return k.hr_role === 'jijuur'; })[0], uz = kids.filter(function (k) { return k.hr_role === 'uzleg'; })[0], sl = function (n) { return kids.filter(function (k) { return k.hr_role === 'salaa' && k.hr_salaa === n; })[0]; };
+          var clsLink = STUDENT_URL + '?c=' + encodeURIComponent(hc.key || hc.name);
+          var RL = { darga: '📋 Ангийн дарга', jijuur: '🧹 Жижүүр хариуцсан', uzleg: '👔 Үзлэгийн дарга', salaa: '👥 Салааны дарга' };
+          var leaders = kids.filter(function (k) { return k.hr_role; }).sort(function (a, b) { var o = ['darga', 'jijuur', 'uzleg', 'salaa']; return (o.indexOf(a.hr_role) - o.indexOf(b.hr_role)) || ((a.hr_salaa || 0) - (b.hr_salaa || 0)); });
+          var myLink = function (k) { return clsLink + '&s=' + encodeURIComponent(k.code) + '&p=' + k.pin; };
+          var qrSvg = function (u, sz) { try { var qq = qrcode(0, 'M'); qq.addData(u); qq.make(); return qq.createSvgTag(sz || 3, 0); } catch (e) { return ''; } };
+          var leadCodes = function () { if (!leaders.length) return '';
+            return '<div class="hr-codes"><div class="row between" style="flex-wrap:wrap;gap:8px"><h2>🔑 Дарга нарын нэвтрэх код</h2><button type="button" class="btn dark" id="ldPrint" style="width:auto;padding:0 16px">🖨 Карт хэвлэх</button></div>' +
+              '<div class="muted">QR-ыг утасны камераар уншуулахад шууд нэвтэрнэ. Эсвэл ангийн линкээр орж кодоо сонгоод 4 оронтой тоогоо бичнэ.</div>' +
+              '<div class="hr-cg">' + leaders.map(function (k) { return '<div class="hr-cc">' + qrSvg(myLink(k), 3) + '<div><b>' + esc(k.name) + '</b><div class="muted">' + RL[k.hr_role] + (k.hr_role === 'salaa' && k.hr_salaa ? ' · ' + k.hr_salaa + '-р салаа' : '') + '</div><div class="hr-kp">Код: <b>' + esc(k.code) + '</b> · Тоо: <b>' + esc(k.pin) + '</b></div><button type="button" class="hr-cpb" data-cp="' + esc(myLink(k)) + '" >📋 Линк хуулах</button></div></div>'; }).join('') + '</div>' +
+              '<div class="muted" style="word-break:break-all">Ангийн линк: <a href="' + esc(clsLink) + '" target="_blank" rel="noopener">' + esc(clsLink) + '</a></div></div>'; };
           var opts = function (sel) { return '<option value="">— Томилоогүй —</option>' + kids.map(function (k) { return '<option value="' + k.id + '"' + (sel && sel.id === k.id ? ' selected' : '') + '>' + esc(k.name) + ' (' + esc(k.code) + ')</option>'; }).join(''); };
           html += '<div class="card" style="max-width:620px"><h2>Дарга нар томилох</h2>' +
             '<label class="muted" for="ldD"><b>📋 Ангийн дарга</b> — өглөө бүр ирц, цаг бүрийн зөрчил тэмдэглэнэ</label><select id="ldD">' + opts(dg) + '</select>' +
@@ -853,7 +866,7 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
             '<div style="margin-top:8px"><b style="font-size:14px">👥 Салааны дарга нар</b><div class="muted" style="font-size:13px">Салааны дарга өөрийн салааны хүүхдүүдийг өөрөө сонгож, тэдний ирцийг бөглөнө. Та «Нэрс» хэсгээс салааг засаж болно.</div></div>' +
             [1, 2, 3, 4, 5].map(function (n) { return '<div class="hr-sl"><span>' + n + '-р салаа</span><select data-ldsl="' + n + '">' + opts(sl(n)) + '</select></div>'; }).join('') +
             '<button class="btn" id="ldSave">Хадгалах</button>' +
-            '<div class="hr-how"><b>Дарга нар хэрхэн орох вэ?</b><br>Ангийн линкээр өөрийн код, 4 оронтой тоогоор орно. Нүүр хуудсанд нь <b>«📋 Дарга»</b> таб нэмэгдэж гарна. Сахилга, эцэг эхийн тэмдэглэл тэдэнд <b>харагдахгүй</b>.</div></div>';
+            '<div class="hr-how"><b>Дарга нар хэрхэн орох вэ?</b><br>Ангийн линкээр өөрийн код, 4 оронтой тоогоор орно. Нүүр хуудсанд нь <b>«📋 Дарга»</b> таб нэмэгдэж гарна. Сахилга, эцэг эхийн тэмдэглэл тэдэнд <b>харагдахгүй</b>.</div>' + leadCodes() + '</div>';
         }
         app.innerHTML = html; bindHead();
         var dI = q('#hrD'); if (dI) dI.onchange = function () { if (this.value) { hrDay = this.value > today ? today : this.value; showHomeroom(); } };
@@ -915,6 +928,13 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
             if (fail(x)) return; inp.classList.add('saved'); setTimeout(function () { inp.classList.remove('saved'); }, 1200);
             var w = inp.parentNode, a = w.querySelector('a'), t = tel(inp.value); if (a) a.remove(); if (t) w.insertAdjacentHTML('beforeend', '<a href="tel:' + t + '" aria-label="Залгах">📞</a>');
           }); }; });
+        app.querySelectorAll('[data-cp]').forEach(function (b) { b.onclick = function () { var u = b.dataset.cp; (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(function () { toast('Линк хуулагдлаа'); }, function () { window.prompt('Линкийг хуулна уу:', u); }); }; });
+        var lp = q('#ldPrint'); if (lp) lp.onclick = function () {
+          var clsLink2 = STUDENT_URL + '?c=' + encodeURIComponent(hc.key || hc.name), RL2 = { darga: 'Ангийн дарга', jijuur: 'Жижүүр хариуцсан', uzleg: 'Үзлэгийн дарга', salaa: 'Салааны дарга' };
+          document.getElementById('print').innerHTML = '<div class="cards">' + kids.filter(function (k) { return k.hr_role; }).map(function (k) { var qq = qrcode(0, 'M'); qq.addData(clsLink2 + '&s=' + encodeURIComponent(k.code) + '&p=' + k.pin); qq.make();
+            return '<div class="pc"><div style="flex:1"><b>' + esc(k.name) + '</b><div>' + esc(hc.name) + ' · ' + RL2[k.hr_role] + (k.hr_role === 'salaa' && k.hr_salaa ? ' ' + k.hr_salaa : '') + '</div><div>Код: <b>' + esc(k.code) + '</b></div><div>Тоо: <b>' + esc(k.pin) + '</b></div></div>' + qq.createSvgTag(3, 0) + '</div>'; }).join('') + '</div>';
+          setTimeout(function () { window.print(); }, 100);
+        };
         var lS = q('#ldSave'); if (lS) lS.onclick = function () {
           var d = q('#ldD').value, j = q('#ldJ').value, u = q('#ldU').value, sls = Array.prototype.map.call(app.querySelectorAll('[data-ldsl]'), function (x) { return [+x.dataset.ldsl, x.value]; }).filter(function (x) { return x[1]; }), pick = [d, j, u].concat(sls.map(function (x) { return x[1]; })).filter(Boolean); if (pick.length !== pick.filter(function (x, i) { return pick.indexOf(x) === i; }).length) { toast('Нэг сурагч хоёр үүрэг авах боломжгүй'); return; }
           this.disabled = true;
