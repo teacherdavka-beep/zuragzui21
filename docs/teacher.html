@@ -287,6 +287,7 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
 .hr-sal{display:flex;gap:6px;flex-wrap:wrap}.hr-sal span{background:#FFF1DF;color:#8A4B0B;border-radius:99px;padding:5px 11px;font-size:13px;font-weight:700}.hr-sal span.ok{background:#E2F6EE;color:#14805A}
 .hr-sl{display:grid;grid-template-columns:80px minmax(0,1fr);gap:8px;align-items:center;font-size:14px;font-weight:600;color:#3A4566}
 .hr-rss{flex:none;width:62px!important;height:40px;padding:0 4px!important;font-size:13px}
+.hr-qr{flex-direction:row!important;align-items:center;justify-content:space-between;gap:12px;background:#EEF3FB!important}.hr-qr .btn{flex:none;height:42px;padding:0 18px}
 .hr-how{background:#F3F6FC;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.6;color:#3A4566}
 @media(max-width:760px){.hr-grid{grid-template-columns:1fr}.hr-form{grid-template-columns:1fr 110px}.hr-btns{gap:3px}.hr-btns button{min-width:36px;padding:0 4px;font-size:12.5px;height:38px}.hr-nm{font-size:14px}.hr-tile b{font-size:26px}}
 /* ---------- НЭВТРЭХ ХЭСЭГ (сурагч, багш ижил загвар) ---------- */
@@ -831,7 +832,7 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
             '<div class="card"><h2>Сарын нэгтгэл · ' + hrDay.slice(0, 7) + '</h2><div style="overflow-x:auto"><table class="hr-tb"><thead><tr><th>Нэр</th><th title="Дүрэмт хувцасгүй">👔</th><th title="Хувцасны уутгүй">🎒</th><th title="Утсаа өгөөгүй">📱</th></tr></thead><tbody>' +
             kids.map(function (k) { var x = mc[k.id]; return '<tr><td>' + esc(k.name) + '</td>' + ['uniform', 'bag', 'phone'].map(function (i) { return '<td' + (x[i] ? ' class="r"' : '') + '>' + (x[i] || '') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div></div>';
         } else if (hrSub === 'roster') {
-          html += '<div class="card"><h2>➕ Сурагч нэмэх</h2><div class="muted">Нэг мөрөнд нэг сурагч. Excel-ээс нэрсийн баганыг хуулж буулгаж болно. Шинэ сурагч автоматаар код, 4 оронтой тоо авна.</div>' +
+          html += '<div class="card hr-qr"><div><b>🔑 Нэвтрэх код, QR карт</b><div class="muted">Сурагч бүрийн код, 4 оронтой тоо, QR картыг хэвлэх</div></div><button type="button" class="btn dark" id="rsQR">Нээх</button></div>' + '<div class="card"><h2>➕ Сурагч нэмэх</h2><div class="muted">Нэг мөрөнд нэг сурагч. Excel-ээс нэрсийн баганыг хуулж буулгаж болно. Шинэ сурагч автоматаар код, 4 оронтой тоо авна.</div>' +
             '<textarea id="rsAdd" placeholder="Б.Тэмүүлэн&#10;Г.Номин"></textarea><button class="btn" id="rsAddB">Нэмэх</button></div>' +
             '<div class="card"><div class="row between"><h2>' + esc(hc.name) + ' · ' + kids.length + ' сурагч</h2></div><div class="muted">Нэрийг дарж засна, гарахад хадгалагдана. «Хасах» дарвал дахин баталгаажуулна. Хассан сурагчийн өмнөх дүн, ирц архивт үлдэнэ.</div>' +
             kids.map(function (k, i) { return '<div class="hr-rs"><span class="hr-rsn">' + (i + 1) + '</span><input type="text" data-rn="' + k.id + '" value="' + esc(k.name) + '" maxlength="60"><select class="hr-rss" data-rsl="' + k.id + '" title="Салаа"><option value="">С—</option>' + [1, 2, 3, 4, 5, 6].map(function (n) { return '<option value="' + n + '"' + (k.hr_salaa === n ? ' selected' : '') + '>С' + n + '</option>'; }).join('') + '</select><span class="muted hr-rsc">' + esc(k.code) + '</span><button type="button" class="btn red" data-rdel="' + k.id + '" data-n="' + esc(k.name) + '">Хасах</button></div>'; }).join('') + '</div>';
@@ -891,6 +892,7 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
           var p = it.length ? sb.from('hr_check').upsert({ student_id: sid, day: hrDay, items: it, by_name: 'Багш', updated_at: new Date().toISOString() }) : sb.from('hr_check').delete().eq('student_id', sid).eq('day', hrDay);
           p.then(function (x) { if (fail(x)) return; dayChk[sid] = it; b.classList.toggle('bad', it.indexOf(b.dataset.ci) >= 0); if (!chkLog) { chkLog = { by_name: 'Багш', at: new Date().toISOString() }; sb.from('hr_check_log').upsert({ class_id: hc.id, day: hrDay, by_name: 'Багш', at: chkLog.at }).then(function () {}); } });
         }; });
+        var rq = q('#rsQR'); if (rq) rq.onclick = function () { curClass = hc.id; cView = 'roster'; tab = 'review'; drawTabs(); showC(); };
         var rsA = q('#rsAddB'); if (rsA) rsA.onclick = function () {
           var names = q('#rsAdd').value.split('\n').map(function (l) { return l.split('\t')[0].trim(); }).filter(Boolean);
           if (!names.length) { toast('Нэрсээ бичнэ үү'); return; }
