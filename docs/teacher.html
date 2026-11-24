@@ -258,6 +258,30 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
 .pvsc.row{overflow-x:auto;overflow-y:auto;scroll-snap-type:x mandatory}.pvsc.row .pvin{flex-direction:row;align-items:flex-start;width:auto!important}
 .pvsc.row .pgw{flex:0 0 calc(var(--pz,1) * 100%);scroll-snap-align:start;background:#fff}
 .clrbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hr-sub::-webkit-scrollbar{display:none}.hr-sub .chip{flex:none}
+.hr-st{display:block!important;font-weight:600;padding:12px 16px!important;line-height:1.5}.hr-st.ok{background:#E2F6EE!important;color:#14805A}.hr-st.no{background:#FFF1DF!important;color:#8A4B0B}
+.hr-tile span{font-size:13px;color:#5A6178;font-weight:600}.hr-tile b{font-size:30px;font-weight:800;line-height:1.1}.hr-tile small{font-size:15px;color:#8C96B3;font-weight:600}
+.hr-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.hr-li{gap:8px;padding:7px 0;border-bottom:1px solid #F0F2F7;font-size:14.5px}.hr-li:last-child{border-bottom:0}.row.hr-li{flex-wrap:nowrap}.row.hr-li>span:first-child{flex:1;min-width:0}.row.hr-li>button,.row.hr-li>.pill{flex:none}
+.hr-per{display:inline-block;align-self:flex-start;background:#EEF1FA;color:#2747B8;border-radius:8px;padding:1px 8px;font-size:12.5px;margin-right:4px}
+.hr-pg{display:flex;flex-direction:column;gap:2px;padding:6px 0;border-bottom:1px solid #EEF1F7}.hr-pg:last-child{border-bottom:0}
+.hr-at{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #F0F2F7}.hr-at:last-child{border-bottom:0}
+.hr-nm{flex:1;min-width:0;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hr-btns{display:flex;gap:4px;flex:none}.hr-btns button{height:34px;min-width:42px;padding:0 8px;border-radius:9px;border:1.5px solid #D5DAE8;background:#fff;font-weight:700;font-size:13px;color:#5A6178}
+.hr-btns button.on.s-here{background:#14805A;border-color:#14805A;color:#fff}.hr-btns button.on.s-absent{background:#B42318;border-color:#B42318;color:#fff}.hr-btns button.on.s-late{background:#C46A0B;border-color:#C46A0B;color:#fff}.hr-btns button.on.s-sick{background:#6B2FA3;border-color:#6B2FA3;color:#fff}.hr-btns button.on.s-excused{background:#1F7A6E;border-color:#1F7A6E;color:#fff}
+.hr-tb{width:100%;border-collapse:collapse;font-size:14px}.hr-tb th,.hr-tb td{padding:6px 8px;border-bottom:1px solid #EEF1F7;text-align:center}.hr-tb th:first-child,.hr-tb td:first-child{text-align:left}.hr-tb td.r{color:#B42318;font-weight:800}.hr-tb td.a{color:#A0560B;font-weight:800}
+.hr-form{display:grid;grid-template-columns:1fr 140px;gap:8px}
+.hr-note{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;background:#FAFBFE;border-left:4px solid #E0A23B}.hr-note.parent{border-left-color:#2E6FD8}
+.hr-abs{padding:6px 0 10px;border-bottom:1px solid #F0F2F7}.hr-abs:last-child{border-bottom:0}
+.hr-call{display:flex;gap:6px;flex-wrap:wrap}.hr-call a{display:inline-flex;flex-direction:column;align-items:flex-start;gap:0;text-decoration:none;background:#E2F6EE;color:#14805A;font-weight:700;font-size:13.5px;border-radius:10px;padding:6px 12px;line-height:1.25}.hr-call a small{font-weight:600;font-size:11.5px;color:#3B8F6A}
+.hr-addph{border:1.5px dashed #C5CADB;background:#fff;color:#5A6178;border-radius:10px;padding:6px 10px;font-size:12.5px;font-weight:600}
+.hr-cts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.hr-ct{gap:8px!important;padding:14px!important}
+.hr-ctg{display:grid;grid-template-columns:1fr;gap:6px}.hr-ctg label{display:grid;grid-template-columns:56px minmax(0,1fr);align-items:center;gap:8px;font-size:13px;color:#5A6178;font-weight:600}
+.hr-ctin{display:flex;gap:6px;align-items:center;min-width:0}.hr-ctin input{flex:1;min-width:0;height:40px;border:1px solid #C5CADB;border-radius:10px;padding:0 12px;font-size:15px;background:#fff;color:#1A1F36;font-family:inherit}.hr-ctin input.saved{border-color:#14805A;box-shadow:0 0 0 3px rgba(20,128,90,.15)}.hr-ctin a{flex:none;width:40px;height:40px;border-radius:10px;background:#E2F6EE;display:grid;place-items:center;text-decoration:none;font-size:18px}
+@media(max-width:760px){.hr-cts{grid-template-columns:1fr}}
+.hr-chk{display:flex;gap:4px;flex:none}.hr-chk button{width:46px;height:38px;border-radius:10px;border:1.5px solid #D5DAE8;background:#fff;font-size:18px}.hr-chk button.bad{background:#FDECEA;border-color:#C0394E;box-shadow:inset 0 0 0 1px #C0394E}
+.hr-how{background:#F3F6FC;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.6;color:#3A4566}
+@media(max-width:760px){.hr-grid{grid-template-columns:1fr}.hr-form{grid-template-columns:1fr 110px}.hr-btns{gap:3px}.hr-btns button{min-width:36px;padding:0 4px;font-size:12.5px;height:38px}.hr-nm{font-size:14px}.hr-tile b{font-size:26px}}
 /* ---------- НЭВТРЭХ ХЭСЭГ (сурагч, багш ижил загвар) ---------- */
 body.authm{background:linear-gradient(180deg,#E6EEFB 0%,#F3EAF7 60%,#FDF3EC 100%) fixed!important;padding-left:0!important}
 body.authm header,body.authm .wrap>header{display:none!important}
@@ -422,7 +446,7 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
         }
         try { localStorage.removeItem('pendingT'); } catch (e) {}
         me = s.user; var _em = me.email || ''; document.getElementById('who').textContent = /^p\d{8}@edusolve\.mn$/.test(_em) ? _em.slice(1, 9) : _em;
-        sb.from('teachers').select('name,subject,school,theme,home_layout,folder_names').eq('id', me.id).maybeSingle().then(function (tr) {
+        sb.from('teachers').select('name,subject,school,theme,home_layout,folder_names,homeroom_class').eq('id', me.id).maybeSingle().then(function (tr) {
           if (tr.data) T = tr.data; applyTheme(T.theme);
           document.getElementById('tTitle').textContent = (T.subject || 'EduSolveMN') + ' · ' + (T.name || '') + ' багшийн самбар';
           document.title = 'EduSolveMN · ' + (T.name || 'Багшийн хэсэг');
@@ -456,10 +480,10 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
     });
   }
   function drawTabs() {
-    var TB = [['home', 'Нүүр'], ['review', 'Журнал'], ['library', 'Материалын сан'], ['exams', 'Шалгалт'], ['feedback', 'Санал хүсэлт' + (fbUnseen ? ' (' + fbUnseen + ')' : '')]];
+    var TB = [['home', 'Нүүр'], ['review', 'Журнал'], ['library', 'Материалын сан'], ['exams', 'Шалгалт'], ['homeroom', 'Даасан анги'], ['feedback', 'Санал хүсэлт' + (fbUnseen ? ' (' + fbUnseen + ')' : '')]];
     tabsEl.hidden = false; document.body.classList.remove('authm');
-    var NI = { home: '<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>', review: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', library: '<path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>', exams: '<path d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01"/>', feedback: '<path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/>', out: '<path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 17l-5-5 5-5M5 12h11"/>' };
-    var NS = { home: 'Нүүр', review: 'Журнал', library: 'Материал', exams: 'Шалгалт', feedback: 'Санал', out: 'Гарах' };
+    var NI = { home: '<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>', review: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', library: '<path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>', exams: '<path d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01"/>', homeroom: '<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>', feedback: '<path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/>', out: '<path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 17l-5-5 5-5M5 12h11"/>' };
+    var NS = { home: 'Нүүр', review: 'Журнал', library: 'Материал', exams: 'Шалгалт', homeroom: 'Анги', feedback: 'Санал', out: 'Гарах' };
     function nb(k, lab, on) { return '<button data-t="' + k + '" class="' + (on ? 'on' : '') + '" title="' + lab + '"><svg class="ni" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + NI[k] + '</svg><span class="nl">' + lab + '</span><span class="ns">' + NS[k] + '</span>' + (k === 'feedback' && fbUnseen ? '<em class="nbad">' + fbUnseen + '</em>' : '') + '</button>'; }
     tabsEl.innerHTML = TB.map(function (t) { return nb(t[0], t[1], t[0] === tab || (t[0] === 'feedback' && (tab === 'team' || tab === 'myfb'))); }).join('') + nb('out', 'Гарах', false);
     var rb = document.getElementById('railBrand'); if (rb) rb.innerHTML = '<b>' + esc((String(T.school || '').match(/\d+/) || ['21'])[0]) + '</b>сургууль';
@@ -679,7 +703,194 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
       };
     });
   }
-  function go(t) { tab = t; drawTabs(); fbSubnav(); ({ home: showHome, review: showReview, library: showLibrary, exams: showExams, feedback: showFeedback, team: showTeam, myfb: showMyFeedback })[t](); countFb(); }
+  // ---------- ДААСАН АНГИ (АУБ) ----------
+  var hrSub = 'board', hrDay = null, hrNoteFilter = '';
+  var HRS = { absent: ['Тасалсан', '#B42318', '#FDECEA'], late: ['Хоцорсон', '#A0560B', '#FFF1DF'], sick: ['Өвчтэй', '#6B2FA3', '#F3E8FD'], excused: ['Чөлөөтэй', '#1F7A6E', '#DDF3EF'] };
+  var HRV = { late: 'Хоцорсон', phone: 'Утас', talk: 'Ярьсан, саад', sleep: 'Унтсан', skip: 'Цаг тасалсан', no_notebook: 'Дэвтэргүй', uniform: 'Дүрэмт хувцасгүй', fight: 'Хэрүүл, зодоон', other: 'Бусад' };
+  var HRT = { behavior: ['Сахилга', 'Сурлага', 'Зан төлөв', 'Магтаал', 'Бусад'], parent: ['Утсаар ярьсан', 'Уулзсан', 'Мессеж бичсэн', 'Эцэг эхийн хурал'] };
+  function hrToday() { return new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10); }
+  function hrTime(t) { var x = new Date(t); return String(x.getHours()).padStart(2, '0') + ':' + String(x.getMinutes()).padStart(2, '0'); }
+  function hrPill(st) { var h = HRS[st]; return h ? '<span class="pill" style="background:' + h[2] + ';color:' + h[1] + '">' + h[0] + '</span>' : ''; }
+  function showHomeroom() {
+    var hc = classes.filter(function (c) { return c.id === T.homeroom_class; })[0];
+    if (!hc) {
+      app.innerHTML = '<div class="card" style="max-width:520px"><h2>🏠 Даасан ангиа сонгоно уу</h2><div class="muted">Та аль ангийн анги удирдсан багш вэ? Нэг л удаа сонгоход хангалттай.</div>' +
+        '<select id="hrSel"><option value="">Анги сонгох…</option>' + classes.map(function (c) { return '<option value="' + c.id + '">' + esc(c.name) + '</option>'; }).join('') + '</select>' +
+        '<button class="btn" id="hrSave">Хадгалах</button></div>';
+      q('#hrSave').onclick = function () {
+        var v = q('#hrSel').value; if (!v) { toast('Ангиа сонгоно уу'); return; }
+        sb.from('teachers').update({ homeroom_class: v }).eq('id', me.id).then(function (x) { if (fail(x)) return; T.homeroom_class = v; showHomeroom(); });
+      };
+      return;
+    }
+    if (!hrDay) hrDay = hrToday();
+    var SUBS = [['board', 'Самбар'], ['att', 'Ирц'], ['check', 'Үзлэг'], ['viol', 'Зөрчил'], ['notes', 'Тэмдэглэл'], ['contacts', 'Утас'], ['lead', 'Дарга нар']];
+    var head = '<div class="row between" style="flex-wrap:wrap;gap:8px"><h1 class="hm-hi" style="font-size:22px;margin:0">🏠 Даасан анги · ' + esc(hc.name) + '</h1><button class="btn ghost" id="hrChg" style="height:36px;font-size:13px">Анги солих</button></div>' +
+      '<div class="row hr-sub" style="gap:6px;overflow-x:auto;flex-wrap:nowrap">' + SUBS.map(function (s) { return '<button class="chip' + (hrSub === s[0] ? ' on' : '') + '" data-hrs="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>';
+    app.innerHTML = head + '<div class="muted">Ачаалж байна…</div>';
+    var bindHead = function () {
+      app.querySelectorAll('[data-hrs]').forEach(function (b) { b.onclick = function () { hrSub = b.dataset.hrs; showHomeroom(); }; });
+      q('#hrChg').onclick = function () { T.homeroom_class = null; showHomeroom(); };
+    };
+    bindHead();
+    var today = hrToday(), m0 = hrDay.slice(0, 8) + '01';
+    sb.from('students').select('id,name,code,hr_role').eq('class_id', hc.id).eq('active', true).order('name').then(function (rs) {
+      var kids = rs.data || [], ids = kids.map(function (k) { return k.id; }), byId = {}; kids.forEach(function (k) { byId[k.id] = k; });
+      var nm = function (id) { return byId[id] ? esc(byId[id].name) : '—'; };
+      Promise.all([
+        ids.length ? sb.from('hr_attendance').select('student_id,day,status,by_name').in('student_id', ids).gte('day', m0).lte('day', hrDay > today ? hrDay : today) : Promise.resolve({ data: [] }),
+        sb.from('hr_att_log').select('day,by_name,at').eq('class_id', hc.id).gte('day', m0),
+        sb.from('hr_duty').select('*').eq('class_id', hc.id).eq('day', hrDay).maybeSingle(),
+        sb.from('hr_violations').select('*').eq('class_id', hc.id).gte('day', m0).order('period'),
+        sb.from('hr_notes').select('*').eq('class_id', hc.id).order('created_at', { ascending: false }).limit(300),
+        ids.length ? sb.from('hr_contacts').select('*').in('student_id', ids) : Promise.resolve({ data: [] }),
+        ids.length ? sb.from('hr_check').select('student_id,day,items,by_name').in('student_id', ids).gte('day', m0) : Promise.resolve({ data: [] }),
+        sb.from('hr_check_log').select('day,by_name,at').eq('class_id', hc.id).eq('day', hrDay).maybeSingle()
+      ]).then(function (r) {
+        var chk = r[6].data || [], chkLog = r[7].data, dayChk = {}; chk.filter(function (c) { return c.day === hrDay; }).forEach(function (c) { dayChk[c.student_id] = c.items || []; });
+        var CHI = { uniform: ['👔', 'Дүрэмт хувцасгүй'], bag: ['🎒', 'Хувцасны уутгүй'], phone: ['📱', 'Утсаа өгөөгүй'] };
+        var ct = {}; (r[5].data || []).forEach(function (c) { ct[c.student_id] = c; });
+        var tel = function (v) { return String(v || '').replace(/[^\d+]/g, ''); };
+        var callBtns = function (id) { var c = ct[id] || {}, L = [['father', 'Аав'], ['mother', 'Ээж'], ['self', 'Сурагч']].filter(function (x) { return tel(c[x[0]]); });
+          return '<div class="hr-call">' + (L.length ? L.map(function (x) { return '<a href="tel:' + tel(c[x[0]]) + '">📞 ' + x[1] + '<small>' + esc(c[x[0]]) + '</small></a>'; }).join('') : '<button type="button" class="hr-addph" data-go="contacts">+ Утасны дугаар нэмэх</button>') + '</div>'; };
+        var att = r[0].data || [], logs = r[1].data || [], duty = r[2].data, viol = r[3].data || [], notes = r[4].data || [];
+        var dayAtt = {}; att.filter(function (a) { return a.day === hrDay; }).forEach(function (a) { dayAtt[a.student_id] = a.status; });
+        var log = logs.filter(function (l) { return l.day === hrDay; })[0];
+        var dayViol = viol.filter(function (v) { return v.day === hrDay; });
+        var dateRow = '<div class="row" style="gap:8px;flex-wrap:wrap"><input type="date" id="hrD" value="' + hrDay + '" max="' + today + '" style="width:auto">' + (hrDay !== today ? '<button class="btn ghost" id="hrT" style="height:40px">Өнөөдөр</button>' : '<span class="muted">Өнөөдөр</span>') + '</div>';
+        var html = head;
+        if (hrSub === 'board') {
+          var cnt = function (s) { return Object.keys(dayAtt).filter(function (k) { return dayAtt[k] === s; }).length; };
+          var abs = cnt('absent'), late = cnt('late'), other = cnt('sick') + cnt('excused'), here = kids.length - abs - other;
+          var mon = {}; kids.forEach(function (k) { mon[k.id] = { a: 0, l: 0, v: 0 }; });
+          att.forEach(function (a) { if (!mon[a.student_id]) return; if (a.status === 'absent') mon[a.student_id].a++; if (a.status === 'late') mon[a.student_id].l++; });
+          viol.forEach(function (v) { if (mon[v.student_id]) mon[v.student_id].v++; });
+          var watch = kids.map(function (k) { var x = mon[k.id]; return { k: k, x: x, sc: x.a * 2 + x.l + x.v }; }).filter(function (w) { return w.sc > 0; }).sort(function (a, b) { return b.sc - a.sc; }).slice(0, 6);
+          html += dateRow +
+            '<div class="card hr-st ' + (log ? 'ok' : 'no') + '">' + (log ? '✅ Ирц бүртгэгдсэн · <b>' + esc(log.by_name || '') + '</b> ' + hrTime(log.at) + '-д' : '⚠️ ' + (hrDay === today ? 'Өнөөдөр' : 'Энэ өдөр') + ' ирц бүртгэгдээгүй байна') + '</div>' +
+            '<div class="hm-stats">' +
+            '<div class="card hr-tile"><span>Ирсэн</span><b>' + (log ? here : '—') + '<small> / ' + kids.length + '</small></b></div>' +
+            '<div class="card hr-tile"><span>Тасалсан</span><b style="color:#B42318">' + abs + '</b></div>' +
+            '<div class="card hr-tile"><span>Хоцорсон</span><b style="color:#A0560B">' + late + '</b></div>' +
+            '<div class="card hr-tile"><span>Өвчтэй, чөлөөтэй</span><b style="color:#1F7A6E">' + other + '</b></div></div>' +
+            '<div class="hr-grid">' +
+            '<div class="card"><div class="row between"><h2>Ирээгүй, хоцорсон</h2><button class="btn ghost" data-go="att" style="height:34px;font-size:13px">Засах</button></div>' +
+            (Object.keys(dayAtt).length ? Object.keys(dayAtt).sort(function (a, b) { return nm(a) < nm(b) ? -1 : 1; }).map(function (id) { return '<div class="hr-abs"><div class="row between hr-li" style="border:0;padding-bottom:2px"><span><b>' + nm(id) + '</b></span>' + hrPill(dayAtt[id]) + '</div>' + callBtns(id) + '</div>'; }).join('') : '<div class="muted">' + (log ? 'Бүгд ирсэн 🎉' : 'Мэдээлэл алга') + '</div>') + '</div>' +
+            '<div class="card"><div class="row between"><h2>Өнөөдрийн зөрчил</h2><button class="btn ghost" data-go="viol" style="height:34px;font-size:13px">Бүгд</button></div>' +
+            (dayViol.length ? dayViol.map(function (v) { return '<div class="hr-li"><b class="hr-per">' + v.period + '-р цаг</b> ' + nm(v.student_id) + ' · <span style="color:#B42318;font-weight:600">' + esc(HRV[v.kind] || v.kind) + '</span>' + (v.note ? '<div class="muted">' + esc(v.note) + '</div>' : '') + '</div>'; }).join('') : '<div class="muted">Зөрчил бүртгэгдээгүй</div>') + '</div>' +
+            '<div class="card"><h2>🧹 Жижүүр</h2>' + (duty && (duty.students || []).length ? '<div>' + duty.students.map(nm).join(', ') + '</div><div>' + (duty.done === true ? '<span class="pill p-green">✓ Хийсэн</span>' : duty.done === false ? '<span class="pill p-red">✗ Хийгээгүй</span>' : '<span class="pill p-amber">Хүлээгдэж байна</span>') + '</div>' + (duty.note ? '<div class="muted">' + esc(duty.note) + '</div>' : '') + '<div class="muted" style="font-size:12px">Тэмдэглэсэн: ' + esc(duty.by_name || '') + '</div>' : '<div class="muted">Жижүүр тэмдэглэгдээгүй</div>') + '</div>' +
+            '<div class="card"><div class="row between"><h2>👔 Өглөөний үзлэг</h2><button class="btn ghost" data-go="check" style="height:34px;font-size:13px">Дэлгэрэнгүй</button></div>' + (chkLog ? '<div class="muted" style="font-size:12px">Тэмдэглэсэн: ' + esc(chkLog.by_name || '') + ' ' + hrTime(chkLog.at) + '</div>' + Object.keys(CHI).map(function (k) { var who = Object.keys(dayChk).filter(function (id) { return dayChk[id].indexOf(k) >= 0; }); return '<div class="hr-li"><b>' + CHI[k][0] + ' ' + CHI[k][1] + ': ' + who.length + '</b>' + (who.length ? '<div class="muted">' + who.map(nm).join(', ') + '</div>' : '') + '</div>'; }).join('') : '<div class="muted">' + (hrDay === today ? 'Өнөөдөр' : 'Энэ өдөр') + ' үзлэг тэмдэглэгдээгүй</div>') + '</div>' +
+            '<div class="card"><h2>👀 Анхаарах сурагчид · энэ сар</h2>' + (watch.length ? watch.map(function (w) { return '<div class="row between hr-li"><span>' + esc(w.k.name) + '</span><span class="muted">' + [w.x.a ? 'тас ' + w.x.a : '', w.x.l ? 'хоц ' + w.x.l : '', w.x.v ? 'зөрчил ' + w.x.v : ''].filter(Boolean).join(' · ') + '</span></div>'; }).join('') : '<div class="muted">Одоогоор анхаарах сурагч алга</div>') + '</div>' +
+            '</div>';
+        } else if (hrSub === 'att') {
+          var mon2 = {}; kids.forEach(function (k) { mon2[k.id] = { absent: 0, late: 0, sick: 0, excused: 0 }; });
+          att.forEach(function (a) { if (mon2[a.student_id]) mon2[a.student_id][a.status]++; });
+          html += dateRow + '<div class="card">' + (log ? '<div class="muted">Бүртгэсэн: <b>' + esc(log.by_name || '') + '</b> ' + hrTime(log.at) + '</div>' : '<div class="muted">Дарга бүртгээгүй байна. Та өөрөө тэмдэглэж болно.</div>') +
+            '<div class="muted" style="font-size:12px">Товч дарахад шууд хадгалагдана.</div>' +
+            kids.map(function (k) { var st = dayAtt[k.id] || ''; return '<div class="hr-at"><span class="hr-nm">' + esc(k.name) + '</span><span class="hr-btns">' + [['', '✓'], ['absent', 'Тас'], ['late', 'Хоц'], ['sick', 'Өвч'], ['excused', 'Чөл']].map(function (o) { return '<button type="button" data-att="' + k.id + '" data-st="' + o[0] + '" class="' + (st === o[0] ? 'on s-' + (o[0] || 'here') : '') + '">' + o[1] + '</button>'; }).join('') + '</span></div>'; }).join('') + '</div>' +
+            '<div class="card"><h2>Сарын нэгтгэл · ' + hrDay.slice(0, 7) + '</h2><div style="overflow-x:auto"><table class="hr-tb"><thead><tr><th>Нэр</th><th>Тас</th><th>Хоц</th><th>Өвч</th><th>Чөл</th></tr></thead><tbody>' +
+            kids.map(function (k) { var x = mon2[k.id]; return '<tr><td>' + esc(k.name) + '</td><td' + (x.absent ? ' class="r"' : '') + '>' + (x.absent || '') + '</td><td' + (x.late ? ' class="a"' : '') + '>' + (x.late || '') + '</td><td>' + (x.sick || '') + '</td><td>' + (x.excused || '') + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
+        } else if (hrSub === 'viol') {
+          var per = {}; dayViol.forEach(function (v) { (per[v.period] = per[v.period] || []).push(v); });
+          var byKind = {}; viol.forEach(function (v) { byKind[v.kind] = (byKind[v.kind] || 0) + 1; });
+          html += dateRow + '<div class="card"><h2>Зөрчил нэмэх</h2><div class="hr-form">' +
+            '<select id="vS"><option value="">Сурагч…</option>' + kids.map(function (k) { return '<option value="' + k.id + '">' + esc(k.name) + '</option>'; }).join('') + '</select>' +
+            '<select id="vP">' + [1, 2, 3, 4, 5, 6, 7, 8].map(function (i) { return '<option value="' + i + '">' + i + '-р цаг</option>'; }).join('') + '</select></div>' +
+            '<div class="row" style="gap:6px;flex-wrap:wrap" id="vK">' + Object.keys(HRV).map(function (k, i) { return '<button type="button" class="chip' + (i === 1 ? ' on' : '') + '" data-vk="' + k + '">' + HRV[k] + '</button>'; }).join('') + '</div>' +
+            '<input type="text" id="vN" placeholder="Тайлбар (заавал биш)" maxlength="300"><button class="btn" id="vAdd">Нэмэх</button></div>' +
+            '<div class="card"><h2>' + hrDay + ' · цагаар</h2>' + (Object.keys(per).length ? Object.keys(per).sort(function (a, b) { return a - b; }).map(function (p) { return '<div class="hr-pg"><b class="hr-per">' + p + '-р цаг</b>' + per[p].map(function (v) { return '<div class="row between hr-li"><span>' + nm(v.student_id) + ' · <span style="color:#B42318;font-weight:600">' + esc(HRV[v.kind] || v.kind) + '</span>' + (v.note ? ' <span class="muted">— ' + esc(v.note) + '</span>' : '') + ' <span class="muted" style="font-size:12px">(' + esc(v.by_name || 'багш') + ')</span></span><button class="btn ghost" data-vdel="' + v.id + '" style="height:32px;padding:0 10px" aria-label="Устгах">✕</button></div>'; }).join('') + '</div>'; }).join('') : '<div class="muted">Энэ өдөр зөрчил бүртгэгдээгүй</div>') + '</div>' +
+            '<div class="card"><h2>Энэ сарын зөрчил төрлөөр</h2>' + (Object.keys(byKind).length ? '<div class="row" style="gap:6px;flex-wrap:wrap">' + Object.keys(byKind).sort(function (a, b) { return byKind[b] - byKind[a]; }).map(function (k) { return '<span class="pill p-red">' + esc(HRV[k] || k) + ' · ' + byKind[k] + '</span>'; }).join('') + '</div>' : '<div class="muted">Алга</div>') + '</div>';
+        } else if (hrSub === 'notes') {
+          var shownN = hrNoteFilter ? notes.filter(function (n) { return n.student_id === hrNoteFilter; }) : notes;
+          html += '<div class="card"><h2>Тэмдэглэл нэмэх</h2><div class="muted">🔒 Зөвхөн танд харагдана. Дарга нар, сурагчид харахгүй.</div>' +
+            '<div class="row" style="gap:6px" id="nK"><button type="button" class="chip on" data-nk="behavior">Сахилга, зан төлөв</button><button type="button" class="chip" data-nk="parent">Эцэг эхтэй харилцсан</button></div>' +
+            '<select id="nS"><option value="">Сурагч…</option>' + kids.map(function (k) { return '<option value="' + k.id + '">' + esc(k.name) + '</option>'; }).join('') + '</select>' +
+            '<div class="row" style="gap:6px;flex-wrap:wrap" id="nT"></div>' +
+            '<textarea id="nX" placeholder="Юу болсон, юу ярилцсан, ямар шийдвэр гарсан…" maxlength="2000"></textarea><button class="btn" id="nAdd">Хадгалах</button></div>' +
+            '<div class="card"><div class="row between" style="flex-wrap:wrap;gap:8px"><h2>Тэмдэглэлүүд</h2><select id="nF" style="width:auto;max-width:100%"><option value="">Бүх сурагч</option>' + kids.map(function (k) { return '<option value="' + k.id + '"' + (k.id === hrNoteFilter ? ' selected' : '') + '>' + esc(k.name) + '</option>'; }).join('') + '</select></div>' +
+            (shownN.length ? shownN.map(function (n) { return '<div class="hr-note ' + n.kind + '"><div class="row between"><b>' + nm(n.student_id) + '</b><span class="muted" style="font-size:12px">' + n.day + '</span></div><div><span class="pill ' + (n.kind === 'parent' ? 'p-blue' : 'p-amber') + '">' + (n.kind === 'parent' ? '👪 ' : '⚠️ ') + esc(n.tag || (n.kind === 'parent' ? 'Эцэг эх' : 'Сахилга')) + '</span></div>' + (n.text ? '<div style="white-space:pre-wrap">' + esc(n.text) + '</div>' : '') + '<button class="link" data-ndel="' + n.id + '" style="font-size:13px;color:#A12A1E;min-height:30px;padding:0">Устгах</button></div>'; }).join('') : '<div class="muted">Тэмдэглэл алга</div>') + '</div>';
+        } else if (hrSub === 'check') {
+          var mc = {}; kids.forEach(function (k) { mc[k.id] = { uniform: 0, bag: 0, phone: 0 }; });
+          chk.forEach(function (c) { (c.items || []).forEach(function (i) { if (mc[c.student_id] && mc[c.student_id][i] != null) mc[c.student_id][i]++; }); });
+          html += dateRow + '<div class="card">' + (chkLog ? '<div class="muted">Тэмдэглэсэн: <b>' + esc(chkLog.by_name || '') + '</b> ' + hrTime(chkLog.at) + '</div>' : '<div class="muted">Үзлэгийн дарга тэмдэглээгүй байна. Та өөрөө тэмдэглэж болно.</div>') +
+            '<div class="muted" style="font-size:12px">Товч дарвал улаан болно, тэр нь «байхгүй / өгөөгүй» гэсэн үг. Шууд хадгалагдана.</div>' +
+            kids.map(function (k) { var it = dayChk[k.id] || []; return '<div class="hr-at"><span class="hr-nm">' + esc(k.name) + '</span><span class="hr-chk">' + Object.keys(CHI).map(function (x) { return '<button type="button" data-ck="' + k.id + '" data-ci="' + x + '" class="' + (it.indexOf(x) >= 0 ? 'bad' : '') + '" title="' + CHI[x][1] + '">' + CHI[x][0] + '</button>'; }).join('') + '</span></div>'; }).join('') + '</div>' +
+            '<div class="card"><h2>Сарын нэгтгэл · ' + hrDay.slice(0, 7) + '</h2><div style="overflow-x:auto"><table class="hr-tb"><thead><tr><th>Нэр</th><th title="Дүрэмт хувцасгүй">👔</th><th title="Хувцасны уутгүй">🎒</th><th title="Утсаа өгөөгүй">📱</th></tr></thead><tbody>' +
+            kids.map(function (k) { var x = mc[k.id]; return '<tr><td>' + esc(k.name) + '</td>' + ['uniform', 'bag', 'phone'].map(function (i) { return '<td' + (x[i] ? ' class="r"' : '') + '>' + (x[i] || '') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div></div>';
+        } else if (hrSub === 'contacts') {
+          var nFill = kids.filter(function (k) { var c = ct[k.id]; return c && (tel(c.father) || tel(c.mother) || tel(c.self)); }).length;
+          html += '<div class="card"><div class="row between" style="flex-wrap:wrap;gap:8px"><h2>📞 Эцэг эх, сурагчийн утас</h2><span class="pill p-blue">' + nFill + ' / ' + kids.length + ' бөглөсөн</span></div>' +
+            '<div class="muted">🔒 Зөвхөн танд харагдана. Нүдэнд бичээд гарахад автоматаар хадгалагдана. Ирээгүй сурагчийн хажууд залгах товч болж гарна.</div>' +
+            '<input type="text" id="ctQ" placeholder="🔍 Нэрээр хайх"></div>' +
+            '<div class="hr-cts">' + kids.map(function (k) { var c = ct[k.id] || {}; return '<div class="card hr-ct" data-ctn="' + esc(k.name.toLowerCase()) + '"><b>' + esc(k.name) + '</b><div class="hr-ctg">' +
+              [['father', 'Аав'], ['mother', 'Ээж'], ['self', 'Сурагч']].map(function (x) { return '<label><span>' + x[1] + '</span><span class="hr-ctin"><input type="tel" inputmode="tel" maxlength="20" placeholder="Дугаар" data-ct="' + k.id + '" data-cf="' + x[0] + '" value="' + esc(c[x[0]] || '') + '">' + (tel(c[x[0]]) ? '<a href="tel:' + tel(c[x[0]]) + '" aria-label="Залгах">📞</a>' : '') + '</span></label>'; }).join('') + '</div></div>'; }).join('') + '</div>';
+        } else {
+          var dg = kids.filter(function (k) { return k.hr_role === 'darga'; })[0], jj = kids.filter(function (k) { return k.hr_role === 'jijuur'; })[0], uz = kids.filter(function (k) { return k.hr_role === 'uzleg'; })[0];
+          var opts = function (sel) { return '<option value="">— Томилоогүй —</option>' + kids.map(function (k) { return '<option value="' + k.id + '"' + (sel && sel.id === k.id ? ' selected' : '') + '>' + esc(k.name) + ' (' + esc(k.code) + ')</option>'; }).join(''); };
+          html += '<div class="card" style="max-width:620px"><h2>Дарга нар томилох</h2>' +
+            '<label class="muted" for="ldD"><b>📋 Ангийн дарга</b> — өглөө бүр ирц, цаг бүрийн зөрчил тэмдэглэнэ</label><select id="ldD">' + opts(dg) + '</select>' +
+            '<label class="muted" for="ldJ"><b>🧹 Жижүүр хариуцсан дарга</b> — өдрийн жижүүр, хийсэн эсэхийг тэмдэглэнэ</label><select id="ldJ">' + opts(jj) + '</select>' +
+            '<label class="muted" for="ldU"><b>👔 Үзлэгийн дарга</b> — өглөө дүрэмт хувцас, хувцасны уут, утсаа хайрцагт өгсөн эсэхийг тэмдэглэнэ</label><select id="ldU">' + opts(uz) + '</select>' +
+            '<button class="btn" id="ldSave">Хадгалах</button>' +
+            '<div class="hr-how"><b>Дарга нар хэрхэн орох вэ?</b><br>Ангийн линкээр өөрийн код, 4 оронтой тоогоор орно. Нүүр хуудсанд нь <b>«📋 Дарга»</b> таб нэмэгдэж гарна. Сахилга, эцэг эхийн тэмдэглэл тэдэнд <b>харагдахгүй</b>.</div></div>';
+        }
+        app.innerHTML = html; bindHead();
+        var dI = q('#hrD'); if (dI) dI.onchange = function () { if (this.value) { hrDay = this.value > today ? today : this.value; showHomeroom(); } };
+        var tB = q('#hrT'); if (tB) tB.onclick = function () { hrDay = today; showHomeroom(); };
+        app.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { hrSub = b.dataset.go; showHomeroom(); }; });
+        app.querySelectorAll('[data-att]').forEach(function (b) {
+          b.onclick = function () {
+            var sid = b.dataset.att, st = b.dataset.st, row = b.parentNode;
+            var p = st ? sb.from('hr_attendance').upsert({ student_id: sid, day: hrDay, status: st, by_name: 'Багш', updated_at: new Date().toISOString() }) : sb.from('hr_attendance').delete().eq('student_id', sid).eq('day', hrDay);
+            p.then(function (x) {
+              if (fail(x)) return;
+              row.querySelectorAll('button').forEach(function (y) { y.className = y === b ? 'on s-' + (st || 'here') : ''; });
+              if (!log) { log = { by_name: 'Багш', at: new Date().toISOString() }; sb.from('hr_att_log').upsert({ class_id: hc.id, day: hrDay, by_name: 'Багш', at: log.at }).then(function () {}); }
+            });
+          };
+        });
+        app.querySelectorAll('#vK [data-vk]').forEach(function (b) { b.onclick = function () { app.querySelectorAll('#vK .chip').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
+        var vA = q('#vAdd'); if (vA) vA.onclick = function () {
+          var s = q('#vS').value, k = app.querySelector('#vK .chip.on'); if (!s) { toast('Сурагчаа сонгоно уу'); return; }
+          this.disabled = true;
+          sb.from('hr_violations').insert({ class_id: hc.id, student_id: s, day: hrDay, period: +q('#vP').value, kind: k ? k.dataset.vk : 'other', note: q('#vN').value.trim() || null, by_name: 'Багш' }).then(function (x) { if (fail(x)) { vA.disabled = false; return; } toast('Нэмэгдлээ'); showHomeroom(); });
+        };
+        app.querySelectorAll('[data-vdel]').forEach(function (b) { b.onclick = function () { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Устгах уу?'; return; } sb.from('hr_violations').delete().eq('id', b.dataset.vdel).then(function (x) { if (!fail(x)) showHomeroom(); }); }; });
+        var nKind = 'behavior', drawTags = function () { var t = q('#nT'); if (t) { t.innerHTML = HRT[nKind].map(function (x, i) { return '<button type="button" class="chip' + (i === 0 ? ' on' : '') + '" data-nt="' + esc(x) + '">' + esc(x) + '</button>'; }).join(''); t.querySelectorAll('[data-nt]').forEach(function (b) { b.onclick = function () { t.querySelectorAll('.chip').forEach(function (y) { y.classList.toggle('on', y === b); }); }; }); } };
+        drawTags();
+        app.querySelectorAll('#nK [data-nk]').forEach(function (b) { b.onclick = function () { nKind = b.dataset.nk; app.querySelectorAll('#nK .chip').forEach(function (x) { x.classList.toggle('on', x === b); }); drawTags(); }; });
+        var nA = q('#nAdd'); if (nA) nA.onclick = function () {
+          var s = q('#nS').value, tg = app.querySelector('#nT .chip.on'), tx = q('#nX').value.trim(); if (!s) { toast('Сурагчаа сонгоно уу'); return; }
+          this.disabled = true;
+          sb.from('hr_notes').insert({ class_id: hc.id, student_id: s, kind: nKind, tag: tg ? tg.dataset.nt : null, text: tx || null }).then(function (x) { if (fail(x)) { nA.disabled = false; return; } toast('Хадгалагдлаа'); showHomeroom(); });
+        };
+        var nF = q('#nF'); if (nF) nF.onchange = function () { hrNoteFilter = this.value; showHomeroom(); };
+        app.querySelectorAll('[data-ndel]').forEach(function (b) { b.onclick = function () { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Устгах уу? Дахин дарна'; return; } sb.from('hr_notes').delete().eq('id', b.dataset.ndel).then(function (x) { if (!fail(x)) showHomeroom(); }); }; });
+        app.querySelectorAll('[data-ck]').forEach(function (b) { b.onclick = function () {
+          var sid = b.dataset.ck, it = (dayChk[sid] || []).slice(), i = it.indexOf(b.dataset.ci); if (i >= 0) it.splice(i, 1); else it.push(b.dataset.ci);
+          var p = it.length ? sb.from('hr_check').upsert({ student_id: sid, day: hrDay, items: it, by_name: 'Багш', updated_at: new Date().toISOString() }) : sb.from('hr_check').delete().eq('student_id', sid).eq('day', hrDay);
+          p.then(function (x) { if (fail(x)) return; dayChk[sid] = it; b.classList.toggle('bad', it.indexOf(b.dataset.ci) >= 0); if (!chkLog) { chkLog = { by_name: 'Багш', at: new Date().toISOString() }; sb.from('hr_check_log').upsert({ class_id: hc.id, day: hrDay, by_name: 'Багш', at: chkLog.at }).then(function () {}); } });
+        }; });
+        var cq = q('#ctQ'); if (cq) cq.oninput = function () { var v = this.value.trim().toLowerCase(); app.querySelectorAll('.hr-ct').forEach(function (x) { x.style.display = !v || x.dataset.ctn.indexOf(v) >= 0 ? '' : 'none'; }); };
+        app.querySelectorAll('[data-ct]').forEach(function (inp) { inp.onchange = function () {
+          var sid = inp.dataset.ct, c = ct[sid] = ct[sid] || { student_id: sid }; c[inp.dataset.cf] = inp.value.trim() || null;
+          sb.from('hr_contacts').upsert({ student_id: sid, father: c.father || null, mother: c.mother || null, self: c.self || null, updated_at: new Date().toISOString() }).then(function (x) {
+            if (fail(x)) return; inp.classList.add('saved'); setTimeout(function () { inp.classList.remove('saved'); }, 1200);
+            var w = inp.parentNode, a = w.querySelector('a'), t = tel(inp.value); if (a) a.remove(); if (t) w.insertAdjacentHTML('beforeend', '<a href="tel:' + t + '" aria-label="Залгах">📞</a>');
+          }); }; });
+        var lS = q('#ldSave'); if (lS) lS.onclick = function () {
+          var d = q('#ldD').value, j = q('#ldJ').value, u = q('#ldU').value, pick = [d, j, u].filter(Boolean); if (pick.length !== pick.filter(function (x, i) { return pick.indexOf(x) === i; }).length) { toast('Нэг сурагч хоёр үүрэг авах боломжгүй'); return; }
+          this.disabled = true;
+          sb.from('students').update({ hr_role: null }).eq('class_id', hc.id).not('hr_role', 'is', null).then(function (x) {
+            if (fail(x)) { lS.disabled = false; return; }
+            var ps = []; if (d) ps.push(sb.from('students').update({ hr_role: 'darga' }).eq('id', d)); if (j) ps.push(sb.from('students').update({ hr_role: 'jijuur' }).eq('id', j)); if (u) ps.push(sb.from('students').update({ hr_role: 'uzleg' }).eq('id', u));
+            Promise.all(ps).then(function (rr) { if (rr.some(fail)) { lS.disabled = false; return; } toast('Хадгалагдлаа'); showHomeroom(); });
+          });
+        };
+      });
+    });
+  }
+  function go(t) { tab = t; drawTabs(); fbSubnav(); ({ home: showHome, review: showReview, library: showLibrary, exams: showExams, homeroom: showHomeroom, feedback: showFeedback, team: showTeam, myfb: showMyFeedback })[t](); countFb(); }
   function showMyFeedback() {
     var rating = 0;
     app.innerHTML = '<div class="card" style="max-width:640px"><h2>Платформын талаарх санал</h2><div class="muted">Таны санал платформыг сайжруулахад шууд ашиглагдана. Долоо хоногт нэг удаа бөглөхөд хангалттай.</div>' +
