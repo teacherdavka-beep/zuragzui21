@@ -594,7 +594,7 @@ main{padding-bottom:96px!important}
   var stTerm = 0, stTab = 'home', lastNav = '';
   function addNav() { if (!lastNav || app.querySelector('.snav')) return; app.insertAdjacentHTML('beforeend', lastNav.replace(/ class="on"/g, ' class=""')); app.querySelectorAll('.snav [data-tab]').forEach(function (b) { b.onclick = function () { stTab = b.dataset.tab; showHome(); }; }); }
   function showHome() {
-    if (hrMe === undefined) { hrMe = null; hrLoad(function () { if (hrMe) showHome(); }); }
+    if (hrMe === undefined) { hrMe = null; hrLoad(function () { if (hrMe) { if (stTab === 'home') stTab = 'lead'; showHome(); window.scrollTo(0, 0); } }); }
     if (stTab === 'lead' && !hrMe) stTab = 'home';
     var xp = home.xp || 0;
     var L = isArt() ? [[0, 'Шавь'], [50, 'Зураач'], [120, 'Уран зураач'], [220, 'Мастер'], [350, 'Уран бүтээлч']] : [[0, 'Шавь'], [50, 'Зураач'], [120, 'Зураг төсөлч'], [220, 'Инженер'], [350, 'Архитектор']];

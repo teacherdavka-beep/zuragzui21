@@ -288,6 +288,8 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
 .hr-sl{display:grid;grid-template-columns:80px minmax(0,1fr);gap:8px;align-items:center;font-size:14px;font-weight:600;color:#3A4566}
 .hr-rss{flex:none;width:62px!important;height:40px;padding:0 4px!important;font-size:13px}
 .hr-qr{flex-direction:row!important;align-items:center;justify-content:space-between;gap:12px;background:#EEF3FB!important}.hr-qr .btn{flex:none;height:42px;padding:0 18px}
+.hr-cls{display:flex;gap:16px;align-items:center;background:#EEF3FB;border-radius:16px;padding:14px}.hr-cls svg{flex:none;width:140px;height:140px;background:#fff;border-radius:8px;padding:6px}.hr-cls>div{min-width:0;display:flex;flex-direction:column;gap:4px}
+@media(max-width:760px){.hr-cls{flex-direction:column;align-items:flex-start}}
 .hr-codes{margin-top:14px;display:flex;flex-direction:column;gap:10px;border-top:1px solid #EEF1F7;padding-top:14px}
 .hr-cg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.hr-cc{display:flex;gap:12px;align-items:center;background:#F8FAFE;border:1px solid #E1E8F5;border-radius:14px;padding:10px}.hr-cc svg{flex:none;width:92px;height:92px;background:#fff;border-radius:6px}.hr-cc>div{min-width:0;display:flex;flex-direction:column;gap:2px}.hr-kp{font-size:14px}.hr-cpb{align-self:flex-start;border:0;background:none;color:#1E4FA8;font-weight:700;font-size:13px;padding:4px 0;cursor:pointer}
 @media(max-width:760px){.hr-cg{grid-template-columns:1fr}}
@@ -854,10 +856,12 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
           var myLink = function (k) { return clsLink + '&s=' + encodeURIComponent(k.code) + '&p=' + k.pin; };
           var qrSvg = function (u, sz) { try { var qq = qrcode(0, 'M'); qq.addData(u); qq.make(); return qq.createSvgTag(sz || 3, 0); } catch (e) { return ''; } };
           var leadCodes = function () { if (!leaders.length) return '';
-            return '<div class="hr-codes"><div class="row between" style="flex-wrap:wrap;gap:8px"><h2>🔑 Дарга нарын нэвтрэх код</h2><button type="button" class="btn dark" id="ldPrint" style="width:auto;padding:0 16px">🖨 Карт хэвлэх</button></div>' +
-              '<div class="muted">QR-ыг утасны камераар уншуулахад шууд нэвтэрнэ. Эсвэл ангийн линкээр орж кодоо сонгоод 4 оронтой тоогоо бичнэ.</div>' +
+            return '<div class="hr-codes">' + classBox + '<div class="row between" style="flex-wrap:wrap;gap:8px"><h2>🔑 Дарга нарын код, тоо</h2><button type="button" class="btn dark" id="ldPrint" style="width:auto;padding:0 16px">🖨 Карт хэвлэх</button></div>' +
+              '<div class="muted">Ангийн линкээр ороход хэрэгтэй код, тоо. Жижиг QR нь тухайн хүүхдийн хувийн QR бөгөөд уншуулахад код бичихгүйгээр шууд орно.</div>' +
               '<div class="hr-cg">' + leaders.map(function (k) { return '<div class="hr-cc">' + qrSvg(myLink(k), 3) + '<div><b>' + esc(k.name) + '</b><div class="muted">' + RL[k.hr_role] + (k.hr_role === 'salaa' && k.hr_salaa ? ' · ' + k.hr_salaa + '-р салаа' : '') + '</div><div class="hr-kp">Код: <b>' + esc(k.code) + '</b> · Тоо: <b>' + esc(k.pin) + '</b></div><button type="button" class="hr-cpb" data-cp="' + esc(myLink(k)) + '" >📋 Линк хуулах</button></div></div>'; }).join('') + '</div>' +
-              '<div class="muted" style="word-break:break-all">Ангийн линк: <a href="' + esc(clsLink) + '" target="_blank" rel="noopener">' + esc(clsLink) + '</a></div></div>'; };
+              '</div>'; };
+          var classBox = '<div class="hr-cls">' + qrSvg(clsLink, 5) + '<div><b style="font-size:16px">📲 Нэг линкээр бүгд орно</b><div class="muted">Дарга нар энэ QR-ыг уншуулах эсвэл ангийн линкээр орно. Дараа нь <b>өөрийн кодоо сонгоод 4 оронтой тоогоо</b> бичихэд өөрийн үүргийн хуудас руу <b>шууд</b> орно.</div>' +
+            '<div class="muted" style="word-break:break-all;margin-top:4px"><a href="' + esc(clsLink) + '" target="_blank" rel="noopener">' + esc(clsLink) + '</a></div><button type="button" class="hr-cpb" data-cp="' + esc(clsLink) + '">📋 Ангийн линк хуулах</button></div></div>';
           var opts = function (sel) { return '<option value="">— Томилоогүй —</option>' + kids.map(function (k) { return '<option value="' + k.id + '"' + (sel && sel.id === k.id ? ' selected' : '') + '>' + esc(k.name) + ' (' + esc(k.code) + ')</option>'; }).join(''); };
           html += '<div class="card" style="max-width:620px"><h2>Дарга нар томилох</h2>' +
             '<label class="muted" for="ldD"><b>📋 Ангийн дарга</b> — өглөө бүр ирц, цаг бүрийн зөрчил тэмдэглэнэ</label><select id="ldD">' + opts(dg) + '</select>' +
