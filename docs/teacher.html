@@ -280,6 +280,13 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
 .hr-ctin{display:flex;gap:6px;align-items:center;min-width:0}.hr-ctin input{flex:1;min-width:0;height:40px;border:1px solid #C5CADB;border-radius:10px;padding:0 12px;font-size:15px;background:#fff;color:#1A1F36;font-family:inherit}.hr-ctin input.saved{border-color:#14805A;box-shadow:0 0 0 3px rgba(20,128,90,.15)}.hr-ctin a{flex:none;width:40px;height:40px;border-radius:10px;background:#E2F6EE;display:grid;place-items:center;text-decoration:none;font-size:18px}
 @media(max-width:760px){.hr-cts{grid-template-columns:1fr}}
 .hr-chk{display:flex;gap:4px;flex:none}.hr-chk button{width:46px;height:38px;border-radius:10px;border:1.5px solid #D5DAE8;background:#fff;font-size:18px}.hr-chk button.bad{background:#FDECEA;border-color:#C0394E;box-shadow:inset 0 0 0 1px #C0394E}
+.hr-rs{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #F0F2F7}.hr-rs:last-child{border-bottom:0}
+.hr-rsn{width:24px;text-align:right;color:#8C96B3;font-size:13px;flex:none}.hr-rs input{flex:1;min-width:0;height:40px}.hr-rs input.saved{border-color:#14805A;box-shadow:0 0 0 3px rgba(20,128,90,.15)}
+.hr-rsc{flex:none;font-size:12px;width:52px}.hr-rs .btn{flex:none;height:38px;padding:0 12px;font-size:13px}
+@media(max-width:760px){.hr-rsc{display:none}}
+.hr-sal{display:flex;gap:6px;flex-wrap:wrap}.hr-sal span{background:#FFF1DF;color:#8A4B0B;border-radius:99px;padding:5px 11px;font-size:13px;font-weight:700}.hr-sal span.ok{background:#E2F6EE;color:#14805A}
+.hr-sl{display:grid;grid-template-columns:80px minmax(0,1fr);gap:8px;align-items:center;font-size:14px;font-weight:600;color:#3A4566}
+.hr-rss{flex:none;width:62px!important;height:40px;padding:0 4px!important;font-size:13px}
 .hr-how{background:#F3F6FC;border-radius:12px;padding:12px;font-size:13.5px;line-height:1.6;color:#3A4566}
 @media(max-width:760px){.hr-grid{grid-template-columns:1fr}.hr-form{grid-template-columns:1fr 110px}.hr-btns{gap:3px}.hr-btns button{min-width:36px;padding:0 4px;font-size:12.5px;height:38px}.hr-nm{font-size:14px}.hr-tile b{font-size:26px}}
 /* ---------- НЭВТРЭХ ХЭСЭГ (сурагч, багш ижил загвар) ---------- */
@@ -724,7 +731,7 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
       return;
     }
     if (!hrDay) hrDay = hrToday();
-    var SUBS = [['board', 'Самбар'], ['att', 'Ирц'], ['check', 'Үзлэг'], ['viol', 'Зөрчил'], ['notes', 'Тэмдэглэл'], ['contacts', 'Утас'], ['lead', 'Дарга нар']];
+    var SUBS = [['board', 'Самбар'], ['att', 'Ирц'], ['check', 'Үзлэг'], ['viol', 'Зөрчил'], ['notes', 'Тэмдэглэл'], ['contacts', 'Утас'], ['roster', 'Нэрс'], ['lead', 'Дарга нар']];
     var head = '<div class="row between" style="flex-wrap:wrap;gap:8px"><h1 class="hm-hi" style="font-size:22px;margin:0">🏠 Даасан анги · ' + esc(hc.name) + '</h1><button class="btn ghost" id="hrChg" style="height:36px;font-size:13px">Анги солих</button></div>' +
       '<div class="row hr-sub" style="gap:6px;overflow-x:auto;flex-wrap:nowrap">' + SUBS.map(function (s) { return '<button class="chip' + (hrSub === s[0] ? ' on' : '') + '" data-hrs="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>';
     app.innerHTML = head + '<div class="muted">Ачаалж байна…</div>';
@@ -734,7 +741,7 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
     };
     bindHead();
     var today = hrToday(), m0 = hrDay.slice(0, 8) + '01';
-    sb.from('students').select('id,name,code,hr_role').eq('class_id', hc.id).eq('active', true).order('name').then(function (rs) {
+    sb.from('students').select('id,name,code,hr_role,hr_salaa').eq('class_id', hc.id).eq('active', true).order('name').then(function (rs) {
       var kids = rs.data || [], ids = kids.map(function (k) { return k.id; }), byId = {}; kids.forEach(function (k) { byId[k.id] = k; });
       var nm = function (id) { return byId[id] ? esc(byId[id].name) : '—'; };
       Promise.all([
@@ -745,8 +752,13 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
         sb.from('hr_notes').select('*').eq('class_id', hc.id).order('created_at', { ascending: false }).limit(300),
         ids.length ? sb.from('hr_contacts').select('*').in('student_id', ids) : Promise.resolve({ data: [] }),
         ids.length ? sb.from('hr_check').select('student_id,day,items,by_name').in('student_id', ids).gte('day', m0) : Promise.resolve({ data: [] }),
-        sb.from('hr_check_log').select('day,by_name,at').eq('class_id', hc.id).eq('day', hrDay).maybeSingle()
+        sb.from('hr_check_log').select('day,by_name,at').eq('class_id', hc.id).eq('day', hrDay).maybeSingle(),
+        sb.from('hr_salaa_log').select('salaa,by_name,at').eq('class_id', hc.id).eq('day', hrDay)
       ]).then(function (r) {
+        var sLog = {}; (r[8].data || []).forEach(function (x) { sLog[x.salaa] = x; });
+        var nSal = Math.max(5, Math.max.apply(null, [0].concat(kids.map(function (k) { return k.hr_salaa || 0; }))));
+        var salStrip = function () { var used = []; for (var i = 1; i <= nSal; i++) if (kids.some(function (k) { return k.hr_salaa === i; })) used.push(i); if (!used.length) return '';
+          return '<div class="hr-sal">' + used.map(function (i) { var l = sLog[i]; return '<span class="' + (l ? 'ok' : '') + '" title="' + (l ? esc(l.by_name || '') + ' ' + hrTime(l.at) : 'Бөглөөгүй') + '">' + i + '-р салаа ' + (l ? '✓ ' + hrTime(l.at) : '—') + '</span>'; }).join('') + '</div>'; };
         var chk = r[6].data || [], chkLog = r[7].data, dayChk = {}; chk.filter(function (c) { return c.day === hrDay; }).forEach(function (c) { dayChk[c.student_id] = c.items || []; });
         var CHI = { uniform: ['👔', 'Дүрэмт хувцасгүй'], bag: ['🎒', 'Хувцасны уутгүй'], phone: ['📱', 'Утсаа өгөөгүй'] };
         var ct = {}; (r[5].data || []).forEach(function (c) { ct[c.student_id] = c; });
@@ -756,6 +768,7 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
         var att = r[0].data || [], logs = r[1].data || [], duty = r[2].data, viol = r[3].data || [], notes = r[4].data || [];
         var dayAtt = {}; att.filter(function (a) { return a.day === hrDay; }).forEach(function (a) { dayAtt[a.student_id] = a.status; });
         var log = logs.filter(function (l) { return l.day === hrDay; })[0];
+        if (!log && (r[8].data || []).length) { var fl = r[8].data.slice().sort(function (a, b) { return a.at < b.at ? -1 : 1; })[0]; log = { by_name: fl.by_name + ' (салаа)', at: fl.at }; }
         var dayViol = viol.filter(function (v) { return v.day === hrDay; });
         var dateRow = '<div class="row" style="gap:8px;flex-wrap:wrap"><input type="date" id="hrD" value="' + hrDay + '" max="' + today + '" style="width:auto">' + (hrDay !== today ? '<button class="btn ghost" id="hrT" style="height:40px">Өнөөдөр</button>' : '<span class="muted">Өнөөдөр</span>') + '</div>';
         var html = head;
@@ -767,7 +780,7 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
           viol.forEach(function (v) { if (mon[v.student_id]) mon[v.student_id].v++; });
           var watch = kids.map(function (k) { var x = mon[k.id]; return { k: k, x: x, sc: x.a * 2 + x.l + x.v }; }).filter(function (w) { return w.sc > 0; }).sort(function (a, b) { return b.sc - a.sc; }).slice(0, 6);
           html += dateRow +
-            '<div class="card hr-st ' + (log ? 'ok' : 'no') + '">' + (log ? '✅ Ирц бүртгэгдсэн · <b>' + esc(log.by_name || '') + '</b> ' + hrTime(log.at) + '-д' : '⚠️ ' + (hrDay === today ? 'Өнөөдөр' : 'Энэ өдөр') + ' ирц бүртгэгдээгүй байна') + '</div>' +
+            '<div class="card hr-st ' + (log ? 'ok' : 'no') + '">' + (log ? '✅ Ирц бүртгэгдсэн · <b>' + esc(log.by_name || '') + '</b> ' + hrTime(log.at) + '-д' : '⚠️ ' + (hrDay === today ? 'Өнөөдөр' : 'Энэ өдөр') + ' ирц бүртгэгдээгүй байна') + '</div>' + salStrip() +
             '<div class="hm-stats">' +
             '<div class="card hr-tile"><span>Ирсэн</span><b>' + (log ? here : '—') + '<small> / ' + kids.length + '</small></b></div>' +
             '<div class="card hr-tile"><span>Тасалсан</span><b style="color:#B42318">' + abs + '</b></div>' +
@@ -817,6 +830,11 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
             kids.map(function (k) { var it = dayChk[k.id] || []; return '<div class="hr-at"><span class="hr-nm">' + esc(k.name) + '</span><span class="hr-chk">' + Object.keys(CHI).map(function (x) { return '<button type="button" data-ck="' + k.id + '" data-ci="' + x + '" class="' + (it.indexOf(x) >= 0 ? 'bad' : '') + '" title="' + CHI[x][1] + '">' + CHI[x][0] + '</button>'; }).join('') + '</span></div>'; }).join('') + '</div>' +
             '<div class="card"><h2>Сарын нэгтгэл · ' + hrDay.slice(0, 7) + '</h2><div style="overflow-x:auto"><table class="hr-tb"><thead><tr><th>Нэр</th><th title="Дүрэмт хувцасгүй">👔</th><th title="Хувцасны уутгүй">🎒</th><th title="Утсаа өгөөгүй">📱</th></tr></thead><tbody>' +
             kids.map(function (k) { var x = mc[k.id]; return '<tr><td>' + esc(k.name) + '</td>' + ['uniform', 'bag', 'phone'].map(function (i) { return '<td' + (x[i] ? ' class="r"' : '') + '>' + (x[i] || '') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div></div>';
+        } else if (hrSub === 'roster') {
+          html += '<div class="card"><h2>➕ Сурагч нэмэх</h2><div class="muted">Нэг мөрөнд нэг сурагч. Excel-ээс нэрсийн баганыг хуулж буулгаж болно. Шинэ сурагч автоматаар код, 4 оронтой тоо авна.</div>' +
+            '<textarea id="rsAdd" placeholder="Б.Тэмүүлэн&#10;Г.Номин"></textarea><button class="btn" id="rsAddB">Нэмэх</button></div>' +
+            '<div class="card"><div class="row between"><h2>' + esc(hc.name) + ' · ' + kids.length + ' сурагч</h2></div><div class="muted">Нэрийг дарж засна, гарахад хадгалагдана. «Хасах» дарвал дахин баталгаажуулна. Хассан сурагчийн өмнөх дүн, ирц архивт үлдэнэ.</div>' +
+            kids.map(function (k, i) { return '<div class="hr-rs"><span class="hr-rsn">' + (i + 1) + '</span><input type="text" data-rn="' + k.id + '" value="' + esc(k.name) + '" maxlength="60"><select class="hr-rss" data-rsl="' + k.id + '" title="Салаа"><option value="">С—</option>' + [1, 2, 3, 4, 5, 6].map(function (n) { return '<option value="' + n + '"' + (k.hr_salaa === n ? ' selected' : '') + '>С' + n + '</option>'; }).join('') + '</select><span class="muted hr-rsc">' + esc(k.code) + '</span><button type="button" class="btn red" data-rdel="' + k.id + '" data-n="' + esc(k.name) + '">Хасах</button></div>'; }).join('') + '</div>';
         } else if (hrSub === 'contacts') {
           var nFill = kids.filter(function (k) { var c = ct[k.id]; return c && (tel(c.father) || tel(c.mother) || tel(c.self)); }).length;
           html += '<div class="card"><div class="row between" style="flex-wrap:wrap;gap:8px"><h2>📞 Эцэг эх, сурагчийн утас</h2><span class="pill p-blue">' + nFill + ' / ' + kids.length + ' бөглөсөн</span></div>' +
@@ -825,12 +843,14 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
             '<div class="hr-cts">' + kids.map(function (k) { var c = ct[k.id] || {}; return '<div class="card hr-ct" data-ctn="' + esc(k.name.toLowerCase()) + '"><b>' + esc(k.name) + '</b><div class="hr-ctg">' +
               [['father', 'Аав'], ['mother', 'Ээж'], ['self', 'Сурагч']].map(function (x) { return '<label><span>' + x[1] + '</span><span class="hr-ctin"><input type="tel" inputmode="tel" maxlength="20" placeholder="Дугаар" data-ct="' + k.id + '" data-cf="' + x[0] + '" value="' + esc(c[x[0]] || '') + '">' + (tel(c[x[0]]) ? '<a href="tel:' + tel(c[x[0]]) + '" aria-label="Залгах">📞</a>' : '') + '</span></label>'; }).join('') + '</div></div>'; }).join('') + '</div>';
         } else {
-          var dg = kids.filter(function (k) { return k.hr_role === 'darga'; })[0], jj = kids.filter(function (k) { return k.hr_role === 'jijuur'; })[0], uz = kids.filter(function (k) { return k.hr_role === 'uzleg'; })[0];
+          var dg = kids.filter(function (k) { return k.hr_role === 'darga'; })[0], jj = kids.filter(function (k) { return k.hr_role === 'jijuur'; })[0], uz = kids.filter(function (k) { return k.hr_role === 'uzleg'; })[0], sl = function (n) { return kids.filter(function (k) { return k.hr_role === 'salaa' && k.hr_salaa === n; })[0]; };
           var opts = function (sel) { return '<option value="">— Томилоогүй —</option>' + kids.map(function (k) { return '<option value="' + k.id + '"' + (sel && sel.id === k.id ? ' selected' : '') + '>' + esc(k.name) + ' (' + esc(k.code) + ')</option>'; }).join(''); };
           html += '<div class="card" style="max-width:620px"><h2>Дарга нар томилох</h2>' +
             '<label class="muted" for="ldD"><b>📋 Ангийн дарга</b> — өглөө бүр ирц, цаг бүрийн зөрчил тэмдэглэнэ</label><select id="ldD">' + opts(dg) + '</select>' +
             '<label class="muted" for="ldJ"><b>🧹 Жижүүр хариуцсан дарга</b> — өдрийн жижүүр, хийсэн эсэхийг тэмдэглэнэ</label><select id="ldJ">' + opts(jj) + '</select>' +
             '<label class="muted" for="ldU"><b>👔 Үзлэгийн дарга</b> — өглөө дүрэмт хувцас, хувцасны уут, утсаа хайрцагт өгсөн эсэхийг тэмдэглэнэ</label><select id="ldU">' + opts(uz) + '</select>' +
+            '<div style="margin-top:8px"><b style="font-size:14px">👥 Салааны дарга нар</b><div class="muted" style="font-size:13px">Салааны дарга өөрийн салааны хүүхдүүдийг өөрөө сонгож, тэдний ирцийг бөглөнө. Та «Нэрс» хэсгээс салааг засаж болно.</div></div>' +
+            [1, 2, 3, 4, 5].map(function (n) { return '<div class="hr-sl"><span>' + n + '-р салаа</span><select data-ldsl="' + n + '">' + opts(sl(n)) + '</select></div>'; }).join('') +
             '<button class="btn" id="ldSave">Хадгалах</button>' +
             '<div class="hr-how"><b>Дарга нар хэрхэн орох вэ?</b><br>Ангийн линкээр өөрийн код, 4 оронтой тоогоор орно. Нүүр хуудсанд нь <b>«📋 Дарга»</b> таб нэмэгдэж гарна. Сахилга, эцэг эхийн тэмдэглэл тэдэнд <b>харагдахгүй</b>.</div></div>';
         }
@@ -871,6 +891,21 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
           var p = it.length ? sb.from('hr_check').upsert({ student_id: sid, day: hrDay, items: it, by_name: 'Багш', updated_at: new Date().toISOString() }) : sb.from('hr_check').delete().eq('student_id', sid).eq('day', hrDay);
           p.then(function (x) { if (fail(x)) return; dayChk[sid] = it; b.classList.toggle('bad', it.indexOf(b.dataset.ci) >= 0); if (!chkLog) { chkLog = { by_name: 'Багш', at: new Date().toISOString() }; sb.from('hr_check_log').upsert({ class_id: hc.id, day: hrDay, by_name: 'Багш', at: chkLog.at }).then(function () {}); } });
         }; });
+        var rsA = q('#rsAddB'); if (rsA) rsA.onclick = function () {
+          var names = q('#rsAdd').value.split('\n').map(function (l) { return l.split('\t')[0].trim(); }).filter(Boolean);
+          if (!names.length) { toast('Нэрсээ бичнэ үү'); return; }
+          this.disabled = true;
+          sb.rpc('add_students', { p_class_id: hc.id, p_names: names }).then(function (x) { if (fail(x)) { rsA.disabled = false; return; } toast(x.data + ' сурагч нэмэгдлээ'); showHomeroom(); });
+        };
+        app.querySelectorAll('[data-rn]').forEach(function (inp) { inp.onchange = function () {
+          var v = inp.value.trim(); if (!v) { toast('Нэр хоосон байж болохгүй'); return; }
+          sb.from('students').update({ name: v }).eq('id', inp.dataset.rn).then(function (x) { if (fail(x)) return; inp.classList.add('saved'); setTimeout(function () { inp.classList.remove('saved'); }, 1200); toast('Нэр засагдлаа'); });
+        }; });
+        app.querySelectorAll('[data-rsl]').forEach(function (sel) { sel.onchange = function () { sb.from('students').update({ hr_salaa: sel.value ? +sel.value : null }).eq('id', sel.dataset.rsl).then(function (x) { if (!fail(x)) toast('Салаа хадгалагдлаа'); }); }; });
+        app.querySelectorAll('[data-rdel]').forEach(function (b) { b.onclick = function () {
+          if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = 'Тийм, хас'; b.style.background = '#A12A1E'; b.style.color = '#fff'; toast(b.dataset.n + '-г хасах бол дахин дарна уу'); return; }
+          sb.from('students').update({ active: false, hr_role: null }).eq('id', b.dataset.rdel).then(function (x) { if (!fail(x)) { toast('Хасагдлаа'); showHomeroom(); } });
+        }; });
         var cq = q('#ctQ'); if (cq) cq.oninput = function () { var v = this.value.trim().toLowerCase(); app.querySelectorAll('.hr-ct').forEach(function (x) { x.style.display = !v || x.dataset.ctn.indexOf(v) >= 0 ? '' : 'none'; }); };
         app.querySelectorAll('[data-ct]').forEach(function (inp) { inp.onchange = function () {
           var sid = inp.dataset.ct, c = ct[sid] = ct[sid] || { student_id: sid }; c[inp.dataset.cf] = inp.value.trim() || null;
@@ -879,11 +914,11 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
             var w = inp.parentNode, a = w.querySelector('a'), t = tel(inp.value); if (a) a.remove(); if (t) w.insertAdjacentHTML('beforeend', '<a href="tel:' + t + '" aria-label="Залгах">📞</a>');
           }); }; });
         var lS = q('#ldSave'); if (lS) lS.onclick = function () {
-          var d = q('#ldD').value, j = q('#ldJ').value, u = q('#ldU').value, pick = [d, j, u].filter(Boolean); if (pick.length !== pick.filter(function (x, i) { return pick.indexOf(x) === i; }).length) { toast('Нэг сурагч хоёр үүрэг авах боломжгүй'); return; }
+          var d = q('#ldD').value, j = q('#ldJ').value, u = q('#ldU').value, sls = Array.prototype.map.call(app.querySelectorAll('[data-ldsl]'), function (x) { return [+x.dataset.ldsl, x.value]; }).filter(function (x) { return x[1]; }), pick = [d, j, u].concat(sls.map(function (x) { return x[1]; })).filter(Boolean); if (pick.length !== pick.filter(function (x, i) { return pick.indexOf(x) === i; }).length) { toast('Нэг сурагч хоёр үүрэг авах боломжгүй'); return; }
           this.disabled = true;
           sb.from('students').update({ hr_role: null }).eq('class_id', hc.id).not('hr_role', 'is', null).then(function (x) {
             if (fail(x)) { lS.disabled = false; return; }
-            var ps = []; if (d) ps.push(sb.from('students').update({ hr_role: 'darga' }).eq('id', d)); if (j) ps.push(sb.from('students').update({ hr_role: 'jijuur' }).eq('id', j)); if (u) ps.push(sb.from('students').update({ hr_role: 'uzleg' }).eq('id', u));
+            var ps = []; if (d) ps.push(sb.from('students').update({ hr_role: 'darga' }).eq('id', d)); if (j) ps.push(sb.from('students').update({ hr_role: 'jijuur' }).eq('id', j)); if (u) ps.push(sb.from('students').update({ hr_role: 'uzleg' }).eq('id', u)); sls.forEach(function (x) { ps.push(sb.from('students').update({ hr_role: 'salaa', hr_salaa: x[0] }).eq('id', x[1])); });
             Promise.all(ps).then(function (rr) { if (rr.some(fail)) { lS.disabled = false; return; } toast('Хадгалагдлаа'); showHomeroom(); });
           });
         };

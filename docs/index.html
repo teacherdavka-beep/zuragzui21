@@ -147,6 +147,7 @@ main>.card:first-child{background:linear-gradient(135deg,#FFFFFF 0%,#F2EEFF 100%
 .hr-form{display:grid;grid-template-columns:1fr 104px;gap:8px}
 .hr-chips{display:flex;flex-wrap:wrap;gap:6px}.hr-chips button{border:1.5px solid #D5DAE8;background:#fff;border-radius:99px;padding:7px 12px;font-weight:600;font-size:13.5px;color:#1A1F36}.hr-chips button.on{background:#5B4FD6;border-color:#5B4FD6;color:#fff}
 .hr-chk{display:flex;gap:4px;flex:none}.hr-chk button{width:48px;height:40px;border-radius:10px;border:1.5px solid #D5DAE8;background:#fff;font-size:19px}.hr-chk button.bad{background:#FFE8EC;border-color:#C0394E;box-shadow:inset 0 0 0 1px #C0394E}
+.hr-chips button.oth{background:#F0F2F7;color:#9AA1B9;border-color:#E1E4EE}
 .hr-leg{background:#FFF6E0;color:#7A4E00;border-radius:12px;padding:9px 12px;font-size:13px;line-height:1.6}
 #hdK{max-height:230px;overflow:auto;padding:2px}#hdD button{font-size:14.5px;padding:0 4px}
 .hr-pg{display:flex;flex-direction:column;gap:4px;padding:8px 0;border-top:1px solid #EEF1F7}
@@ -503,7 +504,7 @@ main{padding-bottom:96px!important}
     });
   }
   // ---------- АНГИЙН ДАРГА ----------
-  var hrMe, hrMarks = null, hrDutySel = null, hrDutyDone, hrChk = null;
+  var hrMe, hrMarks = null, hrDutySel = null, hrDutyDone, hrChk = null, hrPool = null, hrPickSel = null;
   var HRV = { late: 'Хоцорсон', phone: 'Утас', talk: 'Ярьсан, саад', sleep: 'Унтсан', skip: 'Цаг тасалсан', no_notebook: 'Дэвтэргүй', uniform: 'Дүрэмт хувцасгүй', fight: 'Хэрүүл, зодоон', other: 'Бусад' };
   function hrLoad(cb) { sb.rpc('hr_me', { p_token: token }).then(function (r) { hrMe = (r.data && r.data.role) ? r.data : null; hrMarks = null; hrDutySel = null; hrDutyDone = undefined; hrChk = null; cb && cb(); }); }
   function hrPeriodNow() { var d = new Date(), m = d.getHours() * 60 + d.getMinutes() - (7 * 60 + 45); if (m < 0) return 1; var p = m < 130 ? Math.floor(m / 45) + 1 : 4 + Math.floor(Math.max(0, m - 140) / 45); return Math.max(1, Math.min(8, p)); }
@@ -512,7 +513,7 @@ main{padding-bottom:96px!important}
     if (!hrMarks) { hrMarks = {}; Object.keys(d.att || {}).forEach(function (k) { hrMarks[k] = d.att[k]; }); }
     if (!hrDutySel) hrDutySel = (d.duty && d.duty.students) || [];
     if (hrDutyDone === undefined) hrDutyDone = d.duty ? d.duty.done : null;
-    var h = '<div class="card hr-head"><b style="font-size:19px">' + ({ darga: '📋 Ангийн дарга', jijuur: '🧹 Жижүүр хариуцсан дарга', uzleg: '👔 Үзлэгийн дарга' }[d.role] || 'Дарга') + '</b><span class="muted">' + esc(d['class'] || '') + ' анги · ' + d.day + '</span></div>';
+    var h = '<div class="card hr-head"><b style="font-size:19px">' + ({ darga: '📋 Ангийн дарга', jijuur: '🧹 Жижүүр хариуцсан дарга', uzleg: '👔 Үзлэгийн дарга', salaa: '👥 ' + (d.salaa || '') + '-р салааны дарга' }[d.role] || 'Дарга') + '</b><span class="muted">' + esc(d['class'] || '') + ' анги · ' + d.day + '</span></div>';
     if (d.role === 'darga') {
       var nA = Object.keys(hrMarks).length;
       h += '<div class="card"><div class="row"><h2>1. Өнөөдрийн ирц</h2>' + (d.att_log ? '<span class="pill p-green">✓ ' + fmtTime(d.att_log.at) + '</span>' : '<span class="pill p-amber">Бүртгээгүй</span>') + '</div>' +
@@ -527,6 +528,23 @@ main{padding-bottom:96px!important}
         '<div class="hr-chips" id="hvK">' + Object.keys(HRV).map(function (k, i) { return '<button type="button" class="' + (i === 1 ? 'on' : '') + '" data-vk="' + k + '">' + HRV[k] + '</button>'; }).join('') + '</div>' +
         '<input type="text" id="hvN" placeholder="Тайлбар (заавал биш)" maxlength="300"><button class="btn sec" id="hvAdd">+ Зөрчил нэмэх</button>' +
         (Object.keys(per).length ? Object.keys(per).sort(function (a, b) { return a - b; }).map(function (p) { return '<div class="hr-pg"><b class="hr-per">' + p + '-р цаг</b>' + per[p].map(function (v) { return '<div class="hr-li"><span>' + esc(nm[v.sid] || '') + ' · <b style="color:#B42318">' + esc(HRV[v.kind] || v.kind) + '</b>' + (v.note ? ' <span class="muted">— ' + esc(v.note) + '</span>' : '') + '</span><button type="button" data-vdel="' + v.id + '" aria-label="Устгах">✕</button></div>'; }).join('') + '</div>'; }).join('') : '<div class="muted" style="text-align:center;padding:6px">Өнөөдөр зөрчил алга 👍</div>') + '</div>';
+    }
+    if (d.role === 'salaa') {
+      if (hrPool) {
+        var free = hrPool.pool.filter(function (k) { return !k.salaa || k.salaa === hrPool.mine; });
+        return h + '<div class="card"><h2>Салааныхаа хүүхдүүдийг сонго</h2><div class="muted">Дарж сонгоно. Саарал нь өөр салаанд орсон хүүхэд.</div>' +
+          '<div class="hr-chips" id="spK">' + hrPool.pool.map(function (k) { var other = k.salaa && k.salaa !== hrPool.mine; return '<button type="button" ' + (other ? 'disabled class="oth"' : 'data-sp="' + k.id + '" class="' + (hrPickSel.indexOf(k.id) >= 0 ? 'on' : '') + '"') + '>' + esc(k.name) + (other ? ' · ' + k.salaa : '') + '</button>'; }).join('') + '</div>' +
+          '<div class="hr-sum" id="spSum">' + hrPickSel.length + ' сонгосон · ' + free.length + ' сонгох боломжтой</div>' +
+          '<div class="choice"><button type="button" id="spX">Болих</button><button type="button" class="on2" id="spSave">Хадгалах</button></div></div>';
+      }
+      var nA2 = Object.keys(hrMarks).length;
+      h += '<div class="card"><div class="row"><h2>Миний салаа · ' + kids.length + ' хүүхэд</h2><button type="button" class="btn sec" id="spOpen" style="width:auto;height:38px;padding:0 14px;font-size:14px">✏️ Сонгох</button></div>' +
+        (kids.length > 1 ? '<div class="muted">' + kids.map(function (k) { return esc(k.name); }).join(', ') + '</div>' : '<div class="hr-leg">Эхлээд <b>✏️ Сонгох</b> дарж салааныхаа хүүхдүүдийг сонгоорой.</div>') + '</div>';
+      if (kids.length > 1) h += '<div class="card"><div class="row"><h2>Өнөөдрийн ирц</h2>' + (d.att_log ? '<span class="pill p-green">✓ ' + fmtTime(d.att_log.at) + '</span>' : '<span class="pill p-amber">Бүртгээгүй</span>') + '</div>' +
+        '<div class="muted">Бүгд «✓ ирсэн» гэж эхэлнэ. Ирээгүй, хоцорсон хүүхдийг л сонгоод хадгална.</div>' +
+        kids.map(function (k) { var st = hrMarks[k.id] || ''; return '<div class="hr-at"><span class="hr-nm">' + esc(k.name) + '</span><span class="hr-btns">' + [['', '✓'], ['absent', 'Тас'], ['late', 'Хоц'], ['sick', 'Өвч'], ['excused', 'Чөл']].map(function (o) { return '<button type="button" data-hm="' + k.id + '" data-st="' + o[0] + '" class="' + (st === o[0] ? 'on s-' + (o[0] || 'here') : '') + '">' + o[1] + '</button>'; }).join('') + '</span></div>'; }).join('') +
+        '<div class="hr-sum" id="hrSum">' + (kids.length - nA2) + ' ирсэн · ' + nA2 + ' тэмдэглэсэн</div><button class="btn" id="hrAtt">Ирц хадгалах</button></div>';
+      return h + '<div class="muted" style="text-align:center;font-size:12.5px">Таны бөглөсөн мэдээлэл анги удирдсан багшид шууд харагдана.</div>';
     }
     if (d.role === 'uzleg') {
       if (!hrChk) { hrChk = {}; Object.keys(d.check || {}).forEach(function (k) { hrChk[k] = (d.check[k] || []).slice(); }); }
@@ -549,7 +567,7 @@ main{padding-bottom:96px!important}
     var redraw = function () { var y = window.scrollY; showHome(); window.scrollTo(0, y); };
     var upd = function () { var n = Object.keys(hrMarks).length, s = document.getElementById('hrSum'); if (s) s.textContent = (hrMe.students.length - n) + ' ирсэн · ' + n + ' тэмдэглэсэн'; };
     app.querySelectorAll('[data-hm]').forEach(function (b) { b.onclick = function () { var st = b.dataset.st; if (st) hrMarks[b.dataset.hm] = st; else delete hrMarks[b.dataset.hm]; b.parentNode.querySelectorAll('button').forEach(function (x) { x.className = x === b ? 'on s-' + (st || 'here') : ''; }); upd(); }; });
-    var ha = document.getElementById('hrAtt'); if (ha) ha.onclick = function () { var b = this; b.disabled = true; b.textContent = 'Хадгалж байна…'; sb.rpc('hr_save_att', { p_token: token, p_marks: hrMarks }).then(function (r) { b.disabled = false; if (r.error || (r.data && r.data.error)) { toast('Хадгалж чадсангүй'); b.textContent = 'Ирц хадгалах'; return; } toast('✓ Ирц хадгалагдлаа'); hrLoad(redraw); }); };
+    var ha = document.getElementById('hrAtt'); if (ha) ha.onclick = function () { var b = this; b.disabled = true; b.textContent = 'Хадгалж байна…'; sb.rpc(hrMe.role === 'salaa' ? 'hr_save_salaa_att' : 'hr_save_att', { p_token: token, p_marks: hrMarks }).then(function (r) { b.disabled = false; if (r.error || (r.data && r.data.error)) { toast('Хадгалж чадсангүй'); b.textContent = 'Ирц хадгалах'; return; } toast('✓ Ирц хадгалагдлаа'); hrLoad(redraw); }); };
     app.querySelectorAll('#hvK [data-vk]').forEach(function (b) { b.onclick = function () { app.querySelectorAll('#hvK button').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
     var va = document.getElementById('hvAdd'); if (va) va.onclick = function () {
       var s = document.getElementById('hvS').value, k = app.querySelector('#hvK button.on'); if (!s) { toast('Сурагчаа сонгоно уу'); return; }
@@ -559,6 +577,10 @@ main{padding-bottom:96px!important}
     app.querySelectorAll('[data-vdel]').forEach(function (b) { b.onclick = function () { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Устгах?'; return; } sb.rpc('hr_del_viol', { p_token: token, p_id: b.dataset.vdel }).then(function () { hrLoad(redraw); }); }; });
     app.querySelectorAll('[data-dk]').forEach(function (b) { b.onclick = function () { var id = b.dataset.dk, i = hrDutySel.indexOf(id); if (i >= 0) hrDutySel.splice(i, 1); else hrDutySel.push(id); b.classList.toggle('on', i < 0); }; });
     app.querySelectorAll('[data-dd]').forEach(function (b) { b.onclick = function () { hrDutyDone = b.dataset.dd === '' ? null : b.dataset.dd === '1'; app.querySelectorAll('[data-dd]').forEach(function (x) { x.className = x === b ? (b.dataset.dd === '0' ? 'on' : 'on2') : ''; }); }; });
+    var so = document.getElementById('spOpen'); if (so) so.onclick = function () { sb.rpc('hr_salaa_pool', { p_token: token }).then(function (r) { if (!r.data || r.data.error) { toast('Ачаалж чадсангүй'); return; } hrPool = r.data; hrPickSel = hrPool.pool.filter(function (k) { return k.salaa === hrPool.mine; }).map(function (k) { return k.id; }); redraw(); }); };
+    app.querySelectorAll('[data-sp]').forEach(function (b) { b.onclick = function () { var i = hrPickSel.indexOf(b.dataset.sp); if (i >= 0) hrPickSel.splice(i, 1); else hrPickSel.push(b.dataset.sp); b.classList.toggle('on', i < 0); var e = document.getElementById('spSum'); if (e) e.textContent = hrPickSel.length + ' сонгосон'; }; });
+    var sx = document.getElementById('spX'); if (sx) sx.onclick = function () { hrPool = null; redraw(); };
+    var ss = document.getElementById('spSave'); if (ss) ss.onclick = function () { var b = this; b.disabled = true; sb.rpc('hr_set_salaa', { p_token: token, p_ids: hrPickSel }).then(function (r) { b.disabled = false; if (r.error || (r.data && r.data.error)) { toast(r.data && r.data.error === 'limit' ? '20-оос олон хүүхэд сонгох боломжгүй' : 'Хадгалж чадсангүй'); return; } hrPool = null; toast('✓ Салаа хадгалагдлаа'); hrLoad(redraw); }); };
     var ucSum = function () { var e = document.getElementById('ucSum'); if (!e || !hrChk) return; var c = { uniform: 0, bag: 0, phone: 0 }; Object.keys(hrChk).forEach(function (k) { hrChk[k].forEach(function (i) { c[i]++; }); }); e.textContent = '👔 ' + c.uniform + ' · 🎒 ' + c.bag + ' · 📱 ' + c.phone; };
     ucSum();
     app.querySelectorAll('[data-uc]').forEach(function (b) { b.onclick = function () { var id = b.dataset.uc, it = hrChk[id] = hrChk[id] || [], i = it.indexOf(b.dataset.ui); if (i >= 0) it.splice(i, 1); else it.push(b.dataset.ui); if (!it.length) delete hrChk[id]; b.classList.toggle('bad', i < 0); ucSum(); }; });
