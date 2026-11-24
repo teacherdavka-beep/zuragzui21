@@ -137,6 +137,35 @@ main>.card:first-child{background:linear-gradient(135deg,#FFFFFF 0%,#F2EEFF 100%
 .bmsg{font-size:13px;font-weight:700;border-radius:10px;padding:5px 9px;align-self:flex-start}
 .bmsg.b-star{background:#FFF3CF;color:#8A5A00}.bmsg.b-happy{background:#E2F6EE;color:#14805A}.bmsg.b-sleepy{background:#FFF1DF;color:#A0560B}.bmsg.b-sad{background:#EEF0F6;color:#4A5170}
 @media(prefers-reduced-motion:reduce){.buddy *{animation:none!important}}
+/* ---------- НЭВТРЭХ ХЭСЭГ (сурагч, багш ижил загвар) ---------- */
+body.authm{background:linear-gradient(180deg,#E6EEFB 0%,#F3EAF7 60%,#FDF3EC 100%) fixed!important;padding-left:0!important}
+body.authm header,body.authm .wrap>header{display:none!important}
+body.authm main{max-width:none!important;padding:0!important}
+.au{min-height:calc(100vh - 60px);min-height:calc(100dvh - 60px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 18px 20px;gap:18px;box-sizing:border-box}
+.au-brand{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.au-brand img{width:68px;height:68px;border-radius:20px;box-shadow:0 10px 24px rgba(46,80,170,.20);background:#fff;margin-bottom:4px}
+.au-brand b{font-size:25px;font-weight:800;letter-spacing:-.3px;color:#14244A}
+.au-tag{font-size:13px;color:#6B7699;font-weight:600}
+.au-role{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;border-radius:99px;padding:5px 12px;background:var(--au-soft);color:var(--au-c);margin-top:4px}
+.au-card{width:100%;max-width:400px;background:#fff;border-radius:22px;box-shadow:0 10px 34px rgba(40,50,120,.10);padding:22px 20px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;border:0}
+.au-card h2{margin:0;font-size:20px;font-weight:800;color:#14244A}
+.au-sub{font-size:13.5px;color:#6B7699;line-height:1.5;margin-bottom:4px}
+.au-card label{font-size:13.5px;font-weight:700;color:#3A4566;margin-top:6px}
+.au-card input,.au-card select{width:100%;height:50px;border:1.5px solid #D5DCEB;border-radius:12px;padding:0 14px;font-size:16px;background:#F8FAFE;color:#14244A;box-sizing:border-box;font-family:inherit}
+.au-card input:focus,.au-card select:focus{outline:0;border-color:var(--au-c);background:#fff;box-shadow:0 0 0 4px var(--au-ring)}
+.au-pw{position:relative}.au-pw input{padding-right:84px}
+.au-pw button{position:absolute;right:6px;top:6px;height:38px;border:0;border-radius:9px;background:var(--au-soft);color:var(--au-c);font-weight:700;font-size:13px;padding:0 12px;cursor:pointer}
+.au-pin{font-size:22px!important;letter-spacing:8px}
+.au-go{height:52px;border:0;border-radius:14px;background:var(--au-btn);color:#fff;font-weight:800;font-size:16px;margin-top:8px;box-shadow:0 8px 18px var(--au-ring);width:100%;cursor:pointer;font-family:inherit}
+.au-go:disabled{opacity:.6}
+.au-ghost{height:48px;border:1.5px solid var(--au-c);border-radius:14px;background:#fff;color:var(--au-c);font-weight:800;font-size:15px;width:100%;cursor:pointer;font-family:inherit;margin-top:4px}
+.au-err{color:#B42318;font-size:13.5px;font-weight:600}.au-err:empty{display:none}
+.au-help{font-size:13px;color:#6B7699;text-align:center;line-height:1.6}
+.au-help a{color:var(--au-c);font-weight:700;text-decoration:none}
+.au-card details{border-top:1px solid #EEF1F7;margin-top:10px;padding-top:14px}
+.au-new{font-size:13px;color:#6B7699;text-align:center;font-weight:600;margin-bottom:8px}.au-card summary{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:14px;background:var(--au-soft);color:var(--au-c);border:1.5px dashed var(--au-c);font-size:15px;font-weight:800;cursor:pointer;list-style:none}.au-card summary:hover{filter:brightness(.97)}.au-card details[open] summary{border-style:solid}
+.au-card summary::-webkit-details-marker{display:none}
+body{--au-c:#2E6FD8;--au-soft:#EAF0FF;--au-ring:rgba(46,111,216,.18);--au-btn:linear-gradient(110deg,#2E6FD8,#5B4FD6)}
 .terms{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:#fff;border-radius:16px;padding:5px;box-shadow:0 4px 14px rgba(60,60,140,.07)}
 .terms button{border:0;background:transparent;border-radius:12px;height:44px;font-weight:700;font-size:13.5px;color:#5A6178;position:relative}
 .terms button.on{background:linear-gradient(110deg,#2E6FD8,#5B4FD6);color:#fff}
@@ -213,6 +242,7 @@ main{padding-bottom:96px!important}
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function toast(t) { var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 3200); }
   function setHeader() {
+    document.body.classList.toggle('authm', !home);
     document.getElementById('hSub').textContent = info ? (info.school + ' · ' + info.subject) : 'EduSolveMN';
     var cn = home ? home['class'] : (info ? info['class'] : '');
     var fn = home ? String(home.name || '').trim().split(/\s+/).pop() : '';
@@ -223,17 +253,21 @@ main{padding-bottom:96px!important}
   function logout() { try { localStorage.removeItem('tok'); } catch (e) {} token = null; home = null; showLogin(); }
 
   // ---------- LOGIN ----------
+  function auBrand() {
+    var cn = info ? info['class'] : '', sub = info ? [info.subject, info.school].filter(Boolean).join(' · ') : '';
+    return '<div class="au"><div class="au-brand"><img src="icon.png" alt=""><b>EduSolveMN</b><div class="au-tag">' + (sub ? esc(sub) : 'Шийдэл. Хялбар. Хурдан.') + '</div><span class="au-role">🎒 Сурагч' + (cn ? ' · ' + esc(cn) + ' анги' : '') + '</span></div>';
+  }
   function showLogin(msg) {
     setHeader();
     if (!cls) {
-      app.innerHTML = '<div class="card"><h1>Ангийн линк хэрэгтэй</h1><div class="muted">Багшийн өгсөн QR кодыг уншуулж, эсвэл ангийн линкээр орно уу.</div></div>';
+      app.innerHTML = auBrand() + '<div class="au-card"><h2>Ангийн линк хэрэгтэй</h2><div class="au-sub">Багшийн өгсөн QR кодыг уншуулах эсвэл ангийн линкээр орно уу.</div></div></div>';
       return;
     }
-    app.innerHTML = '<div class="card"><h1>Ангидаа нэвтрэх</h1><div class="muted">Кодоо сонгоод 4 оронтой тоогоо бичнэ үү.</div>' +
+    app.innerHTML = auBrand() + '<div class="au-card"><h2>Ангидаа нэвтрэх</h2><div class="au-sub">Кодоо сонгоод 4 оронтой тоогоо бичнэ үү.</div>' +
       '<label for="code">Миний код</label><select id="code"><option value="">Ачаалж байна…</option></select>' +
-      '<label for="pin">4 оронтой тоо</label><div style="display:flex;gap:8px"><input id="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••" style="font-size:22px;letter-spacing:8px;flex:1;min-width:0"><button type="button" id="eye" aria-pressed="false" style="height:50px;padding:0 14px;border-radius:10px;border:1px solid #C5CADB;background:#fff;color:#1A1F36;font-weight:600">Харах</button></div>' +
-      '<div class="err" id="err">' + esc(msg || '') + '</div><button class="btn" id="go">Орох</button>' +
-      '<div class="muted">Кодоо мартсан бол багшаасаа асуугаарай.</div></div>';
+      '<label for="pin">4 оронтой тоо</label><div class="au-pw"><input id="pin" class="au-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••"><button type="button" id="eye" aria-pressed="false">Харах</button></div>' +
+      '<div class="au-err" id="err">' + esc(msg || '') + '</div><button class="au-go" id="go">Орох</button>' +
+      '<div class="au-help">Кодоо мартсан бол багшаасаа асуугаарай.</div></div></div>';
     sb.rpc('class_codes', { p_class: cls }).then(function (r) {
       var sel = document.getElementById('code'); if (!sel) return;
       var list = r.data || [];
@@ -931,7 +965,7 @@ main{padding-bottom:96px!important}
     });
   }
 
-  if (cls) sb.rpc('class_info', { p_class: cls }).then(function (r) { if (r.data) { info = r.data; setHeader(); } });
+  if (cls) sb.rpc('class_info', { p_class: cls }).then(function (r) { if (r.data) { info = r.data; setHeader(); var ab = !home && document.querySelector('.au-brand'); if (ab) ab.outerHTML = auBrand().replace(/^<div class="au">/, ''); } });
   var autoPin = params.get('p');
   if (preCode && autoPin) {
     try { history.replaceState(null, '', location.pathname + '?c=' + encodeURIComponent(cls)); } catch (e) {}
