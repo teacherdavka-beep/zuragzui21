@@ -288,7 +288,8 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
 .hr-sl{display:grid;grid-template-columns:80px minmax(0,1fr);gap:8px;align-items:center;font-size:14px;font-weight:600;color:#3A4566}
 .hr-rss{flex:none;width:62px!important;height:40px;padding:0 4px!important;font-size:13px}
 .hr-qr{flex-direction:row!important;align-items:center;justify-content:space-between;gap:12px;background:#EEF3FB!important}.hr-qr .btn{flex:none;height:42px;padding:0 18px}
-.ac-th img{width:96px;height:96px;object-fit:cover;border-radius:10px;background:#EEF0F5;display:block}.hr-msg{background:#F4F6FB;border-radius:12px;padding:9px 11px;margin-top:8px}.hr-bk{border-top:1px solid #EEF0F5;padding:8px 0}.hr-bk summary{cursor:pointer;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.ac-th img{width:96px;height:96px;object-fit:cover;border-radius:10px;background:#EEF0F5;display:block}.rd-ov{position:fixed;inset:0;background:rgba(20,20,50,.45);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px}.rd-bx{background:#fff;border-radius:18px;padding:18px;width:min(460px,100%);display:flex;flex-direction:column;gap:10px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.rd-q{display:flex;flex-wrap:wrap;gap:6px}.rd-q button{border:1.5px solid #E7B16B;background:#FFF8EC;color:#8A4B0B;border-radius:99px;padding:6px 11px;font-size:13px;font-weight:600;cursor:pointer}.rd-q button.on{background:#F5B547;color:#3B2400}.rd-bx textarea{min-height:90px}
+.hr-msg{background:#F4F6FB;border-radius:12px;padding:9px 11px;margin-top:8px}.hr-bk{border-top:1px solid #EEF0F5;padding:8px 0}.hr-bk summary{cursor:pointer;display:flex;gap:8px;align-items:center;justify-content:space-between}
 .hr-cls{display:flex;gap:16px;align-items:center;background:#EEF3FB;border-radius:16px;padding:14px}.hr-cls svg{flex:none;width:140px;height:140px;background:#fff;border-radius:8px;padding:6px}.hr-cls>div{min-width:0;display:flex;flex-direction:column;gap:4px}
 @media(max-width:760px){.hr-cls{flex-direction:column;align-items:flex-start}}
 .hr-codes{margin-top:14px;display:flex;flex-direction:column;gap:10px;border-top:1px solid #EEF1F7;padding-top:14px}
@@ -1248,8 +1249,9 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
       z.querySelectorAll('[data-gv]').forEach(function (b) {
         b.onclick = function () { var pp = latest[b.dataset.gv].photo_paths || []; var l = pp.map(function (p) { return urls[p]; }).filter(Boolean); var ld0 = lateDays(latest[b.dataset.gv].created_at, due); if (l.length) gallery(l, 0, ld0 ? ld0 + ' хоног хоцорсон' : ''); };
       });
-      var act = function (id, st, card, credit) {
-        var upd = { status: st, reviewed_at: new Date().toISOString() }; if (st === 'ok') upd.credit = credit == null ? null : credit;
+      var act = function (id, st, card, credit, msg) {
+        if (st === 'redo' && msg === undefined) { askRedo(((card.querySelector('b') || {}).textContent || ''), function (m) { act(id, st, card, credit, m); }, function () { card.querySelectorAll('button[disabled]').forEach(function (b) { b.disabled = false; }); }); return; }
+        var upd = { status: st, reviewed_at: new Date().toISOString() }; if (st === 'ok') upd.credit = credit == null ? null : credit; if (st === 'redo') upd.teacher_msg = msg || null; else if (st === 'ok') upd.teacher_msg = null;
         sb.from('submissions').update(upd).eq('id', id).then(function (r) {
           if (fail(r)) return; changed = true;
           sent.forEach(function (k) { if (latest[k.id].id === id) { latest[k.id].status = st; latest[k.id].credit = upd.credit; } });
@@ -1260,7 +1262,7 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
         });
       };
       z.querySelectorAll('[data-gok]').forEach(function (b) { b.onclick = function () { b.disabled = true; act(b.dataset.gok, 'ok', b.closest('[data-gc]')); }; });
-      z.querySelectorAll('[data-gret]').forEach(function (b) { b.onclick = function () { if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Буцаах уу? Сурагч дахин илгээнэ'; return; } b.disabled = true; act(b.dataset.gret, 'redo', b.closest('[data-gc]')); b.remove(); }; });
+      z.querySelectorAll('[data-gret]').forEach(function (b) { b.onclick = function () { b.disabled = true; act(b.dataset.gret, 'redo', b.closest('[data-gc]')); b.remove(); }; });
       z.querySelectorAll('[data-sc]').forEach(function (b) { b.onclick = function () { var v = scoreVal(b); if (v == null) return; b.disabled = true; act(b.dataset.sc, 'ok', b.closest('[data-gc]'), v); }; });
       z.querySelectorAll('[data-gredo]').forEach(function (b) { b.onclick = function () { b.disabled = true; act(b.dataset.gredo, 'redo', b.closest('[data-gc]')); }; });
     }
@@ -1574,8 +1576,24 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
     document.addEventListener('keydown', key);
     draw(); document.body.appendChild(z);
   }
-  function setStatus(id, st, after, credit) {
-    var upd = { status: st, reviewed_at: new Date().toISOString() }; if (st === 'ok') upd.credit = credit == null ? null : credit;
+  var REDO_Q = ['Зураг бүдэг, тод харагдахгүй байна', 'Дутуу хийсэн, дуусгаад илгээ', 'Хэмжээ, харьцаа буруу', 'Буруу даалгавар илгээсэн', 'Шугамаа цэвэрхэн, тод тат', 'Хүрээ, гарчгийн хүснэгтээ хий', 'Өнгө, будгаа гүйцээ'];
+  function askRedo(name, done, cancel) {
+    var ov = document.createElement('div'); ov.className = 'rd-ov';
+    ov.innerHTML = '<div class="rd-bx"><b style="font-size:17px">↺ Дахин хийлгэх' + (name ? ' · ' + esc(name) : '') + '</b><div class="muted" style="font-size:13px">Юу буруу, дутуу байгааг бичээрэй — сурагчид харагдана.</div>' +
+      '<div class="rd-q">' + REDO_Q.map(function (x, i) { return '<button type="button" data-rq="' + i + '">' + esc(x) + '</button>'; }).join('') + '</div>' +
+      '<textarea id="rdT" maxlength="600" placeholder="Жишээ: 2-р зургийн хэмжээ буруу, 30мм биш 40мм байх ёстой"></textarea>' +
+      '<div class="row" style="gap:8px"><button type="button" class="btn ghost" id="rdX" style="flex:1">Болих</button><button type="button" class="btn" id="rdOk" style="flex:2;background:#E08A1E">↺ Буцаах</button></div></div>';
+    document.body.appendChild(ov);
+    var ta = ov.querySelector('#rdT'); setTimeout(function () { ta.focus(); }, 50);
+    ov.querySelectorAll('[data-rq]').forEach(function (b) { b.onclick = function () { var t = REDO_Q[+b.dataset.rq]; if (ta.value.indexOf(t) >= 0) return; ta.value = (ta.value.trim() ? ta.value.trim() + '. ' : '') + t; b.classList.add('on'); }; });
+    var close = function () { ov.remove(); };
+    ov.querySelector('#rdX').onclick = function () { close(); cancel && cancel(); };
+    ov.onclick = function (e) { if (e.target === ov) { close(); cancel && cancel(); } };
+    ov.querySelector('#rdOk').onclick = function () { var m = ta.value.trim(); close(); done(m || null); };
+  }
+  function setStatus(id, st, after, credit, msg) {
+    if (st === 'redo' && msg === undefined) { var ce = app.querySelector('.card[data-id="' + id + '"]'); askRedo(ce ? ((ce.querySelector('b') || {}).textContent || '') : '', function (m) { setStatus(id, st, after, credit, m); }, function () { app.querySelectorAll('button[disabled]').forEach(function (b) { b.disabled = false; }); }); return; }
+    var upd = { status: st, reviewed_at: new Date().toISOString() }; if (st === 'ok') upd.credit = credit == null ? null : credit; if (st === 'redo') upd.teacher_msg = msg || null; else if (st === 'ok') upd.teacher_msg = null;
     sb.from('submissions').update(upd).eq('id', id).then(function (r) {
       if (fail(r)) return;
       var el = app.querySelector('.card[data-id="' + id + '"]');
