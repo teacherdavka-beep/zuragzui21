@@ -288,7 +288,8 @@ nav.tabs button{position:relative}.nbad{display:none;font-style:normal;backgroun
 .hr-sl{display:grid;grid-template-columns:80px minmax(0,1fr);gap:8px;align-items:center;font-size:14px;font-weight:600;color:#3A4566}
 .hr-rss{flex:none;width:62px!important;height:40px;padding:0 4px!important;font-size:13px}
 .hr-qr{flex-direction:row!important;align-items:center;justify-content:space-between;gap:12px;background:#EEF3FB!important}.hr-qr .btn{flex:none;height:42px;padding:0 18px}
-.ac-th img{width:96px;height:96px;object-fit:cover;border-radius:10px;background:#EEF0F5;display:block}.rd-ov{position:fixed;inset:0;background:rgba(20,20,50,.45);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px}.rd-bx{background:#fff;border-radius:18px;padding:18px;width:min(460px,100%);display:flex;flex-direction:column;gap:10px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.rd-q{display:flex;flex-wrap:wrap;gap:6px}.rd-q button{border:1.5px solid #E7B16B;background:#FFF8EC;color:#8A4B0B;border-radius:99px;padding:6px 11px;font-size:13px;font-weight:600;cursor:pointer}.rd-q button.on{background:#F5B547;color:#3B2400}.rd-bx textarea{min-height:90px}
+.ac-th img{width:96px;height:96px;object-fit:cover;border-radius:10px;background:#EEF0F5;display:block}.fk-b{display:inline-block;font-size:11.5px;font-weight:800;border-radius:99px;padding:2px 8px;background:#EEF0F5;color:#4A5170}.fk-b.q{background:#FFF1DC;color:#A0560B}.fb-rp{background:#EEF3FF;border-left:4px solid #3557C7;border-radius:10px;padding:8px 12px;font-size:14px}.fb-rp span{display:block;font-size:12px;font-weight:800;color:#3557C7;margin-bottom:2px}.fb-rf{display:flex;flex-direction:column;gap:6px}.fb-rf[hidden]{display:none}.fb-rf textarea{min-height:64px}
+.rd-ov{position:fixed;inset:0;background:rgba(20,20,50,.45);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px}.rd-bx{background:#fff;border-radius:18px;padding:18px;width:min(460px,100%);display:flex;flex-direction:column;gap:10px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.rd-q{display:flex;flex-wrap:wrap;gap:6px}.rd-q button{border:1.5px solid #E7B16B;background:#FFF8EC;color:#8A4B0B;border-radius:99px;padding:6px 11px;font-size:13px;font-weight:600;cursor:pointer}.rd-q button.on{background:#F5B547;color:#3B2400}.rd-bx textarea{min-height:90px}
 .hr-msg{background:#F4F6FB;border-radius:12px;padding:9px 11px;margin-top:8px}.hr-bk{border-top:1px solid #EEF0F5;padding:8px 0}.hr-bk summary{cursor:pointer;display:flex;gap:8px;align-items:center;justify-content:space-between}
 .hr-cls{display:flex;gap:16px;align-items:center;background:#EEF3FB;border-radius:16px;padding:14px}.hr-cls svg{flex:none;width:140px;height:140px;background:#fff;border-radius:8px;padding:6px}.hr-cls>div{min-width:0;display:flex;flex-direction:column;gap:4px}
 @media(max-width:760px){.hr-cls{flex-direction:column;align-items:flex-start}}
@@ -1128,26 +1129,36 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
     });
   }
   var fbUnseen = 0, fbClass = null;
+  var fbKind = null;
   function countFb() { sb.from('feedback').select('id', { count: 'exact', head: true }).eq('seen', false).then(function (r) { var n = r.count || 0; if (n !== fbUnseen) { fbUnseen = n; drawTabs(); } }); }
   function showFeedback() {
     app.innerHTML = '<div class="muted">Ачаалж байна…</div>';
-    var qy = sb.from('feedback').select('id,class_id,body,seen,created_at,students(name),lessons(title,num)').order('created_at', { ascending: false }).limit(300);
+    var qy = sb.from('feedback').select('id,class_id,body,seen,created_at,reply,replied_at,kind,students(name),lessons(title,num)').order('created_at', { ascending: false }).limit(300);
     if (fbClass) qy = qy.eq('class_id', fbClass);
     qy.then(function (r) {
       if (fail(r)) return;
-      var rows = r.data || [], cn = {}; classes.forEach(function (c) { cn[c.id] = c.name; });
+      var all0 = r.data || [], cn = {}; classes.forEach(function (c) { cn[c.id] = c.name; });
+      var nQ = all0.filter(function (x) { return x.kind === 'question' && !x.reply; }).length, rows = all0.filter(function (x) { return !fbKind || (fbKind === 'q' ? x.kind === 'question' : x.kind !== 'question'); });
       var html = '<div class="row between"><h2>Сурагчдын санал хүсэлт</h2>' + (rows.some(function (x) { return !x.seen; }) ? '<button class="btn sec" id="fball">Бүгдийг уншсан болгох</button>' : '') + '</div>' +
-        '<div class="muted">Сурагчид хуудасныхаа доод хэсгээс бичнэ. "Нэрээ нуух" сонгосон бол нэр нь хадгалагддаггүй.</div>' +
+        '<div class="muted">Сурагчид «Захиа» хэсгээс асуулт эсвэл санал гэж сонгож бичнэ. "Нэрээ нуух" сонгосон бол нэр нь хадгалагддаггүй.</div>' +
+        '<div class="row"><button class="chip' + (!fbKind ? ' on' : '') + '" data-fkf="">Бүгд</button><button class="chip' + (fbKind === 'q' ? ' on' : '') + '" data-fkf="q">❓ Асуулт' + (nQ ? ' <b style="color:#C0392B">' + nQ + ' хариугүй</b>' : '') + '</button><button class="chip' + (fbKind === 'c' ? ' on' : '') + '" data-fkf="c">💬 Санал, сэтгэгдэл</button></div>' +
         '<div class="row"><button class="chip' + (!fbClass ? ' on' : '') + '" data-fc="">Бүх анги</button>' + classes.map(function (c) { return '<button class="chip' + (fbClass === c.id ? ' on' : '') + '" data-fc="' + c.id + '">' + esc(c.name) + '</button>'; }).join('') + '</div>';
       if (!rows.length) html += '<div class="card muted">Одоогоор санал ирээгүй байна.</div>';
       rows.forEach(function (x) {
-        html += '<div class="card" style="gap:6px;' + (x.seen ? '' : 'border-left:5px solid #2747B8') + '"><div class="row between"><span style="font-size:13px;font-weight:600">' + esc(cn[x.class_id] || '') + ' · ' + (x.students ? esc(x.students.name) : '<i>Нэргүй</i>') +
+        var isQ = x.kind === 'question';
+        html += '<div class="card" style="gap:6px;' + (isQ && !x.reply ? 'border-left:5px solid #E08A1E' : x.seen ? '' : 'border-left:5px solid #2747B8') + '"><div class="row between"><span style="font-size:13px;font-weight:600">' + (isQ ? '<span class="fk-b q">❓ Асуулт' + (x.reply ? ' · хариулсан' : '') + '</span> ' : '<span class="fk-b">💬 Санал</span> ') + esc(cn[x.class_id] || '') + ' · ' + (x.students ? esc(x.students.name) : '<i>Нэргүй</i>') +
           (x.lessons ? ' · Хичээл ' + x.lessons.num + ' ' + esc(x.lessons.title) : '') + '</span><span class="muted" style="font-size:12px">' + fmt(x.created_at) + '</span></div>' +
           '<div style="font-size:15px;line-height:1.5;white-space:pre-wrap">' + esc(x.body) + '</div>' +
-          (x.seen ? '' : '<button class="btn ghost" style="align-self:flex-start;height:34px" data-fs="' + x.id + '">Уншсан</button>') + '</div>';
+          (x.reply ? '<div class="fb-rp"><span>↩ Таны хариу · ' + fmt(x.replied_at) + ' <button class="link" data-fre="' + x.id + '" style="font-size:12px">засах</button></span><div style="white-space:pre-wrap">' + esc(x.reply) + '</div></div>' : '') +
+          '<div class="fb-rf" data-frf="' + x.id + '"' + (x.reply ? ' hidden' : '') + '><textarea data-frt="' + x.id + '" maxlength="1000" placeholder="Хариу бичих… (сурагчид харагдана' + (x.students ? '' : ', нэрээ нуусан ч хариу нь очно') + ')">' + esc(x.reply || '') + '</textarea>' +
+          '<div class="row" style="gap:8px"><button class="btn" data-frs="' + x.id + '" style="width:auto;padding:0 16px;height:38px">↩ Хариу илгээх</button>' + (x.seen ? '' : '<button class="btn ghost" style="height:38px;width:auto;padding:0 14px" data-fs="' + x.id + '">Зөвхөн уншсан</button>') + '</div></div></div>';
       });
       app.innerHTML = html;
       app.querySelectorAll('[data-fc]').forEach(function (b) { b.onclick = function () { fbClass = b.dataset.fc || null; showFeedback(); }; });
+      app.querySelectorAll('[data-fkf]').forEach(function (b) { b.onclick = function () { fbKind = b.dataset.fkf || null; showFeedback(); }; });
+      app.querySelectorAll('[data-fre]').forEach(function (b) { b.onclick = function () { var f = app.querySelector('[data-frf="' + b.dataset.fre + '"]'); f.hidden = false; f.querySelector('textarea').focus(); }; });
+      app.querySelectorAll('[data-frs]').forEach(function (b) { b.onclick = function () { var t = app.querySelector('[data-frt="' + b.dataset.frs + '"]').value.trim(); if (!t) { toast('Хариугаа бичнэ үү'); return; } b.disabled = true;
+        sb.from('feedback').update({ reply: t, replied_at: new Date().toISOString(), seen: true }).eq('id', b.dataset.frs).then(function (x) { b.disabled = false; if (fail(x)) return; toast('↩ Хариу сурагчид очлоо'); countFb(); showFeedback(); }); }; });
       app.querySelectorAll('[data-fs]').forEach(function (b) { b.onclick = function () { sb.from('feedback').update({ seen: true }).eq('id', b.dataset.fs).then(function () { showFeedback(); countFb(); }); }; });
       var all = q('#fball'); if (all) all.onclick = function () { var ids = rows.filter(function (x) { return !x.seen; }).map(function (x) { return x.id; }); sb.from('feedback').update({ seen: true }).in('id', ids).then(function () { showFeedback(); countFb(); }); };
     });
