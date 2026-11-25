@@ -1352,13 +1352,15 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
           '<div id="nkCbox" style="display:flex;flex-direction:column;gap:8px">' +
           '<div class="row"><label class="muted" for="cg">Анги</label><select id="cg">' + [6, 7, 8, 9, 10, 11, 12].map(function (g) { return '<option value="' + g + '"' + (g === (preG || 12) ? ' selected' : '') + '>' + g + '</option>'; }).join('') + '</select>' +
           '<label class="muted" for="cb">Бүлэг</label><select id="cb">' + letters.map(function (l) { return '<option>' + l + '</option>'; }).join('') + '</select></div>' +
+          '<div class="row" role="radiogroup" aria-label="Групп" style="gap:6px"><span class="muted" style="font-size:13px">Групп:</span><button type="button" class="chip on" data-cx="">Бүтэн анги</button><button type="button" class="chip" data-cx=" А">А групп</button><button type="button" class="chip" data-cx=" Б">Б групп</button></div>' +
           '<button class="btn" id="addC">Нэмэх</button><span class="muted" id="cprev"></span></div>' +
           '<button class="lnk" id="nkG" type="button" style="text-align:left;font-size:13px">+ Олон ангиас бүлэг (давтлага г.м.)</button>' +
           '<div id="nkGbox" style="display:none;flex-direction:column;gap:8px"><input type="text" id="gname" maxlength="40" placeholder="Бүлгийн нэр · жишээ: ЭЕШ давтлага" aria-label="Бүлгийн нэр"><button class="btn sec" id="addG">Бүлэг үүсгэх</button></div></div>';
   }
   function bindNewBoard() {
         if (!q('#addC')) return;
-        var prev = function () { q('#cprev').textContent = '→ ' + q('#cg').value + q('#cb').value + ' анги · "' + fname(+q('#cg').value) + '" хавтсанд орно'; };
+        var cx = '', prev = function () { q('#cprev').textContent = '→ ' + q('#cg').value + q('#cb').value + cx + ' · "' + fname(+q('#cg').value) + '" хавтсанд орно'; };
+        app.querySelectorAll('[data-cx]').forEach(function (b) { b.onclick = function () { cx = b.dataset.cx; app.querySelectorAll('[data-cx]').forEach(function (x) { x.classList.toggle('on', x === b); }); prev(); }; });
         q('#cg').onchange = prev; q('#cb').onchange = prev; prev();
         q('#nkG').onclick = function () { var bx = q('#nkGbox'), o = bx.style.display === 'none'; bx.style.display = o ? 'flex' : 'none'; if (o) q('#gname').focus(); };
         q('#addG').onclick = function () {
@@ -1366,7 +1368,7 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
           sb.from('groups').insert({ teacher_id: me.id, name: n, kind: 'davtlaga' }).select().then(function (r) { if (fail(r)) return; toast(n + ' үүслээ · хүүхдүүдээ сонгоно уу'); loadClasses().then(function () { openGroupView(r.data[0].id, 'members'); }); });
         };
         q('#addC').onclick = function () {
-          var n = q('#cg').value + q('#cb').value;
+          var n = q('#cg').value + q('#cb').value + cx;
           if (classes.some(function (c) { return c.name === n; })) { toast(n + ' анги аль хэдийн байна'); return; }
           sb.from('classes').insert({ teacher_id: me.id, name: n, grade: +q('#cg').value }).select().then(function (r) { if (fail(r)) return; toast(n + ' анги нэмэгдлээ · нэрсээ оруулна уу'); loadClasses().then(function () { openClassView(r.data[0].id, 'roster'); }); });
         };
