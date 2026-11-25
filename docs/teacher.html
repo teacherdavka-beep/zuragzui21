@@ -2626,7 +2626,7 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
           html += '<div class="card" style="border:2px solid #2747B8"><div class="row between"><h3>Гарчиг, видео</h3><button class="btn ghost" data-panel="">Хаах</button></div>' +
             '<label class="muted">Гарчиг</label><input type="text" id="lt" value="' + esc(L.title) + '">' +
             '<label class="muted">Төрөл (үнэлгээнд хаана орох)</label><select id="lk"><option value="class"' + (L.kind !== 'bd' ? ' selected' : '') + '>Ангийн даалгавар → Явц</option><option value="bd"' + (L.kind === 'bd' ? ' selected' : '') + '>Бие даалтын ажил → Бие даалт</option></select>' +
-            '<label class="muted">Сурагч илгээх зургийн тоо</label><select id="lmax">' + [1, 2, 3].map(function (n) { return '<option value="' + n + '"' + ((L.max_photos || 1) === n ? ' selected' : '') + '>' + n + ' хуудас</option>'; }).join('') + '</select>' +
+            '<label class="muted">Сурагч илгээх зургийн тоо</label><select id="lmax">' + [1, 2, 3].map(function (n) { return '<option value="' + n + '"' + ((L.max_photos || 3) === n ? ' selected' : '') + '>' + n + ' хуудас</option>'; }).join('') + '</select>' +
             '<label class="muted">Видео линк (YouTube эсвэл Google Drive, "Anyone with the link") · хуудсан дотор тоглогдоно</label><input type="url" id="lv" value="' + esc(L.video_url || '') + '"><div id="lvp" style="display:flex;flex-direction:column;gap:8px">' + vidPreview(L.video_url) + '</div>' +
             '<label class="muted">Нэмэлт линк (Medle г.м.) · мөр бүрт нэг: Нэр | линк</label><textarea id="lx2" style="min-height:90px" placeholder="Medle хичээл | https://medle.mn/lesson/...">' + esc((L.extra_links || []).map(function (x) { return x.title + ' | ' + x.url; }).join('\n')) + '</textarea><div id="lxp" style="display:flex;flex-direction:column;gap:8px">' + linksPreview(L.extra_links) + '</div>' +
             '<button class="btn" id="saveE">Хадгалах</button></div>';
@@ -2667,7 +2667,7 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
             (groups.length ? '<div class="muted">Сонгон, давтлага, дугуйлан</div><div class="row" id="pg">' + groups.map(function (g) { return '<button class="chip" data-pg="' + g.id + '" style="border-color:#5B2A86">' + esc(g.name) + '</button>'; }).join('') + '</div>' : '') +
             '<div class="muted">2. Юуг нээх (видео, зураг илгээх нь үргэлж нээлттэй)</div><div class="row"><button class="chip on" id="ot">Дасгал, даалгавар</button><button class="chip on" id="oq">Тест</button></div>' +
             '<div class="muted">Тест нээгдээд хэдэн минутын дараа хаагдах вэ</div><div class="row" id="tmin"><button class="chip on" data-tm="40">40 мин</button><button class="chip" data-tm="20">20 мин</button><button class="chip" data-tm="80">80 мин (2 цаг)</button><button class="chip" data-tm="0">Хугацаагүй</button></div>' +
-            '<div class="muted">3. Даалгавар илгээх хугацаа</div><div class="row" id="due"><button class="chip" data-d="1">Өнөөдөр</button><button class="chip on" data-d="3">3 хоног</button><button class="chip" data-d="7">1 долоо хоног</button></div>' +
+            '<div class="muted">3. Даалгавар илгээх хугацаа</div><div class="row" id="due"><button class="chip" data-d="1">Өнөөдөр</button><button class="chip on" data-d="3">3 хоног</button><button class="chip" data-d="7">1 долоо хоног</button><button class="chip" data-d="14">2 долоо хоног</button><button class="chip" data-d="x">📅 Огноо сонгох</button><button class="chip" data-d="0">Хугацаагүй</button></div><input type="date" id="dueX" hidden style="max-width:200px"><div class="muted" id="dueTx" style="font-size:12.5px"></div>' +
             '<button class="btn green" id="send">Сонгосон анги руу илгээх</button></div>';
         }
       }
@@ -2786,16 +2786,20 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
           app.querySelectorAll('#pc .chip, #pg .chip, #ot, #oq').forEach(function (b) { b.onclick = function () { b.classList.toggle('on'); }; });
           q('#allg').onclick = function () { app.querySelectorAll('#pc .chip').forEach(function (x) { var c = classes.filter(function (k) { return k.id === x.dataset.pc; })[0]; x.classList.toggle('on', !!c && c.grade === libGrade); }); };
           app.querySelectorAll('#tmin .chip').forEach(function (b) { b.onclick = function () { app.querySelectorAll('#tmin .chip').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
-          app.querySelectorAll('#due .chip').forEach(function (b) { b.onclick = function () { app.querySelectorAll('#due .chip').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
+          var dueTx = function () { var b = app.querySelector('#due .chip.on'), d = b.dataset.d, e = q('#dueTx'), x = q('#dueX'); x.hidden = d !== 'x'; if (d === '0') { e.textContent = 'Сурагчдад хугацаа харагдахгүй'; return; } var t; if (d === 'x') { if (!x.value) { e.textContent = 'Огноогоо сонгоно уу'; return; } t = new Date(x.value + 'T23:59:00'); } else { t = new Date(); t.setDate(t.getDate() + +d - 1); } e.textContent = '⏰ Сүүлийн хугацаа: ' + ['Ням', 'Даваа', 'Мягмар', 'Лхагва', 'Пүрэв', 'Баасан', 'Бямба'][t.getDay()] + ', ' + (t.getMonth() + 1) + '/' + t.getDate() + ' 23:59'; };
+          app.querySelectorAll('#due .chip').forEach(function (b) { b.onclick = function () { app.querySelectorAll('#due .chip').forEach(function (x) { x.classList.toggle('on', x === b); }); dueTx(); if (b.dataset.d === 'x') { var x = q('#dueX'); if (!x.value) { var t = new Date(); t.setDate(t.getDate() + 5); x.value = t.toISOString().slice(0, 10); } try { x.showPicker(); } catch (e) {} dueTx(); } }; });
+          q('#dueX').onchange = dueTx; dueTx();
           q('#send').onclick = function () {
             var cs = Array.prototype.map.call(app.querySelectorAll('#pc .chip.on'), function (b) { return b.dataset.pc; });
             var gsel = Array.prototype.map.call(app.querySelectorAll('#pg .chip.on'), function (b) { return b.dataset.pg; });
             if (!cs.length && !gsel.length) { toast('Дор хаяж нэг анги эсвэл бүлэг сонгоно уу'); return; }
-            var days = +app.querySelector('#due .chip.on').dataset.d;
+            var dsel = app.querySelector('#due .chip.on').dataset.d, days = dsel === 'x' ? null : +dsel;
+            if (dsel === 'x' && !q('#dueX').value) { toast('Огноогоо сонгоно уу'); return; }
             var tmb = app.querySelector('#tmin .chip.on'), tm = tmb ? +tmb.dataset.tm : 0, tOpen = q('#oq').classList.contains('on'), tUntil = tOpen && tm ? new Date(Date.now() + tm * 60000).toISOString() : null;
-            var due = new Date(); due.setDate(due.getDate() + days - 1); due.setHours(23, 59, 0, 0);
-            var rows = cs.map(function (c) { return { lesson_id: L.id, class_id: c, visible: true, tasks_open: q('#ot').classList.contains('on'), test_open: q('#oq').classList.contains('on'), due_at: due.toISOString(), opened_at: new Date().toISOString(), test_until: tUntil }; });
-            var grows = gsel.map(function (g) { return { lesson_id: L.id, group_id: g, visible: true, tasks_open: q('#ot').classList.contains('on'), test_open: q('#oq').classList.contains('on'), due_at: due.toISOString(), opened_at: new Date().toISOString(), test_until: tUntil }; });
+            var due = new Date(); if (dsel === 'x') due = new Date(q('#dueX').value + 'T23:59:00'); else { due.setDate(due.getDate() + days - 1); due.setHours(23, 59, 0, 0); }
+            var dueIso = dsel === '0' ? null : due.toISOString();
+            var rows = cs.map(function (c) { return { lesson_id: L.id, class_id: c, visible: true, tasks_open: q('#ot').classList.contains('on'), test_open: q('#oq').classList.contains('on'), due_at: dueIso, opened_at: new Date().toISOString(), test_until: tUntil }; });
+            var grows = gsel.map(function (g) { return { lesson_id: L.id, group_id: g, visible: true, tasks_open: q('#ot').classList.contains('on'), test_open: q('#oq').classList.contains('on'), due_at: dueIso, opened_at: new Date().toISOString(), test_until: tUntil }; });
             Promise.all([rows.length ? sb.from('lesson_access').upsert(rows) : Promise.resolve({}), grows.length ? sb.from('group_access').upsert(grows) : Promise.resolve({})]).then(function (x) { if (!fail(x[0]) && !fail(x[1])) { toast((cs.length + gsel.length) + ' анги/бүлэг рүү илгээгдлээ'); libPanel = null; showLibrary(); } });
           };
         }

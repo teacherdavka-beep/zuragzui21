@@ -164,6 +164,7 @@ main>.card:first-child{background:linear-gradient(135deg,#FFFFFF 0%,#F2EEFF 100%
 .grp-c{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:18px;padding:14px 16px;background:linear-gradient(120deg,#7B3FC4,#C0397E);color:#fff;box-shadow:0 8px 20px rgba(123,63,196,.3);cursor:pointer;font-family:inherit}.grp-c b{font-size:17px;display:block}.grp-c small{font-size:12.5px;opacity:.92}.grp-c .tgo{color:#fff}.grp-st{font-size:30px;width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex:none}.grp-hd{display:flex;gap:12px;align-items:center;background:linear-gradient(120deg,#7B3FC4,#C0397E);color:#fff;border-radius:18px;padding:14px 16px}
 .fk-sel{display:flex;gap:8px}.fk-sel button{flex:1;height:44px;border-radius:12px;border:1.5px solid #D5DAE8;background:#fff;font-weight:700;font-size:14.5px;color:#4A5170;font-family:inherit}.fk-sel button.on{background:#EEF3FF;border-color:#3557C7;color:#2747B8}.fk-b{display:inline-block;font-size:11.5px;font-weight:800;border-radius:99px;padding:2px 8px;background:#EEF0F5;color:#4A5170;vertical-align:1px}.fk-b.q{background:#FFF1DC;color:#A0560B}
 .fb-rp{margin-top:8px;background:linear-gradient(180deg,#EEF3FF,#F7F9FF);border-left:4px solid #3557C7;border-radius:10px;padding:9px 12px;font-size:14.5px;line-height:1.45;color:#1A1F36}.fb-rp span{display:block;font-size:12px;font-weight:800;color:#3557C7;margin-bottom:2px}
+.due{display:inline-block;align-self:flex-start;margin-top:4px;font-size:12.5px;font-weight:800;border-radius:99px;padding:3px 10px;background:#EEF3FF;color:#2747B8}.due.o{background:#FFF1DC;color:#A0560B}.due.r{background:#FDECEE;color:#C0392B;animation:dueP 1.6s ease-in-out infinite}.due.x{background:#FDECEE;color:#B42318}@keyframes dueP{50%{opacity:.6}}
 .rd-msg{background:#fff;border-left:4px solid #F5B547;border-radius:10px;padding:9px 12px;color:#3B2400;font-size:14.5px;line-height:1.45;font-weight:600}.rd-msg span{display:block;font-size:12px;color:#A0560B;font-weight:800;margin-bottom:2px}.rd-msg.sm{font-size:12.5px;padding:6px 9px;margin-top:4px;background:#FFF8EC;text-align:left;font-weight:600}
 .snav.six{grid-template-columns:repeat(6,1fr)}.snav.six button{font-size:10.5px}
 .cl-days{display:flex;gap:6px;margin:4px 0}.cl-days button{flex:1;height:40px;border-radius:12px;border:1.5px solid #D5DAE8;background:#fff;font-weight:700;color:#4A5170;position:relative}.cl-days button.on{background:#5B4FD6;border-color:#5B4FD6;color:#fff}.cl-days i{position:absolute;top:4px;right:6px;width:6px;height:6px;border-radius:50%;background:#F5B547}
@@ -650,6 +651,11 @@ main{padding-bottom:96px!important}
   function grpIds() { var m = {}; (home.groups || []).forEach(function (g) { (g.lessons || []).forEach(function (id) { m[id] = g.id; }); }); return m; }
   function grpCards() { return (home.groups || []).map(function (g) { var n = home.topics.filter(function (t) { return (g.lessons || []).indexOf(t.id) >= 0; }).length;
     return '<button type="button" class="grp-c" data-grp="' + g.id + '"><span class="grp-st">⭐</span><span style="flex:1;text-align:left"><b>' + esc(g.name) + '</b><small>' + (n ? n + ' сэдэв · дарж орох' : 'Багш удахгүй сэдэв нээнэ') + '</small></span><span class="tgo">›</span></button>'; }).join(''); }
+  function dueBadge(t) { if (!t.due_at || !t.tasks_open || (t.sub_status && t.sub_status !== 'redo')) return ''; var ms = new Date(t.due_at) - Date.now(), d = new Date(t.due_at), dd = (d.getMonth() + 1) + '/' + d.getDate();
+      if (ms < 0) return '<span class="due x">⚠️ Хугацаа хэтэрсэн (' + dd + ') · одоо ч илгээж болно</span>';
+      var td = new Date(); td.setHours(23, 59, 59, 999); if (d <= td) return '<span class="due r">⏰ Өнөөдөр ' + fmtTime(t.due_at) + ' хүртэл!</span>';
+      var tm = new Date(td.getTime() + 864e5); if (d <= tm) return '<span class="due o">⏰ Маргааш хүртэл · ' + dd + '</span>';
+      return '<span class="due">⏰ ' + Math.ceil(ms / 864e5) + ' хоног үлдлээ · ' + dd + ' хүртэл</span>'; }
   function mrLoad() {
     sb.rpc('student_marathon', { p_token: token }).then(function (r) {
       var box = document.getElementById('mrBox'), d = r.data; if (!box || !d || !d.board || !(d.board.rows || []).length) return;
@@ -934,16 +940,17 @@ main{padding-bottom:96px!important}
       '<div class="muted">Энэ сарын хичээлийн тэмдэглэл: ' + (beh.length ? esc(beh.join(', ')) + ' удаа' : 'тэмдэглэл алга, сайн байна') + '</div></div>';
     if (stTab !== 'home') html = '';
     var TC = ['#7C6CF0', '#3BB6A6', '#F08A5D', '#E86CA8', '#4F8CF7', '#F2B53C'];
+    var dueB = dueBadge;
     var card = function (t, k, sub) { var isNew = t.tasks_open || t.test_open, tc = TC[(t.num || k) % TC.length];
       return '<button class="topic' + (isNew ? ' now' : '') + '" data-k="' + k + '" style="--tc:' + tc + '"><span class="tnum">' + (t.num || '•') + '</span><div class="tbody"><div class="row"><span style="font-size:12px;font-weight:600;color:' + (isNew ? '#2747B8' : '#5A6178') + '">' +
-        (sub || (isNew ? 'Нээлттэй даалгавартай' : fmtDate(t.opened_at) + ' · ' + esc(t.unit))) + '</span>' + statusPill(t) + '</div><b style="font-size:16px">' + esc(t.title) + '</b>' + (t.sub_status === 'redo' && ((t.my_subs || [])[0] || {}).msg ? '<div class="rd-msg sm">👩‍🏫 ' + esc(t.my_subs[0].msg.length > 80 ? t.my_subs[0].msg.slice(0, 80) + '…' : t.my_subs[0].msg) + '</div>' : '') + '</div><span class="tgo">›</span></button>'; };
+        (sub || (isNew ? 'Нээлттэй даалгавартай' : fmtDate(t.opened_at) + ' · ' + esc(t.unit))) + '</span>' + statusPill(t) + '</div><b style="font-size:16px">' + esc(t.title) + '</b>' + dueB(t) + (t.sub_status === 'redo' && ((t.my_subs || [])[0] || {}).msg ? '<div class="rd-msg sm">👩‍🏫 ' + esc(t.my_subs[0].msg.length > 80 ? t.my_subs[0].msg.slice(0, 80) + '…' : t.my_subs[0].msg) + '</div>' : '') + '</div><span class="tgo">›</span></button>'; };
     var sentOk = function (t) { return t.sub_status === 'auto' || t.sub_status === 'ok' || t.sub_status === 'review'; };
     var todo = home.topics.map(function (t, k) { return { t: t, k: k }; }).filter(function (x) { return (x.t.tasks_open && !sentOk(x.t)) || x.t.sub_status === 'redo'; });
     var tests = home.topics.map(function (t, k) { return { t: t, k: k }; }).filter(function (x) { return x.t.test_open && x.t.test_count && !x.t.test_result; });
     if (stTab === 'home') {
       html += '<div id="bdBox" style="display:flex;flex-direction:column;gap:12px"></div><div id="svBox" style="display:flex;flex-direction:column;gap:12px"></div><div id="mrBox"></div>' + grpCards() + '<div id="exBox" style="display:flex;flex-direction:column;gap:12px"></div>';
       html += '<h1 style="font-size:19px;margin-top:4px">📸 Хийх ажил</h1>';
-      html += todo.length ? todo.map(function (x) { return card(x.t, x.k, x.t.sub_status === 'redo' ? 'Засаад илгээ' : (x.t.due_at ? fmtDate(x.t.due_at) + ' хүртэл илгээ' : 'Дадлага ажлаа илгээ')); }).join('') + tests.map(function (x) { return card(x.t, x.k, '📝 Тест өгөх · ' + (x.t.test_count || 0) + ' асуулт'); }).join('')
+      html += todo.length ? todo.map(function (x) { return card(x.t, x.k, x.t.sub_status === 'redo' ? 'Засаад илгээ' : 'Дадлага ажлаа илгээ'); }).join('') + tests.map(function (x) { return card(x.t, x.k, '📝 Тест өгөх · ' + (x.t.test_count || 0) + ' асуулт'); }).join('')
         : (tests.length ? tests.map(function (x) { return card(x.t, x.k, '📝 Тест өгөх · ' + (x.t.test_count || 0) + ' асуулт'); }).join('') : '<div class="card" style="flex-direction:row;align-items:center;gap:12px"><span style="font-size:30px">🎉</span><div><b>Бүх ажлаа хийсэн байна!</b><div class="muted">' + buddyName() + ' баяртай байна.</div></div></div>');
       var nPh = allMyPhotos().length;
       html += '<button type="button" class="card myph" id="myPh"><span style="font-size:30px">🖼️</span><span style="flex:1;text-align:left"><b style="font-size:16px">Миний зургууд</b><span class="muted" style="display:block">' + (nPh ? nPh + ' зураг · бүгдийг нэг дор харах' : 'Илгээсэн зураг энд цугларна') + '</span></span><span class="tgo">›</span></button>';
@@ -1038,7 +1045,7 @@ main{padding-bottom:96px!important}
       mySubsHtml(t) +
       (canSend(t) ? '<button class="btn" id="send">' + (isRedo(t) ? 'Дахин зурж илгээх' : (t.tasks_open ? 'Зураг илгээх' : 'Нөхөж илгээх')) + '</button>' : '') + '</div>';
     html += '<div class="card' + (t.tasks_open ? '' : ' locked') + '"><div class="row"><h2>Дасгал ажил, даалгавар</h2>' + (t.tasks_open ? '' : lockIcon) + '</div>' +
-      (t.tasks_open ? '<div class="muted">Багш нээсэн' + (t.due_at ? ' · хугацаа ' + fmtDate(t.due_at) : '') + '</div>' +
+      (t.tasks_open ? '<div class="muted">Багш нээсэн' + (t.due_at ? ' · хугацаа ' + fmtDate(t.due_at) : '') + '</div>' + dueBadge(t) +
         (t.exercise_url ? ((/\.(png|jpe?g|webp|gif)(\?|$)/i).test(t.exercise_url) ? '<a href="' + esc(t.exercise_url) + '" target="_blank" rel="noopener"><img alt="Дасгалын хуудас" src="' + esc(t.exercise_url) + '" style="width:100%;border-radius:10px;border:1px solid #C5CADB"></a><div class="muted">Зураг дээр дарж томруулна</div>' : '<a class="btn sec" style="display:flex;align-items:center;justify-content:center;text-decoration:none" target="_blank" rel="noopener" href="' + esc(t.exercise_url) + '">Дасгалын хуудас харах</a>') : '<div class="muted">Дасгалын хуудсыг багш ангид тараана.</div>')
         : '<div class="muted">Багш нээх үед энд гарна</div>') + '</div>';
     html += '<div class="card' + (t.test_open || t.test_result ? '' : ' locked') + '"><div class="row"><h2>Тест</h2>' +
@@ -1238,9 +1245,9 @@ main{padding-bottom:96px!important}
   }
   function showSubmit() {
     if (!canSend(curTopic)) { toast('Энэ сэдэвт аль хэдийн илгээсэн байна'); return; }
-    var t = curTopic, photos = [], claim = null, sentPaths = [], MAX = t.max_photos || 1, myCode = home ? home.code : '';
+    var t = curTopic, photos = [], claim = null, sentPaths = [], MAX = t.max_photos || 3, myCode = home ? home.code : '';
     app.innerHTML = '<button class="link" id="back">← Буцах</button><h1>Зураг илгээх</h1><div class="muted">' + esc(t.title) + '</div>' +
-      '<div style="background:#EEF1FA;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px"><b style="font-size:16px">Энэ сэдэвт ' + MAX + ' хуудас зураг илгээнэ</b>' +
+      '<div style="background:#EEF1FA;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px"><b style="font-size:16px">' + (MAX > 1 ? 'Энэ сэдэвт ' + MAX + ' хүртэл хуудас илгээж болно' : 'Энэ сэдэвт 1 хуудас зураг илгээнэ') + '</b>' + (MAX > 1 ? '<span style="font-size:13.5px;color:#2747B8;font-weight:600">📄 Хоёр, гурван цаасан дээр зурсан бол бүх хуудсаа нэг дор оруулна</span>' : '') +
       '<span style="font-size:14px">Дэвтрийнхээ <b>зүүн доод буланд</b> өөрийн кодоо <b style="font-size:18px;letter-spacing:.04em">' + esc(myCode) + '</b> гэж <b>үзгээр</b> тод бичсэн байх ёстой. Кодгүй зураг илгээгдэхгүй.</span></div>' +
       '<input id="cam" type="file" accept="image/*" capture="environment" hidden><input id="gal" type="file" accept="image/*" multiple hidden>' +
       '<div class="choice"><button class="btn dark" id="take" style="height:62px;font-size:16px">📷 Зураг авах</button><button class="btn sec" id="pick" style="height:62px;font-size:16px">🖼 Галерейгаас</button></div>' +
