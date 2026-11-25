@@ -1235,10 +1235,10 @@ main{padding-bottom:96px!important}
         URL.revokeObjectURL(url);
         var pv = document.createElement('canvas'), pk = Math.min(1, 360 / Math.max(c.width, c.height)); pv.width = Math.round(c.width * pk); pv.height = Math.round(c.height * pk);
         pv.getContext('2d').drawImage(c, 0, 0, pv.width, pv.height);
-        var cw = Math.round(c.width * 0.42), ch = Math.round(c.height * 0.3), cr = document.createElement('canvas'), ck = Math.min(1, 480 / cw);
-        cr.width = Math.round(cw * ck); cr.height = Math.round(ch * ck);
-        cr.getContext('2d').drawImage(c, 0, c.height - ch, cw, ch, 0, 0, cr.width, cr.height);
-        c.toBlob(function (blob) { res({ blob: blob, hash: hex, preview: pv.toDataURL('image/jpeg', 0.6), corner: cr.toDataURL('image/jpeg', 0.8), codeOk: null }); }, 'image/jpeg', 0.72);
+        // код шалгах алхмыг хассан
+
+
+        c.toBlob(function (blob) { res({ blob: blob, hash: hex, preview: pv.toDataURL('image/jpeg', 0.6), corner: null, codeOk: true }); }, 'image/jpeg', 0.72);
       };
       img.onerror = rej; img.src = url;
     });
@@ -1248,7 +1248,7 @@ main{padding-bottom:96px!important}
     var t = curTopic, photos = [], claim = null, sentPaths = [], MAX = t.max_photos || 3, myCode = home ? home.code : '';
     app.innerHTML = '<button class="link" id="back">← Буцах</button><h1>Зураг илгээх</h1><div class="muted">' + esc(t.title) + '</div>' +
       '<div style="background:#EEF1FA;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px"><b style="font-size:16px">' + (MAX > 1 ? 'Энэ сэдэвт ' + MAX + ' хүртэл хуудас илгээж болно' : 'Энэ сэдэвт 1 хуудас зураг илгээнэ') + '</b>' + (MAX > 1 ? '<span style="font-size:13.5px;color:#2747B8;font-weight:600">📄 Хоёр, гурван цаасан дээр зурсан бол бүх хуудсаа нэг дор оруулна</span>' : '') +
-      '<span style="font-size:14px">Дэвтрийнхээ <b>зүүн доод буланд</b> өөрийн кодоо <b style="font-size:18px;letter-spacing:.04em">' + esc(myCode) + '</b> гэж <b>үзгээр</b> тод бичсэн байх ёстой. Кодгүй зураг илгээгдэхгүй.</span></div>' +
+      '<span style="font-size:14px">Дэвтрийнхээ <b>зүүн доод буланд</b> өөрийн кодоо <b style="font-size:18px;letter-spacing:.04em">' + esc(myCode) + '</b> гэж <b>үзгээр</b> тод бичсэн байх ёстой. Кодоо бичихээ бүү мартаарай.</span></div>' +
       '<input id="cam" type="file" accept="image/*" capture="environment" hidden><input id="gal" type="file" accept="image/*" multiple hidden>' +
       '<div class="choice"><button class="btn dark" id="take" style="height:62px;font-size:16px">📷 Зураг авах</button><button class="btn sec" id="pick" style="height:62px;font-size:16px">🖼 Галерейгаас</button></div>' +
       '<div id="ph"></div><div class="muted">Хуудсаа гэрэлтэй газар, дээрээс нь шулуун авна. Зүүн доод булан (кодтой хэсэг) бүтэн орсон байх ёстой.</div>' +
@@ -1295,6 +1295,16 @@ main{padding-bottom:96px!important}
       if (!photos.length) { err.textContent = 'Эхлээд зургаа авна уу.'; return; }
       if (photos.some(function (p) { return !p.codeOk; })) { err.textContent = 'Зураг бүрийн зүүн доод буланд ' + myCode + ' код харагдаж байгааг шалгаад "Тийм" дарна уу.'; return; }
       if (claim === null) { err.textContent = 'Багшид үзүүлсэн эсэхээ сонгоно уу.'; return; }
+      if (!b.dataset.codeok) {
+        var ov = document.createElement('div'); ov.className = 'bd-pop';
+        ov.innerHTML = '<div class="bd-pc" style="background:#fff"><div style="font-size:48px">✍️</div><b style="font-size:19px">Кодоо бичихээ мартаагүй биз?</b><div style="font-size:15px">Зураг бүрийн <b>зүүн доод буланд</b><div style="font-size:30px;font-weight:900;color:#2747B8;letter-spacing:.04em;margin:6px 0">' + esc(myCode) + '</div>гэж бичсэн үү?</div>' +
+          '<button type="button" class="btn" id="ckY">✓ Тийм, бичсэн · Илгээх</button><button type="button" class="link" id="ckN" style="align-self:center;font-size:15px">Үгүй, бичээд дахин зураг авъя</button></div>';
+        document.body.appendChild(ov);
+        ov.querySelector('#ckY').onclick = function () { ov.remove(); b.dataset.codeok = '1'; b.click(); };
+        ov.querySelector('#ckN').onclick = function () { ov.remove(); };
+        ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+        return;
+      }
       b.disabled = true; b.textContent = 'Илгээж байна…';
       Promise.resolve().then(function () {
         var uploads = photos.map(function (p, i) {
