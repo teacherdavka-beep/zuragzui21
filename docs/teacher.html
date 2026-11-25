@@ -56,7 +56,7 @@ th{font-size:12px;color:#5A6178}
 .sticky{position:sticky;bottom:0;background:#fff;border-top:2px solid #2747B8;padding:12px;border-radius:12px 12px 0 0;box-shadow:0 -4px 18px rgba(0,0,0,.06)}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1A1F36;color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;z-index:20}
 .zoom{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:30}
-.zoom img{max-width:96vw;max-height:94vh}
+.zoom img{max-width:96vw;max-height:94vh}.zr{position:fixed;right:16px;bottom:18px;z-index:40;background:#fff;color:#1E2A5A;border:0;border-radius:99px;padding:12px 18px;font-weight:800;font-size:15px;box-shadow:0 6px 20px rgba(0,0,0,.35);cursor:pointer}
 #print{display:none}
 @media print{
   body{background:#fff} header,main,.toast,.credit{display:none!important}
@@ -1576,6 +1576,24 @@ body{--au-c:var(--btn);--au-soft:var(--soft);--au-ring:rgba(40,70,160,.16);--au-
     document.addEventListener('keydown', key);
     draw(); document.body.appendChild(z);
   }
+  // --- зураг эргүүлэх (багшийн бүх зураг харах цонхонд) ---
+  var ROT = {}, rotLoaded = false, rotSave = {};
+  function rotKey(src) { var m = String(src || '').match(/\/object\/(?:sign|public)\/[^/]+\/([^?#]+)/); return m ? decodeURIComponent(m[1]) : null; }
+  function rotApply(img) { var k = rotKey(img.getAttribute('src')); if (!k) return; var d = ROT[k] || 0, inZ = !!img.closest('.zoom');
+    img.style.transform = d ? 'rotate(' + d + 'deg)' : ''; img.style.transition = 'transform .25s';
+    if (inZ) { var side = d % 180 !== 0; img.style.maxWidth = side ? '90vh' : ''; img.style.maxHeight = side ? '94vw' : ''; } }
+  function rotAll() { document.querySelectorAll('img').forEach(rotApply); }
+  function rotLoad() { if (rotLoaded) return; rotLoaded = true; sb.from('photo_rot').select('path,deg').then(function (r) { (r.data || []).forEach(function (x) { ROT[x.path] = x.deg; }); rotAll(); }); }
+  function rotZoom(z) { if (z.querySelector('.zr')) return; var b = document.createElement('button'); b.className = 'zr'; b.type = 'button'; b.innerHTML = '⟳ Эргүүлэх';
+    b.onclick = function (e) { e.stopPropagation(); e.preventDefault(); var imgs = [].filter.call(z.querySelectorAll('img'), function (im) { return im.offsetParent !== null && rotKey(im.getAttribute('src')); }); var im = imgs[imgs.length - 1]; if (!im) return;
+      var k = rotKey(im.getAttribute('src')); ROT[k] = ((ROT[k] || 0) + 90) % 360; rotAll();
+      clearTimeout(rotSave[k]); rotSave[k] = setTimeout(function () { sb.from('photo_rot').upsert({ path: k, deg: ROT[k] }, { onConflict: 'teacher_id,path' }).then(function () {}); }, 600); };
+    z.appendChild(b); }
+  new MutationObserver(function (ms) { var any = false; ms.forEach(function (m) {
+      if (m.type === 'attributes' && m.target.tagName === 'IMG') { if (rotKey(m.target.getAttribute('src'))) { rotLoad(); rotApply(m.target); } return; }
+      m.addedNodes.forEach(function (n) { if (n.nodeType !== 1) return; if (n.classList && n.classList.contains('zoom')) rotZoom(n); var z = n.closest && n.closest('.zoom'); if (z) rotZoom(z);
+        (n.tagName === 'IMG' ? [n] : [].slice.call(n.querySelectorAll ? n.querySelectorAll('img') : [])).forEach(function (im) { if (rotKey(im.getAttribute('src'))) { any = true; rotApply(im); } }); }); });
+    if (any) rotLoad(); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
   var REDO_Q = ['Зураг бүдэг, тод харагдахгүй байна', 'Дутуу хийсэн, дуусгаад илгээ', 'Хэмжээ, харьцаа буруу', 'Буруу даалгавар илгээсэн', 'Шугамаа цэвэрхэн, тод тат', 'Хүрээ, гарчгийн хүснэгтээ хий', 'Өнгө, будгаа гүйцээ'];
   function askRedo(name, done, cancel) {
     var ov = document.createElement('div'); ov.className = 'rd-ov';
