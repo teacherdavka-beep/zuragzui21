@@ -108,7 +108,7 @@ header{position:relative;overflow:hidden;background:linear-gradient(125deg,#3BB6
 header:before,header:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.12)}
 header:before{width:180px;height:180px;right:-50px;top:-70px}header:after{width:110px;height:110px;right:70px;bottom:-60px;background:rgba(255,255,255,.08)}
 header .sub{color:#DDEBFF;position:relative}header .ttl{position:relative;font-size:25px;font-weight:800;margin:4px 0 8px}
-.hout{position:absolute;top:14px;right:14px;z-index:2;width:42px;height:42px;border-radius:50%;border:1.5px solid rgba(255,255,255,.6);background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;backdrop-filter:blur(4px)}.hout:active{background:rgba(255,255,255,.35)}#hSub,#hTitle{padding-right:46px}.wrap{width:100%}#hTitle{overflow:hidden}#hWho{display:flex;gap:6px;flex-wrap:wrap}.hchip{background:rgba(255,255,255,.2);color:#fff;border-radius:99px;padding:4px 11px;font-size:12.5px;font-weight:700;backdrop-filter:blur(4px)}
+.hout{position:absolute;top:14px;right:14px;z-index:2;width:42px;height:42px;border-radius:50%;border:1.5px solid rgba(255,255,255,.6);background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;backdrop-filter:blur(4px)}.hout:active{background:rgba(255,255,255,.35)}#hSub,#hTitle{padding-right:46px}.cl-phs{display:flex;gap:8px;flex-wrap:wrap}.cl-th{position:relative}.cl-th img{width:88px;height:88px;object-fit:cover;border-radius:12px;display:block}.cl-th button{position:absolute;top:-6px;right:-6px;width:26px;height:26px;border-radius:50%;border:0;background:#C0394E;color:#fff;font-weight:800;font-size:12px}.cl-add{width:88px;height:88px;border:2px dashed #9DB4E8;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:26px;color:#2E6FD8;cursor:pointer;background:#F3F7FF}.cl-add span{font-size:11.5px;font-weight:700}.fb-it{border-top:1px solid #EEF1F7;padding:8px 0;display:flex;flex-direction:column;gap:4px}.fb-tx{white-space:pre-wrap;font-size:14.5px;overflow-wrap:anywhere}.fb-mt{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;color:#6B7390}.fb-del{flex:none;border:1.5px solid #E1E4EE;background:#fff;border-radius:9px;height:34px;min-width:38px;padding:0 8px;font-size:15px;color:#A12A1E;font-weight:700;font-family:inherit}.fb-del.sure{background:#C0394E;border-color:#C0394E;color:#fff;font-size:13px}.wrap{width:100%}#hTitle{overflow:hidden}#hWho{display:flex;gap:6px;flex-wrap:wrap}.hchip{background:rgba(255,255,255,.2);color:#fff;border-radius:99px;padding:4px 11px;font-size:12.5px;font-weight:700;backdrop-filter:blur(4px)}
 .card{border:0;border-radius:22px;box-shadow:0 4px 18px rgba(60,60,140,.08)}
 main>.card:first-child{background:linear-gradient(135deg,#FFFFFF 0%,#F2EEFF 100%)}
 .btn{border-radius:14px;background:linear-gradient(110deg,#2E6FD8,#5B4FD6);box-shadow:0 6px 14px rgba(46,111,216,.25);font-weight:700}
@@ -573,7 +573,7 @@ main{padding-bottom:96px!important}
   function fmtDay(t) { var x = new Date(t); return (x.getMonth() + 1) + '/' + x.getDate() + ' ' + fmtTime(t); }
   function hrAnnList(d, mine) { var a = d.ann || [];
     return a.map(function (m) { return '<div class="hr-an"><div>' + esc(m.body).replace(/\n/g, '<br>') + '</div><div class="muted" style="font-size:12px">' + (m.t ? '👩‍🏫 Багш' : esc(m.by || 'Дарга')) + ' · ' + fmtDay(m.at) + (m.all ? ' · 🏫 бүх анги' : ' · дарга нарт') + (mine && !m.t ? ' <button type="button" class="link" data-andel="' + m.id + '" style="font-size:12px;color:#B42318">Устгах</button>' : '') + '</div></div>'; }).join(''); }
-  var hrActPh = [], hrDpDay = null, hrDpSel = null, hrBkSub = null, hrBk = null, hrPhEdit = null, hrRec = null, hrClip = null, hrVTarget = 'teacher';
+  var hrClPh = [], hrActPh = [], hrDpDay = null, hrDpSel = null, hrBkSub = null, hrBk = null, hrPhEdit = null, hrRec = null, hrClip = null, hrVTarget = 'teacher';
   function hrDur(n) { n = Math.round(n || 0); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); }
   function hrVoiceHtml(tg, label) { tg = tg || 'teacher';
     if (!window.MediaRecorder || !navigator.mediaDevices) return '<div class="muted" style="font-size:12.5px">Энэ утас дуу бичихийг дэмжихгүй байна. Бичгээр илгээнэ үү.</div>';
@@ -794,6 +794,11 @@ main{padding-bottom:96px!important}
       '<div class="hr-chips" id="hdK">' + kids.map(function (k) { return '<button type="button" class="' + (hrDutySel.indexOf(k.id) >= 0 ? 'on' : '') + '" data-dk="' + k.id + '">' + esc(k.name) + '</button>'; }).join('') + '</div>' +
       '<div class="choice" style="grid-template-columns:1fr 1fr 1fr" id="hdD"><button type="button" data-dd="1" class="' + (hrDutyDone === true ? 'on2' : '') + '">✓ Хийсэн</button><button type="button" data-dd="0" class="' + (hrDutyDone === false ? 'on' : '') + '">✗ Үгүй</button><button type="button" data-dd="" class="' + (hrDutyDone == null ? 'on2' : '') + '">Хүлээгдэж</button></div>' +
       '<input type="text" id="hdN" placeholder="Тэмдэглэл (жишээ: шал угаасан)" maxlength="300" value="' + esc((d.duty && d.duty.note) || '') + '"><button class="btn" id="hdSave">Цэвэрлэгээ хадгалах</button></div>' +
+      '<div class="card"><h2>📷 Цэвэрлэсэн ангийн зураг</h2><div class="muted">Цэвэрлэж дууссаны дараа ангийн зургийг аваад илгээнэ. Зөвхөн багшид харагдана.</div>' +
+      (d.duty && d.duty.photos ? '<div class="hr-sum" style="color:#14805A">✓ Өнөөдөр ' + d.duty.photos + ' зураг илгээсэн</div>' : '') +
+      '<div class="cl-phs">' + hrClPh.map(function (p, i) { return '<span class="cl-th"><img src="' + p.url + '" alt=""><button type="button" data-clx="' + i + '" aria-label="Хасах">✕</button></span>'; }).join('') +
+      (hrClPh.length < 4 ? '<label class="cl-add">📷<span>Зураг авах</span><input type="file" accept="image/*" capture="environment" id="clF" hidden></label>' : '') + '</div>' +
+      (hrClPh.length ? '<button class="btn" id="clSend">📤 Зураг илгээх (' + hrClPh.length + ')</button>' : '') + '</div>' +
       '<div class="muted" style="text-align:center;font-size:12.5px">Таны бөглөсөн мэдээлэл анги удирдсан багшид шууд харагдана.</div>';
     return h;
   }
@@ -847,6 +852,16 @@ main{padding-bottom:96px!important}
     app.querySelectorAll('[data-dpd]').forEach(function (b) { b.onclick = function () { hrDpDay = +b.dataset.dpd; hrDpSel = null; redraw(); }; });
     app.querySelectorAll('[data-dpk]').forEach(function (b) { b.onclick = function () { var id = b.dataset.dpk, i = hrDpSel.indexOf(id); if (i >= 0) hrDpSel.splice(i, 1); else hrDpSel.push(id); b.classList.toggle('on', i < 0); var e = document.getElementById('dpSum'); if (e) e.textContent = hrDpSel.length + ' хүүхэд'; }; });
     var dpS = document.getElementById('dpSave'); if (dpS) dpS.onclick = function () { dpS.disabled = true; sb.rpc('hr_save_duty_plan', { p_token: token, p_dow: hrDpDay, p_students: hrDpSel }).then(function (r) { dpS.disabled = false; if (r.error || (r.data && r.data.error)) { toast('Хадгалж чадсангүй'); return; } toast('✓ ' + ['', 'Даваа', 'Мягмар', 'Лхагва', 'Пүрэв', 'Баасан'][hrDpDay] + ' гарагийн хуваарь хадгалагдлаа'); hrDpSel = null; hrLoad(redraw); }); };
+    var clF = document.getElementById('clF'); if (clF) clF.onchange = function () { var f = this.files && this.files[0]; if (!f) return; var u = URL.createObjectURL(f), im = new Image(); im.onload = function () { var k = Math.min(1, 1600 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); c.toBlob(function (bl) { hrClPh.push({ blob: bl, url: URL.createObjectURL(bl) }); redraw(); }, 'image/jpeg', 0.85); }; im.onerror = function () { toast('Зураг уншиж чадсангүй'); }; im.src = u; };
+    app.querySelectorAll('[data-clx]').forEach(function (b) { b.onclick = function () { hrClPh.splice(+b.dataset.clx, 1); redraw(); }; });
+    var clSend = document.getElementById('clSend'); if (clSend) clSend.onclick = function () {
+      if (!hrClPh.length || !hrMe.cid) return; var b = this; b.disabled = true; b.textContent = 'Илгээж байна…';
+      var rid = function () { return crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2); };
+      Promise.all(hrClPh.map(function (p) { var path = hrMe.cid + '/' + hrMe.sid + '/' + rid() + '.jpg'; return sb.storage.from('hr-act').upload(path, p.blob, { contentType: 'image/jpeg' }).then(function (u) { if (u.error) throw u.error; return path; }); }))
+        .then(function (paths) { return sb.rpc('hr_add_duty_photos', { p_token: token, p_photos: paths }); })
+        .then(function (r) { if (r.error || (r.data && r.data.error)) throw 1; hrClPh = []; toast('📷 Зураг багшид очлоо'); hrLoad(redraw); })
+        .catch(function () { b.disabled = false; b.textContent = '📤 Зураг илгээх'; toast('Илгээж чадсангүй'); });
+    };
     var acF = document.getElementById('acF'); if (acF) acF.onchange = function () { var f = this.files && this.files[0]; if (!f) return; var u = URL.createObjectURL(f), im = new Image(); im.onload = function () { var k = Math.min(1, 1600 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); c.toBlob(function (bl) { hrActPh.push({ blob: bl, url: URL.createObjectURL(bl) }); redraw(); }, 'image/jpeg', 0.85); }; im.onerror = function () { toast('Зураг уншиж чадсангүй'); }; im.src = u; };
     app.querySelectorAll('[data-acx]').forEach(function (b) { b.onclick = function () { hrActPh.splice(+b.dataset.acx, 1); redraw(); }; });
     var acSend = document.getElementById('acSend'); if (acSend) acSend.onclick = function () {
@@ -946,7 +961,7 @@ main{padding-bottom:96px!important}
       html = hrLeadHtml() + '<div id="mrBox" style="margin-top:12px"></div>';
     } else {
       html = '<h1 style="font-size:19px">✉️ Багшид захиа</h1><div class="muted">Ойлгомжгүй зүйл, санал хүсэлтээ багшдаа бичээрэй.</div>';
-      html += feedbackCard(null) + '<button class="link" id="out">Гарах</button>';
+      html += feedbackCard(null) + '<div class="card" id="myFb"><h2>Миний илгээсэн захиа</h2><div class="muted">Ачаалж байна…</div></div>' + '<button class="link" id="out">Гарах</button>';
     }
     var nb = function (k, ic, lab, n) { return '<button type="button" class="' + (stTab === k ? 'on' : '') + '" data-tab="' + k + '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ic + '</svg><span>' + lab + '</span>' + (n ? '<em>' + n + '</em>' : '') + '</button>'; };
     var nTab = 4 + (hrMe ? 1 : 0) + (stCls ? 1 : 0); html += '<nav class="snav' + (nTab === 5 ? ' five' : nTab === 6 ? ' six' : '') + '" aria-label="Цэс">' +
@@ -1150,9 +1165,27 @@ main{padding-bottom:96px!important}
       sb.rpc('student_feedback', { p_token: token, p_body: t, p_lesson: b.dataset.l || null, p_anon: document.getElementById('fba').checked }).then(function (r) {
         b.disabled = false;
         if (r.error) { toast(/too many/.test(r.error.message) ? 'Түр хүлээгээд дахин бичээрэй' : 'Илгээж чадсангүй'); return; }
-        document.getElementById('fbt').value = ''; toast('Баярлалаа! Багшид очлоо');
+        document.getElementById('fbt').value = ''; toast('Баярлалаа! Багшид очлоо'); loadMyFb();
       });
     };
+    loadMyFb();
+  }
+  function loadMyFb() {
+    var box = document.getElementById('myFb'); if (!box) return;
+    sb.rpc('my_feedback', { p_token: token }).then(function (r) {
+      var L = r.data || [], h = '<h2>Миний илгээсэн захиа</h2>';
+      if (r.error) h += '<div class="muted">Ачаалж чадсангүй</div>';
+      else if (!L.length) h += '<div class="muted">Одоогоор захиа илгээгээгүй байна.</div>';
+      else h += '<div class="muted" style="font-size:12.5px">Буруу бичсэн бол 🗑 дарж устгана. Устгасан захиа багшид харагдахаа болино.</div>' + L.map(function (f) {
+        return '<div class="fb-it"><div class="fb-tx">' + esc(f.body) + '</div><div class="fb-mt"><span>' + fmtDate(f.at) + ' ' + fmtTime(f.at) + (f.anon ? ' · нэргүй' : '') + (f.seen ? ' · <b style="color:#14805A">✓ Багш уншсан</b>' : '') + '</span><button type="button" class="fb-del" data-fbdel="' + f.id + '" aria-label="Устгах">🗑</button></div></div>';
+      }).join('');
+      box.innerHTML = h;
+      box.querySelectorAll('[data-fbdel]').forEach(function (b) { b.onclick = function () {
+        if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Устгах уу?'; b.classList.add('sure'); return; }
+        b.disabled = true;
+        sb.rpc('delete_my_feedback', { p_token: token, p_id: b.dataset.fbdel }).then(function (x) { if (x.error || !(x.data && x.data.ok)) { toast('Устгаж чадсангүй'); b.disabled = false; return; } toast('Захиа устгагдлаа'); loadMyFb(); });
+      }; });
+    });
   }
 
   // ---------- SUBMIT ----------
