@@ -1267,9 +1267,9 @@ main{padding-bottom:96px!important}
   }
   function showSubmit() {
     if (!canSend(curTopic)) { toast('Энэ сэдэвт аль хэдийн илгээсэн байна'); return; }
-    var t = curTopic, photos = [], claim = null, sentPaths = [], MAX = t.max_photos || 3, myCode = home ? home.code : '';
+    var t = curTopic, photos = [], claim = null, sentPaths = [], MAX = t.max_photos || 5, myCode = home ? home.code : '';
     app.innerHTML = '<button class="link" id="back">← Буцах</button><h1>Зураг илгээх</h1><div class="muted">' + esc(t.title) + '</div>' +
-      '<div style="background:#EEF1FA;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px"><b style="font-size:16px">' + (MAX > 1 ? 'Энэ сэдэвт ' + MAX + ' хүртэл хуудас илгээж болно' : 'Энэ сэдэвт 1 хуудас зураг илгээнэ') + '</b>' + (MAX > 1 ? '<span style="font-size:13.5px;color:#2747B8;font-weight:600">📄 Хоёр, гурван цаасан дээр зурсан бол бүх хуудсаа нэг дор оруулна</span>' : '') +
+      '<div style="background:#EEF1FA;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px"><b style="font-size:16px">' + (MAX > 1 ? 'Энэ сэдэвт ' + MAX + ' хүртэл хуудас илгээж болно' : 'Энэ сэдэвт 1 хуудас зураг илгээнэ') + '</b>' + (MAX > 1 ? '<span style="font-size:13.5px;color:#2747B8;font-weight:600">📄 Хэд хэдэн цаасан дээр зурсан бол бүх хуудсаа нэг дор оруулна</span>' : '') +
       '<span style="font-size:14px">Дэвтрийнхээ <b>зүүн доод буланд</b> өөрийн кодоо <b style="font-size:18px;letter-spacing:.04em">' + esc(myCode) + '</b> гэж <b>үзгээр</b> тод бичсэн байх ёстой. Кодоо бичихээ бүү мартаарай.</span></div>' +
       '<input id="cam" type="file" accept="image/*" capture="environment" hidden><input id="gal" type="file" accept="image/*" multiple hidden>' +
       '<div class="choice"><button class="btn dark" id="take" style="height:62px;font-size:16px">📷 Зураг авах</button><button class="btn sec" id="pick" style="height:62px;font-size:16px">🖼 Галерейгаас</button></div>' +
