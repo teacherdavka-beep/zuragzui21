@@ -587,7 +587,7 @@ main{padding-bottom:96px!important}
     if (!hrHwG) { hrHwG = {}; hrHwPt = {}; hrHwNo = []; P.forEach(function (p) { hrHwG[p] = (hw[p] || []).slice(); hrHwPt[p] = (hp[p] || []).slice(); if (lg[p] && lg[p].given === false) hrHwNo.push(p); }); }
     var short = subAbbr;
     var saved = P.filter(function (p) { return lg[p]; }).length;
-    return '<div class="card"><div class="row between"><h2>2. Гэрийн даалгавар</h2>' + (saved ? '<span class="pill p-green">✓ ' + saved + '/' + P.length + ' цаг</span>' : '') + '</div>' +
+    return '<div class="card"><div class="row between"><h2>§Гэрийн даалгавар</h2>' + (saved ? '<span class="pill p-green">✓ ' + saved + '/' + P.length + ' цаг</span>' : '') + '</div>' +
       '<div class="muted">Бүгд <b style="color:#1F7A6E">✓</b> гэж эхэлнэ. Нүдэн дээр дарах бүрт: <b style="color:#C0392B">✗ хийгээгүй</b> → <b style="color:#A0560B">½ дутуу</b> → <b style="color:#1F7A6E">✓ хийсэн</b>. Даалгавар өгөөгүй хичээлийн <b>нэр</b> дээр дарна.</div>' +
       '<div class="hw-wrap"><table class="hw-t"><thead><tr><th></th>' + P.map(function (p) { var no = hrHwNo.indexOf(p) >= 0; return '<th><button type="button" data-hwc="' + p + '" class="' + (no ? 'no' : '') + '"><b>' + p + '</b><small>' + (no ? 'өгөөгүй' : esc(short(tt[p] || 'цаг'))) + '</small>' + (lg[p] ? '<i>✓</i>' : '') + '</button></th>'; }).join('') + '</tr></thead><tbody>' +
       kids.map(function (k) { return '<tr><td class="hw-n">' + esc(k.name) + '</td>' + P.map(function (p) { var no = hrHwNo.indexOf(p) >= 0, x = (hrHwG[p] || []).indexOf(k.id) >= 0, pt = (hrHwPt[p] || []).indexOf(k.id) >= 0; return '<td>' + (no ? '<span class="hw-dash">—</span>' : '<button type="button" data-hwg="' + p + '" data-k="' + k.id + '" class="' + (x ? 'x' : pt ? 'pt' : '') + '">' + (x ? '✗' : pt ? '½' : '✓') + '</button>') + '</td>'; }).join('') + '</tr>'; }).join('') +
@@ -761,43 +761,8 @@ main{padding-bottom:96px!important}
     if (!hrDutySel) { var dw0 = new Date(d.day + 'T00:00:00').getDay() || 7; hrDutySel = ((d.duty && d.duty.students) || (d.dplan && d.dplan[dw0]) || []).slice(); }
     if (hrDutyDone === undefined) hrDutyDone = d.duty ? d.duty.done : null;
     var h = '<div class="card hr-head"><b style="font-size:19px">' + ({ darga: '📋 Ангийн дарга', jijuur: '🧹 Цэвэрлэгээний дарга', uzleg: '🧹 Цэвэрлэгээний дарга', salaa: '👥 ' + (d.salaa || '') + '-р салааны дарга' }[d.role] || 'Дарга') + '</b><span class="muted">' + esc(d['class'] || '') + ' анги · ' + d.day + '</span></div>';
-    if (d.role !== 'darga' && (d.ann || []).length) h += '<div class="card hr-ann"><h2>📣 Зар</h2>' + hrAnnList(d, false) + '</div>';
-    if (d.role === 'darga') {
-      var nA = Object.keys(hrMarks).length;
-      if (!hrLate.__i) { hrLate = { __i: 1 }; Object.keys(d.att_x || {}).forEach(function (k) { if (d.att[k] === 'late') hrLate[k] = d.att_x[k]; }); }
-      h += '<div class="card"><div class="row"><h2>1. Өнөөдрийн ирц</h2>' + (d.att_log ? '<span class="pill p-green">✓ ' + fmtTime(d.att_log.at) + '</span>' : '<span class="pill p-amber">Бүртгээгүй</span>') + '</div>' +
-        '<div class="muted">Бүгд «✓ ирсэн» гэж эхэлнэ. Ирээгүй, хоцорсон хүүхдийг л сонгоно. Хоцорсон бол хэдэн минут хоцорсныг бичнэ.</div>' +
-        kids.map(function (k) { var st = hrMarks[k.id] || ''; return '<div class="hr-at" style="flex-wrap:wrap"><span class="hr-nm">' + esc(k.name) + '</span><span class="hr-btns">' + [['', '✓'], ['absent', 'Тас'], ['late', 'Хоц'], ['sick', 'Өвч'], ['excused', 'Чөл']].map(function (o) { return '<button type="button" data-hm="' + k.id + '" data-st="' + o[0] + '" class="' + (st === o[0] ? 'on s-' + (o[0] || 'here') : '') + '">' + o[1] + '</button>'; }).join('') + '</span>' +
-          '<label class="hr-lm" data-lmw="' + k.id + '"' + (st === 'late' ? '' : ' hidden') + '><input type="number" inputmode="numeric" min="1" max="240" data-lm="' + k.id + '" value="' + (hrLate[k.id] || '') + '" placeholder="?"> минут хоцорсон</label></div>'; }).join('') +
-        '<div class="hr-sum" id="hrSum">' + (kids.length - nA) + ' ирсэн · ' + nA + ' тэмдэглэсэн</div><button class="btn" id="hrAtt">Ирц хадгалах</button></div>';
-      var ttn = d.ttn || {}, tta = d.tt_all || [], TTK = { missed: 'Хичээл ороогүй', swap: 'Өөр хичээл орсон', other: 'Бусад' };
-      h += '<div class="card"><h2>2. Өнөөдрийн хуваарь</h2><div class="muted">Хуваарийн дагуу хичээл ороогүй бол тухайн цаг дээр дарж тэмдэглэнэ.</div>' +
-        (tta.length ? tta.map(function (t) { var n = ttn[t.p]; return '<div class="hr-tt' + (n ? ' bad' : '') + '"><button type="button" class="hr-ttb" data-tto="' + t.p + '"><b class="hr-per">' + t.p + '-р цаг</b> ' + esc(t.s) + (n ? '<span class="hr-ttn">⚠️ ' + esc(TTK[n.k] || '') + (n.n ? ' — ' + esc(n.n) : '') + '</span>' : '') + '</button>' +
-          (hrTtOpen === t.p ? '<div class="hr-ttf"><div class="hr-chips" id="ttK">' + Object.keys(TTK).map(function (k) { return '<button type="button" data-ttk="' + k + '" class="' + ((n ? n.k : 'missed') === k ? 'on' : '') + '">' + TTK[k] + '</button>'; }).join('') + '</div>' +
-            '<input type="text" id="ttN" maxlength="300" placeholder="Тайлбар (жишээ: багш өвчтэй, бие даан ажилласан)" value="' + esc((n && n.n) || '') + '"><div class="choice">' + (n ? '<button type="button" id="ttDel">Тэмдэглэл арилгах</button>' : '<button type="button" id="ttX">Болих</button>') + '<button type="button" class="on2" id="ttSave">Хадгалах</button></div></div>' : '') + '</div>'; }).join('') : '<div class="muted" style="padding:6px 0">Өнөөдрийн хуваарь оруулаагүй байна. Багшдаа хэлээрэй.</div>') + '</div>';
-      h += '<div class="card"><h2>3. Дарга нарт зар</h2><div class="muted">Бичсэн зар бусад дарга нарын «Дарга» хэсэгт 7 хоног харагдана.</div>' +
-        '<textarea id="anT" maxlength="1000" placeholder="Жишээ: Маргааш 2-р цагт биеийн тамир, спорт хувцсаа авчраарай"></textarea><label class="hr-allc"><input type="checkbox" id="anAll" checked> Ангийн бүх хүүхдэд харуулах</label><button class="btn sec" id="anS">📣 Зар тараах</button>' + hrAnnList(d, true) + '</div>';
-      h += '<div class="card"><h2>4. Багшид захиа</h2><div class="muted">Зөвхөн анги удирдсан багшид очно. Дуугаар хэлэх нь хурдан 🎤</div>' + hrVoiceHtml('teacher') +
-        '<details class="hr-txt"><summary>✏️ Бичгээр бичих</summary><textarea id="tmT" maxlength="1000" placeholder="Багшдаа хэлэх зүйлээ бичнэ үү"></textarea><button class="btn sec" id="tmS">✉️ Илгээх</button></details>' +
-        ((d.sent || []).length ? '<div class="muted" style="margin-top:6px;font-size:12.5px">Сүүлд илгээсэн:</div>' + d.sent.slice(0, 3).map(function (m) { return '<div class="hr-li"><span>' + (m.audio ? '🎤 Дуут захиа' + (m.dur ? ' · ' + hrDur(m.dur) : '') : esc(m.body || '')) + ' <span class="muted" style="font-size:12px">· ' + fmtDay(m.at) + '</span></span></div>'; }).join('') : '') + '</div>';
-      var ph = d.phones || {}, tl = function (v) { return String(v || '').replace(/[^\d+]/g, ''); };
-      h += '<div class="card"><h2>5. Ангийн сурагчдын утас</h2><div class="muted">Дугаар дээр дарж засна, хоосон бол «+ Нэмэх» дарж бичнэ.</div>' + kids.map(function (k) { var v = ph[k.id];
-          if (hrPhEdit === k.id) return '<div class="hr-phe"><b>' + esc(k.name) + '</b><div class="row" style="gap:6px"><input type="tel" inputmode="tel" maxlength="20" id="phI" value="' + esc(v || '') + '" placeholder="Утасны дугаар"><button type="button" class="btn" id="phS" style="width:auto;padding:0 16px">Хадгалах</button></div><button type="button" class="link" id="phX" style="font-size:13px">Болих</button></div>';
-          return '<div class="hr-li"><span>' + esc(k.name) + '</span><span class="row" style="gap:6px">' + (v ? '<button type="button" class="hr-phb" data-phe="' + k.id + '">' + esc(v) + ' ✏️</button><a class="hr-call1" href="tel:' + tl(v) + '" aria-label="Залгах">📞</a>' : '<button type="button" class="hr-phb add" data-phe="' + k.id + '">+ Нэмэх</button>') + '</span></div>'; }).join('') + '</div>';
-      hrBkSub = 'Багц';
-      if (!hrBk) { hrBk = {}; (d.books || []).forEach(function (b) { if (b.s === hrBkSub) hrBk[b.sid] = b.c || ''; }); }
-      h += '<div class="card"><h2>6. Сурах бичгийн багц</h2><div class="muted">Багц авсан хүүхдийг «Авсан» болгоод багцын кодыг нь бичнэ.</div>' +
-        kids.map(function (k) { var got = hrBk.hasOwnProperty(k.id); return '<div class="hr-bkr"><span class="hr-nm">' + esc(k.name) + '</span><button type="button" class="hr-bkg' + (got ? ' on' : '') + '" data-bkg="' + k.id + '">' + (got ? '✓ Авсан' : 'Аваагүй') + '</button>' +
-          '<input type="text" class="hr-bkc" data-bkc="' + k.id + '" maxlength="40" placeholder="Багцын код" value="' + esc(got ? hrBk[k.id] : '') + '"' + (got ? '' : ' hidden') + '></div>'; }).join('') +
-        '<div class="hr-sum" id="bkSum">' + Object.keys(hrBk).length + ' / ' + kids.length + ' авсан</div><button class="btn" id="bkSave">Хадгалах</button></div>';
-      h += '<div class="card"><h2>7. Акт илгээх</h2><div class="muted">Анги эсвэл хүүхэд акт авсан бол зургийг нь дарж багшид илгээнэ.</div>' +
-        '<select id="acS"><option value="">🏫 Анги бүхэлдээ</option>' + kids.map(function (k) { return '<option value="' + k.id + '">' + esc(k.name) + '</option>'; }).join('') + '</select>' +
-        '<div class="ac-ph">' + hrActPh.map(function (p, i) { return '<div class="ac-t"><img src="' + p.url + '" alt=""><button type="button" data-acx="' + i + '" aria-label="Хасах">✕</button></div>'; }).join('') +
-        (hrActPh.length < 4 ? '<label class="ac-add">📷<span>' + (hrActPh.length ? 'Дахин нэмэх' : 'Зураг дарах') + '</span><input type="file" accept="image/*" capture="environment" id="acF" hidden></label>' : '') + '</div>' +
-        '<input type="text" id="acN" maxlength="300" placeholder="Тайлбар (жишээ: дүрэмт хувцасгүй, 2-р давхарт)"><button class="btn" id="acSend"' + (hrActPh.length ? '' : ' disabled') + '>📤 Акт илгээх</button>' +
-        ((d.acts || []).length ? '<div class="muted" style="margin-top:6px;font-size:12.5px">Сүүлд илгээсэн:</div>' + d.acts.map(function (a) { return '<div class="hr-li"><span>📄 ' + (a.sid ? esc(nm[a.sid] || '') : 'Анги') + (a.note ? ' — ' + esc(a.note) : '') + ' <span class="muted" style="font-size:12px">· ' + fmtDay(a.at) + '</span></span></div>'; }).join('') : '') + '</div>';
-      return h + '<div class="muted" style="text-align:center;font-size:12.5px">Таны бөглөсөн мэдээлэл анги удирдсан багшид шууд харагдана.</div>';
-    }
+    var can = function (t) { return (d.can || []).indexOf(t) >= 0; };
+    if (!can('ann') && (d.ann || []).length) h += '<div class="card hr-ann"><h2>📣 Зар</h2>' + hrAnnList(d, false) + '</div>';
     if (d.role === 'salaa') {
       if (hrPool) {
         var free = hrPool.pool.filter(function (k) { return !k.salaa || k.salaa === hrPool.mine; });
@@ -808,24 +773,76 @@ main{padding-bottom:96px!important}
       }
       h += '<div class="card"><div class="row"><h2>Миний салаа · ' + kids.length + ' хүүхэд</h2><button type="button" class="btn sec" id="spOpen" style="width:auto;height:38px;padding:0 14px;font-size:14px">✏️ Сонгох</button></div>' +
         (kids.length > 1 ? '<div class="muted">' + kids.map(function (k) { return esc(k.name); }).join(', ') + '</div>' : '<div class="hr-leg">Эхлээд <b>✏️ Сонгох</b> дарж салааныхаа хүүхдүүдийг сонгоорой.</div>') + '</div>';
-      if (kids.length > 1) h += hrSvCard(d, kids) + hrHwCard(d, kids, nm).replace('<h2>2. ', '<h2>1. ') + hrViolCard(d, kids, nm, '2. Хичээл дээрх зөрчил');
-      return h + '<div class="muted" style="text-align:center;font-size:12.5px">Таны бөглөсөн мэдээлэл анги удирдсан багшид шууд харагдана.</div>';
     }
-    if (d.role === 'uzleg' || d.role === 'jijuur') {
+    if (can('att')) {
+      var nA = Object.keys(hrMarks).length;
+      if (!hrLate.__i) { hrLate = { __i: 1 }; Object.keys(d.att_x || {}).forEach(function (k) { if (d.att[k] === 'late') hrLate[k] = d.att_x[k]; }); }
+      h += '<div class="card"><div class="row"><h2>§Өнөөдрийн ирц</h2>' + (d.att_log ? '<span class="pill p-green">✓ ' + fmtTime(d.att_log.at) + '</span>' : '<span class="pill p-amber">Бүртгээгүй</span>') + '</div>' +
+        '<div class="muted">Бүгд «✓ ирсэн» гэж эхэлнэ. Ирээгүй, хоцорсон хүүхдийг л сонгоно. Хоцорсон бол хэдэн минут хоцорсныг бичнэ.</div>' +
+        kids.map(function (k) { var st = hrMarks[k.id] || ''; return '<div class="hr-at" style="flex-wrap:wrap"><span class="hr-nm">' + esc(k.name) + '</span><span class="hr-btns">' + [['', '✓'], ['absent', 'Тас'], ['late', 'Хоц'], ['sick', 'Өвч'], ['excused', 'Чөл']].map(function (o) { return '<button type="button" data-hm="' + k.id + '" data-st="' + o[0] + '" class="' + (st === o[0] ? 'on s-' + (o[0] || 'here') : '') + '">' + o[1] + '</button>'; }).join('') + '</span>' +
+          '<label class="hr-lm" data-lmw="' + k.id + '"' + (st === 'late' ? '' : ' hidden') + '><input type="number" inputmode="numeric" min="1" max="240" data-lm="' + k.id + '" value="' + (hrLate[k.id] || '') + '" placeholder="?"> минут хоцорсон</label></div>'; }).join('') +
+        '<div class="hr-sum" id="hrSum">' + (kids.length - nA) + ' ирсэн · ' + nA + ' тэмдэглэсэн</div><button class="btn" id="hrAtt">Ирц хадгалах</button></div>';
+    }
+    if (can('tt')) {
+      var ttn = d.ttn || {}, tta = d.tt_all || [], TTK = { missed: 'Хичээл ороогүй', swap: 'Өөр хичээл орсон', other: 'Бусад' };
+      h += '<div class="card"><h2>§Өнөөдрийн хуваарь</h2><div class="muted">Хуваарийн дагуу хичээл ороогүй бол тухайн цаг дээр дарж тэмдэглэнэ.</div>' +
+        (tta.length ? tta.map(function (t) { var n = ttn[t.p]; return '<div class="hr-tt' + (n ? ' bad' : '') + '"><button type="button" class="hr-ttb" data-tto="' + t.p + '"><b class="hr-per">' + t.p + '-р цаг</b> ' + esc(t.s) + (n ? '<span class="hr-ttn">⚠️ ' + esc(TTK[n.k] || '') + (n.n ? ' — ' + esc(n.n) : '') + '</span>' : '') + '</button>' +
+          (hrTtOpen === t.p ? '<div class="hr-ttf"><div class="hr-chips" id="ttK">' + Object.keys(TTK).map(function (k) { return '<button type="button" data-ttk="' + k + '" class="' + ((n ? n.k : 'missed') === k ? 'on' : '') + '">' + TTK[k] + '</button>'; }).join('') + '</div>' +
+            '<input type="text" id="ttN" maxlength="300" placeholder="Тайлбар (жишээ: багш өвчтэй, бие даан ажилласан)" value="' + esc((n && n.n) || '') + '"><div class="choice">' + (n ? '<button type="button" id="ttDel">Тэмдэглэл арилгах</button>' : '<button type="button" id="ttX">Болих</button>') + '<button type="button" class="on2" id="ttSave">Хадгалах</button></div></div>' : '') + '</div>'; }).join('') : '<div class="muted" style="padding:6px 0">Өнөөдрийн хуваарь оруулаагүй байна. Багшдаа хэлээрэй.</div>') + '</div>';
+    }
+    if (can('ann')) {
+      h += '<div class="card"><h2>§Дарга нарт зар</h2><div class="muted">Бичсэн зар бусад дарга нарын «Дарга» хэсэгт 7 хоног харагдана.</div>' +
+        '<textarea id="anT" maxlength="1000" placeholder="Жишээ: Маргааш 2-р цагт биеийн тамир, спорт хувцсаа авчраарай"></textarea><label class="hr-allc"><input type="checkbox" id="anAll" checked> Ангийн бүх хүүхдэд харуулах</label><button class="btn sec" id="anS">📣 Зар тараах</button>' + hrAnnList(d, true) + '</div>';
+    }
+    if (can('msg')) {
+      h += '<div class="card"><h2>§Багшид захиа</h2><div class="muted">Зөвхөн анги удирдсан багшид очно. Дуугаар хэлэх нь хурдан 🎤</div>' + hrVoiceHtml('teacher') +
+        '<details class="hr-txt"><summary>✏️ Бичгээр бичих</summary><textarea id="tmT" maxlength="1000" placeholder="Багшдаа хэлэх зүйлээ бичнэ үү"></textarea><button class="btn sec" id="tmS">✉️ Илгээх</button></details>' +
+        ((d.sent || []).length ? '<div class="muted" style="margin-top:6px;font-size:12.5px">Сүүлд илгээсэн:</div>' + d.sent.slice(0, 3).map(function (m) { return '<div class="hr-li"><span>' + (m.audio ? '🎤 Дуут захиа' + (m.dur ? ' · ' + hrDur(m.dur) : '') : esc(m.body || '')) + ' <span class="muted" style="font-size:12px">· ' + fmtDay(m.at) + '</span></span></div>'; }).join('') : '') + '</div>';
+    }
+    if (can('phones')) {
+      var ph = d.phones || {}, tl = function (v) { return String(v || '').replace(/[^\d+]/g, ''); };
+      h += '<div class="card"><h2>§Ангийн сурагчдын утас</h2><div class="muted">Дугаар дээр дарж засна, хоосон бол «+ Нэмэх» дарж бичнэ.</div>' + kids.map(function (k) { var v = ph[k.id];
+          if (hrPhEdit === k.id) return '<div class="hr-phe"><b>' + esc(k.name) + '</b><div class="row" style="gap:6px"><input type="tel" inputmode="tel" maxlength="20" id="phI" value="' + esc(v || '') + '" placeholder="Утасны дугаар"><button type="button" class="btn" id="phS" style="width:auto;padding:0 16px">Хадгалах</button></div><button type="button" class="link" id="phX" style="font-size:13px">Болих</button></div>';
+          return '<div class="hr-li"><span>' + esc(k.name) + '</span><span class="row" style="gap:6px">' + (v ? '<button type="button" class="hr-phb" data-phe="' + k.id + '">' + esc(v) + ' ✏️</button><a class="hr-call1" href="tel:' + tl(v) + '" aria-label="Залгах">📞</a>' : '<button type="button" class="hr-phb add" data-phe="' + k.id + '">+ Нэмэх</button>') + '</span></div>'; }).join('') + '</div>';
+    }
+    if (can('books')) {
+      hrBkSub = 'Багц';
+      if (!hrBk) { hrBk = {}; (d.books || []).forEach(function (b) { if (b.s === hrBkSub) hrBk[b.sid] = b.c || ''; }); }
+      h += '<div class="card"><h2>§Сурах бичгийн багц</h2><div class="muted">Багц авсан хүүхдийг «Авсан» болгоод багцын кодыг нь бичнэ.</div>' +
+        kids.map(function (k) { var got = hrBk.hasOwnProperty(k.id); return '<div class="hr-bkr"><span class="hr-nm">' + esc(k.name) + '</span><button type="button" class="hr-bkg' + (got ? ' on' : '') + '" data-bkg="' + k.id + '">' + (got ? '✓ Авсан' : 'Аваагүй') + '</button>' +
+          '<input type="text" class="hr-bkc" data-bkc="' + k.id + '" maxlength="40" placeholder="Багцын код" value="' + esc(got ? hrBk[k.id] : '') + '"' + (got ? '' : ' hidden') + '></div>'; }).join('') +
+        '<div class="hr-sum" id="bkSum">' + Object.keys(hrBk).length + ' / ' + kids.length + ' авсан</div><button class="btn" id="bkSave">Хадгалах</button></div>';
+    }
+    if (can('acts')) {
+      h += '<div class="card"><h2>§Акт илгээх</h2><div class="muted">Анги эсвэл хүүхэд акт авсан бол зургийг нь дарж багшид илгээнэ.</div>' +
+        '<select id="acS"><option value="">🏫 Анги бүхэлдээ</option>' + kids.map(function (k) { return '<option value="' + k.id + '">' + esc(k.name) + '</option>'; }).join('') + '</select>' +
+        '<div class="ac-ph">' + hrActPh.map(function (p, i) { return '<div class="ac-t"><img src="' + p.url + '" alt=""><button type="button" data-acx="' + i + '" aria-label="Хасах">✕</button></div>'; }).join('') +
+        (hrActPh.length < 4 ? '<label class="ac-add">📷<span>' + (hrActPh.length ? 'Дахин нэмэх' : 'Зураг дарах') + '</span><input type="file" accept="image/*" capture="environment" id="acF" hidden></label>' : '') + '</div>' +
+        '<input type="text" id="acN" maxlength="300" placeholder="Тайлбар (жишээ: дүрэмт хувцасгүй, 2-р давхарт)"><button class="btn" id="acSend"' + (hrActPh.length ? '' : ' disabled') + '>📤 Акт илгээх</button>' +
+        ((d.acts || []).length ? '<div class="muted" style="margin-top:6px;font-size:12.5px">Сүүлд илгээсэн:</div>' + d.acts.map(function (a) { return '<div class="hr-li"><span>📄 ' + (a.sid ? esc(nm[a.sid] || '') : 'Анги') + (a.note ? ' — ' + esc(a.note) : '') + ' <span class="muted" style="font-size:12px">· ' + fmtDay(a.at) + '</span></span></div>'; }).join('') : '') + '</div>';
+    }
+    var salE = d.role === 'salaa' && kids.length <= 1;
+    if (can('survey') && !salE) h += hrSvCard(d, kids);
+    if (can('hw') && !salE) h += hrHwCard(d, kids, nm);
+    if (can('viol') && !salE) h += hrViolCard(d, kids, nm, '§Хичээл дээрх зөрчил');
+    if (can('check')) {
       if (!hrChk) { hrChk = {}; Object.keys(d.check || {}).forEach(function (k) { hrChk[k] = (d.check[k] || []).slice(); }); }
       var CI = [['uniform', '👔', 'Дүрэмт'], ['bag', '🎒', 'Уут'], ['locker', '🔐', 'Локер'], ['phone', '📱', 'Утас']];
-      h += '<div class="card"><div class="row"><h2>1. Өглөөний үзлэг</h2>' + (d.check_log ? '<span class="pill p-green">✓ ' + fmtTime(d.check_log.at) + '</span>' : '<span class="pill p-amber">Хийгээгүй</span>') + '</div>' +
+      h += '<div class="card"><div class="row"><h2>§Өглөөний үзлэг</h2>' + (d.check_log ? '<span class="pill p-green">✓ ' + fmtTime(d.check_log.at) + '</span>' : '<span class="pill p-amber">Хийгээгүй</span>') + '</div>' +
         '<div class="hr-leg">Байхгүй, өгөөгүй бол дарж <b style="color:#C0394E">улаан</b> болгоно:<br>👔 Дүрэмт хувцасгүй · 🎒 Хувцасны уутгүй · 🔐 Локер эмх цэгцгүй · 📱 Утсаа хайрцагт өгөөгүй</div>' +
         kids.map(function (k) { var it = hrChk[k.id] || []; return '<div class="hr-at"><span class="hr-nm">' + esc(k.name) + '</span><span class="hr-chk">' + CI.map(function (c) { return '<button type="button" data-uc="' + k.id + '" data-ui="' + c[0] + '" class="' + (it.indexOf(c[0]) >= 0 ? 'bad' : '') + '" aria-label="' + c[2] + '">' + c[1] + '</button>'; }).join('') + '</span></div>'; }).join('') +
         '<div class="hr-sum" id="ucSum"></div><button class="btn" id="ucSave">Үзлэг хадгалах</button></div>';
+    }
+    if (can('dplan')) {
       var dpl = d.dplan || {}, dowT = new Date(d.day + 'T00:00:00').getDay() || 7; if (!hrDpDay) hrDpDay = dowT > 5 ? 1 : dowT; if (!hrDpSel) hrDpSel = (dpl[hrDpDay] || []).slice();
-      h += '<div class="card"><h2>2. Жижүүрийн хуваарь</h2><div class="muted">Өдөр бүр хэн жижүүр хийхийг гаргана. Ангийн бүх хүүхдэд «Анги» хэсэгт харагдана.</div>' +
+      h += '<div class="card"><h2>§Жижүүрийн хуваарь</h2><div class="muted">Өдөр бүр хэн жижүүр хийхийг гаргана. Ангийн бүх хүүхдэд «Анги» хэсэгт харагдана.</div>' +
         '<div class="cl-days">' + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-dpd="' + n + '" class="' + (n === hrDpDay ? 'on' : '') + '">' + ['', 'Да', 'Мя', 'Лх', 'Пү', 'Ба'][n] + ((dpl[n] || []).length ? '<i></i>' : '') + '</button>'; }).join('') + '</div>' +
         '<div class="hr-chips" id="dpK">' + kids.map(function (k) { return '<button type="button" data-dpk="' + k.id + '" class="' + (hrDpSel.indexOf(k.id) >= 0 ? 'on' : '') + '">' + esc(k.name) + '</button>'; }).join('') + '</div>' +
         '<div class="hr-sum" id="dpSum">' + hrDpSel.length + ' хүүхэд</div><button class="btn sec" id="dpSave">Хуваарь хадгалах</button></div>';
 
     }
-    h += '<div class="card"><h2>3. Өнөөдрийн жижүүр, цэвэрлэгээ</h2><div class="muted">Цэвэрлэгээ хийх хүүхдүүдийг сонгоод, хийсэн эсэхийг тэмдэглэнэ.</div>' +
+    if (can('duty')) {
+    h += '<div class="card"><h2>§Өнөөдрийн жижүүр, цэвэрлэгээ</h2><div class="muted">Цэвэрлэгээ хийх хүүхдүүдийг сонгоод, хийсэн эсэхийг тэмдэглэнэ.</div>' +
       '<div class="hr-chips" id="hdK">' + kids.map(function (k) { return '<button type="button" class="' + (hrDutySel.indexOf(k.id) >= 0 ? 'on' : '') + '" data-dk="' + k.id + '">' + esc(k.name) + '</button>'; }).join('') + '</div>' +
       '<div class="choice" style="grid-template-columns:1fr 1fr 1fr" id="hdD"><button type="button" data-dd="1" class="' + (hrDutyDone === true ? 'on2' : '') + '">✓ Хийсэн</button><button type="button" data-dd="0" class="' + (hrDutyDone === false ? 'on' : '') + '">✗ Үгүй</button><button type="button" data-dd="" class="' + (hrDutyDone == null ? 'on2' : '') + '">Хүлээгдэж</button></div>' +
       '<input type="text" id="hdN" placeholder="Тэмдэглэл (жишээ: шал угаасан)" maxlength="300" value="' + esc((d.duty && d.duty.note) || '') + '"><button class="btn" id="hdSave">Цэвэрлэгээ хадгалах</button></div>' +
@@ -833,9 +850,11 @@ main{padding-bottom:96px!important}
       (d.duty && d.duty.photos ? '<div class="hr-sum" style="color:#14805A">✓ Өнөөдөр ' + d.duty.photos + ' зураг илгээсэн</div>' : '') +
       '<div class="cl-phs">' + hrClPh.map(function (p, i) { return '<span class="cl-th"><img src="' + p.url + '" alt=""><button type="button" data-clx="' + i + '" aria-label="Хасах">✕</button></span>'; }).join('') +
       (hrClPh.length < 4 ? '<label class="cl-add">📷<span>Зураг авах</span><input type="file" accept="image/*" capture="environment" id="clF" hidden></label>' : '') + '</div>' +
-      (hrClPh.length ? '<button class="btn" id="clSend">📤 Зураг илгээх (' + hrClPh.length + ')</button>' : '') + '</div>' +
-      '<div class="muted" style="text-align:center;font-size:12.5px">Таны бөглөсөн мэдээлэл анги удирдсан багшид шууд харагдана.</div>';
-    return h;
+      (hrClPh.length ? '<button class="btn" id="clSend">📤 Зураг илгээх (' + hrClPh.length + ')</button>' : '') + '</div>';
+    }
+    if (h.indexOf('<h2>§') < 0 && !(d.can || []).length) h += '<div class="card muted" style="text-align:center">Багш танд одоогоор үүрэг өгөөгүй байна.</div>';
+    var nn = 0; h = h.replace(/<h2>§/g, function () { nn++; return '<h2>' + nn + '. '; });
+    return h + '<div class="muted" style="text-align:center;font-size:12.5px">Таны бөглөсөн мэдээлэл анги удирдсан багшид шууд харагдана.</div>';
   }
   function fmtTime(t) { var x = new Date(t); return String(x.getHours()).padStart(2, '0') + ':' + String(x.getMinutes()).padStart(2, '0'); }
   function hrLeadBind() {
